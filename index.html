@@ -205,12 +205,12 @@ body{margin:0}
 <div class="login-wrap" id="login" hidden>
   <form class="panel login" id="login-form" autocomplete="on">
     <h1>Bill<b>Book</b></h1>
-    <p class="hint" style="font-size:14px">Apni ID se login karo</p>
+    <p class="hint" style="font-size:14px">Sign in to continue</p>
     <label class="f">Email<input id="lg-email" type="email" autocomplete="username" required></label>
     <label class="f">Password<input id="lg-pass" type="password" autocomplete="current-password" required></label>
     <p class="err" id="lg-err" hidden></p>
-    <button class="btn primary" type="submit" id="lg-btn">Login</button>
-    <button class="linkbtn" type="button" id="lg-forgot">Password bhool gaye?</button>
+    <button class="btn primary" type="submit" id="lg-btn">Sign in</button>
+    <button class="linkbtn" type="button" id="lg-forgot">Forgot password?</button>
   </form>
 </div>
 <div id="app" hidden>
@@ -219,9 +219,9 @@ body{margin:0}
   <div class="top-in">
     <div class="brand">
       <h1>Bill<b>Book</b></h1>
-      <small id="firm-sub">Firm details bharo → Settings</small>
+      <small id="firm-sub">Add your business details in Settings</small>
     </div>
-    <div class="userchip"><span id="user-email"></span><button class="btn sm" id="logout">Logout</button></div>
+    <div class="userchip"><span id="user-email"></span><button class="btn sm" id="logout">Sign out</button></div>
     <nav role="tablist" aria-label="Sections">
       <button role="tab" data-tab="bill" aria-selected="true">New Bill</button>
       <button role="tab" data-tab="bills" aria-selected="false">Bills</button>
@@ -238,11 +238,11 @@ body{margin:0}
   <section id="tab-bill">
     <div class="bill-grid">
       <div class="stack">
-        <div class="notice" id="firm-notice" hidden>Invoice pe aapki firm ka naam, GSTIN aur bank details aayenge — pehle <button data-go="settings">Settings</button> mein bhar do.</div>
+        <div class="notice" id="firm-notice" hidden>Your business name, GSTIN and bank details appear on every invoice. Add them in <button data-go="settings">Settings</button> first.</div>
         <div class="panel">
           <h2>Buyer (Bill to)</h2>
           <div class="fields">
-            <label class="f wide">Party name<input id="b-pname" list="partyList" autocomplete="off" placeholder="Naam likho ya list se chuno"></label>
+            <label class="f wide">Party name<input id="b-pname" list="partyList" autocomplete="off" placeholder="Type a name or pick from the list"></label>
             <label class="f wide">Address<input id="b-paddr" autocomplete="off"></label>
             <label class="f">GSTIN/UIN<input id="b-pgstin" autocomplete="off" maxlength="15" placeholder="09AAAAA0000A1Z5"></label>
             <label class="f">State<select id="b-pstate" class="state-sel"></select></label>
@@ -269,28 +269,28 @@ body{margin:0}
         <div class="panel">
           <h2>Items</h2>
           <div class="adder">
-            <input id="add-item" list="itemList" autocomplete="off" placeholder="Item ka naam likho / list se chuno" aria-label="Item">
+            <input id="add-item" list="itemList" autocomplete="off" placeholder="Type an item name or pick from the list" aria-label="Item">
             <input id="add-qty" type="number" min="0" step="any" value="1" aria-label="Quantity">
             <button class="btn primary" id="add-btn">Add</button>
           </div>
-          <p class="hint">Item master mein ho to HSN, rate, GST apne aap aa jayega. Table mein rate / discount badal sakte ho.</p>
+          <p class="hint">Saved items fill in HSN, rate and GST automatically. You can change the rate or discount in the table.</p>
           <div class="tablewrap" id="lines-wrap" hidden>
             <table class="grid lines">
               <thead><tr><th>Item</th><th>HSN/SAC</th><th class="r">Qty</th><th>Unit</th><th class="r">Rate</th><th class="r">Disc %</th><th>GST %</th><th class="r">Amount</th><th></th></tr></thead>
               <tbody id="lines-body"></tbody>
             </table>
           </div>
-          <p class="empty" id="lines-empty">Abhi koi item nahi. Upar se item chuno aur <b>Add</b> dabao.</p>
+          <p class="empty" id="lines-empty">No items yet. Pick an item above and click <b>Add</b>.</p>
         </div>
       </div>
       <aside class="panel summary">
         <div class="inv-no"><span>Invoice No.</span><strong id="s-no">—</strong></div>
         <label class="f">GST type<select id="b-taxmode">
-          <option value="auto">Auto — party ke state se</option>
-          <option value="intra">Hamesha CGST + SGST</option>
-          <option value="inter">Hamesha IGST</option>
+          <option value="auto">Automatic (based on party state)</option>
+          <option value="intra">Always CGST + SGST</option>
+          <option value="inter">Always IGST</option>
         </select></label>
-        <div class="supply" id="s-supply">Same state: CGST + SGST</div>
+        <div class="supply" id="s-supply">Intra-state: CGST + SGST</div>
         <div class="sum-row"><span>Taxable value</span><span class="num" id="s-taxable">0.00</span></div>
         <div class="sum-row" id="s-cgst-row"><span>CGST</span><span class="num" id="s-cgst">0.00</span></div>
         <div class="sum-row" id="s-sgst-row"><span>SGST</span><span class="num" id="s-sgst">0.00</span></div>
@@ -298,7 +298,7 @@ body{margin:0}
         <div class="sum-row"><span>Round off</span><span class="num" id="s-round">0.00</span></div>
         <div class="sum-total"><b>Total</b><span class="num" id="s-total">₹0</span></div>
         <div class="words" id="s-words"></div>
-        <button class="btn primary" id="save-bill">Save &amp; cut bill</button>
+        <button class="btn primary" id="save-bill">Save invoice</button>
         <div class="row"><button class="btn" id="preview-bill" style="flex:1">Preview</button><button class="btn" id="clear-bill" style="flex:1">Clear</button></div>
       </aside>
     </div>
@@ -308,23 +308,23 @@ body{margin:0}
   <section id="tab-bills" hidden>
     <div class="stack">
       <div class="tiles">
-        <div class="tile"><span>Aaj ki sale</span><b id="t-today">₹0</b></div>
-        <div class="tile"><span id="t-month-lbl">Is mahine</span><b id="t-month">₹0</b></div>
-        <div class="tile"><span>Bills</span><b id="t-count">0</b></div>
+        <div class="tile"><span>Today's sales</span><b id="t-today">₹0</b></div>
+        <div class="tile"><span id="t-month-lbl">This month</span><b id="t-month">₹0</b></div>
+        <div class="tile"><span>Invoices</span><b id="t-count">0</b></div>
         <div class="tile" id="t-low-tile"><span>Low stock items</span><b id="t-low">0</b></div>
       </div>
       <div class="panel">
         <div class="listhead"><h2>Saved bills</h2>
           <div class="row" style="flex:1;justify-content:flex-end">
-            <label class="f" style="flex-direction:row;align-items:center;gap:6px">Mahina<input id="bills-month" type="month" style="width:auto"></label>
-            <button class="btn sm" id="bills-all">Saare bills</button>
-            <input class="search" id="bills-q" type="search" placeholder="Party ya invoice no. se dhundho" aria-label="Search bills">
+            <label class="f" style="flex-direction:row;align-items:center;gap:6px">Month<input id="bills-month" type="month" style="width:auto"></label>
+            <button class="btn sm" id="bills-all">All invoices</button>
+            <input class="search" id="bills-q" type="search" placeholder="Search by party or invoice no." aria-label="Search bills">
             <button class="btn" id="bills-xlsx">Excel export</button>
           </div></div>
         <div class="tablewrap" id="bills-wrap">
           <table class="grid"><thead><tr><th>Invoice No.</th><th>Date</th><th>Party</th><th class="r">Items</th><th class="r">Amount</th></tr></thead><tbody id="bills-body"></tbody></table>
         </div>
-        <p class="empty" id="bills-empty">Koi bill nahi mila. <b>New Bill</b> tab se pehla bill banao.</p>
+        <p class="empty" id="bills-empty">No invoices found. Create your first invoice from the <b>New Bill</b> tab.</p>
       </div>
     </div>
   </section>
@@ -333,7 +333,7 @@ body{margin:0}
   <section id="tab-items" hidden>
     <div class="two">
       <form class="panel" id="item-form" autocomplete="off">
-        <h2 id="item-form-title">Naya item</h2>
+        <h2 id="item-form-title">New item</h2>
         <div class="fields">
           <label class="f wide">Item name<input id="it-name" required></label>
           <label class="f">HSN/SAC<input id="it-hsn"></label>
@@ -344,14 +344,14 @@ body{margin:0}
           <label class="f">Low stock alert at<input id="it-low" type="number" step="any" value="5"></label>
         </div>
         <div class="row"><button class="btn primary" type="submit" id="it-save">Save item</button><button class="btn" type="button" id="it-cancel" hidden>Cancel</button></div>
-        <p class="hint">Bill save karte hi stock apne aap kam ho jata hai. Naya maal aaye to item edit karke stock badha do.</p>
+        <p class="hint">Stock is reduced automatically when an invoice is saved. To add new stock, edit the item.</p>
       </form>
       <div class="panel">
-        <div class="listhead"><h2>Items</h2><input class="search" id="items-q" type="search" placeholder="Item dhundho" aria-label="Search items"></div>
+        <div class="listhead"><h2>Items</h2><input class="search" id="items-q" type="search" placeholder="Search items" aria-label="Search items"></div>
         <div class="tablewrap" id="items-wrap">
           <table class="grid"><thead><tr><th>Item</th><th>HSN</th><th class="r">Rate</th><th class="r">GST</th><th class="r">Stock</th><th></th></tr></thead><tbody id="items-body"></tbody></table>
         </div>
-        <p class="empty" id="items-empty">Abhi koi item nahi. Baayi taraf form se apna pehla item add karo.</p>
+        <p class="empty" id="items-empty">No items yet. Add your first item using the form.</p>
       </div>
     </div>
   </section>
@@ -360,7 +360,7 @@ body{margin:0}
   <section id="tab-parties" hidden>
     <div class="two">
       <form class="panel" id="party-form" autocomplete="off">
-        <h2 id="party-form-title">Nayi party</h2>
+        <h2 id="party-form-title">New party</h2>
         <div class="fields">
           <label class="f wide">Party name<input id="pt-name" required></label>
           <label class="f wide">Address<input id="pt-addr"></label>
@@ -369,14 +369,14 @@ body{margin:0}
           <label class="f">Phone<input id="pt-phone" inputmode="tel"></label>
         </div>
         <div class="row"><button class="btn primary" type="submit">Save party</button><button class="btn" type="button" id="pt-cancel" hidden>Cancel</button></div>
-        <p class="hint">Bill mein nayi party ka naam likhoge to wo yahan apne aap save ho jayegi.</p>
+        <p class="hint">New parties are saved here automatically when you create an invoice for them.</p>
       </form>
       <div class="panel">
-        <div class="listhead"><h2>Parties</h2><input class="search" id="parties-q" type="search" placeholder="Party dhundho" aria-label="Search parties"></div>
+        <div class="listhead"><h2>Parties</h2><input class="search" id="parties-q" type="search" placeholder="Search parties" aria-label="Search parties"></div>
         <div class="tablewrap" id="parties-wrap">
           <table class="grid"><thead><tr><th>Party</th><th>GSTIN</th><th>State</th><th>Phone</th><th></th></tr></thead><tbody id="parties-body"></tbody></table>
         </div>
-        <p class="empty" id="parties-empty">Abhi koi party nahi.</p>
+        <p class="empty" id="parties-empty">No parties yet.</p>
       </div>
     </div>
   </section>
@@ -384,7 +384,7 @@ body{margin:0}
   <!-- SETTINGS -->
   <section id="tab-settings" hidden>
     <form class="panel" id="settings-form" autocomplete="off" style="max-width:820px">
-      <h2>Firm details (invoice pe chhapega)</h2>
+      <h2>Business details (printed on invoices)</h2>
       <div class="fields">
         <label class="f wide">Firm name<input id="st-name"></label>
         <label class="f wide">Address<textarea id="st-addr" rows="2"></textarea></label>
@@ -406,7 +406,7 @@ body{margin:0}
         <label class="f">Financial year<input id="st-fy" placeholder="auto (e.g. 26-27)"></label>
         <label class="f">Next number<input id="st-next" type="number" min="1" step="1"></label>
       </div>
-      <p class="hint">Number aisa banega: <b class="num" id="st-sample">INV/00001/26-27</b></p>
+      <p class="hint">Invoice numbers will look like: <b class="num" id="st-sample">INV/00001/26-27</b></p>
       <label class="f wide">Declaration<textarea id="st-decl" rows="3"></textarea></label>
       <div class="row"><button class="btn primary" type="submit">Save settings</button><span class="hint" id="st-state-msg"></span></div>
     </form>
@@ -494,8 +494,8 @@ let draft = (()=>{ try{ const d=JSON.parse(localStorage.getItem(DRAFT_KEY)); if(
 let draftT; function saveDraft(){ clearTimeout(draftT); draftT=setTimeout(()=>{ try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); }catch(e){} }, 300); }
 
 function toast(msg, bad){ const t=$("#toast"); t.textContent=msg; t.className="toast"+(bad?" bad":""); t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true, 3200); }
-function errMsg(e){ const c=e&&e.code; if(c==="permission-denied"||c==="invalid_argument") return "Save nahi hua — is ID ko permission nahi hai (Firestore rules mein email jodo)."; if(c==="quota_exceeded") return "Storage bhar gaya — purane items/bills delete karo."; return "Save nahi hua, dobara try karo." + (e&&e.message? " ("+e.message+")":""); }
-function armDelete(btn, fn){ if(btn.dataset.armed){ fn(); return; } btn.dataset.armed="1"; const old=btn.textContent; btn.textContent="Pakka delete?"; setTimeout(()=>{ delete btn.dataset.armed; btn.textContent=old; }, 3000); }
+function errMsg(e){ const c=e&&e.code; if(c==="permission-denied"||c==="invalid_argument") return "Could not save: this account does not have permission. Add the email to the Firestore rules."; if(c==="quota_exceeded") return "Storage is full. Delete old items or invoices to free up space."; return "Could not save. Please try again." + (e&&e.message? " ("+e.message+")":""); }
+function armDelete(btn, fn){ if(btn.dataset.armed){ fn(); return; } btn.dataset.armed="1"; const old=btn.textContent; btn.textContent="Confirm delete?"; setTimeout(()=>{ delete btn.dataset.armed; btn.textContent=old; }, 3000); }
 
 // ---- Tabs
 function showTab(name){
@@ -542,11 +542,11 @@ function addLine(){
   const it = S.items.find(i => i.name.toLowerCase() === name.toLowerCase());
   if(it){
     const already = draft.lines.filter(l=>l.itemId===it.id).reduce((s,l)=>s+(+l.qty||0),0);
-    if((+it.stock||0) < qty+already) toast(`Dhyan do: ${it.name} ka stock sirf ${fmtQ(it.stock||0)} ${it.unit||""} hai`, true);
+    if((+it.stock||0) < qty+already) toast(`Low stock: only ${fmtQ(it.stock||0)} ${it.unit||""} of ${it.name} left`, true);
     draft.lines.push({itemId:it.id, name:it.name, hsn:it.hsn||"", unit:it.unit||"PCS", qty, rate:+it.rate||0, disc:0, gst:+(it.gst ?? 18)});
   } else {
     draft.lines.push({itemId:"", name, hsn:"", unit:"PCS", qty, rate:0, disc:0, gst:18});
-    toast("Ye item master mein nahi hai — HSN aur rate table mein bhar do");
+    toast("This item is not in your item list. Enter its HSN and rate in the table.");
   }
   $("#add-item").value=""; $("#add-qty").value="1";
   renderLines(); updateSummary(); saveDraft(); $("#add-item").focus();
@@ -583,11 +583,11 @@ const posCode = () => (draft.same ? draft.party : draft.ship).stateCode || "";
 function draftIntra(){ if(draft.taxMode==="intra") return true; if(draft.taxMode==="inter") return false; return isIntra(S.firm.stateCode, posCode()); }
 function supplyText(intra){
   const tax = intra ? "CGST + SGST" : "IGST";
-  if(draft.taxMode==="intra" || draft.taxMode==="inter") return `Aapne khud chuna: ${tax}`;
-  if(!S.firm.stateCode) return `Settings mein firm ka state nahi bhara — abhi ${tax} laga`;
+  if(draft.taxMode==="intra" || draft.taxMode==="inter") return `Set manually: ${tax}`;
+  if(!S.firm.stateCode) return `Business state not set in Settings; applying ${tax}`;
   const pc=posCode();
-  if(!pc) return `Party ka state nahi chuna — same state maan ke ${tax} laga`;
-  return pc===S.firm.stateCode ? `${stateName(pc)} — same state: ${tax}` : `${stateName(pc)} — doosra state: ${tax}`;
+  if(!pc) return `Party state not selected; treating as intra-state (${tax})`;
+  return pc===S.firm.stateCode ? `${stateName(pc)}: intra-state, ${tax}` : `${stateName(pc)}: inter-state, ${tax}`;
 }
 function invNo(seq, iso){ const f=S.firm; const fy=(f.fy||"").trim() || autoFY(iso); return `${f.prefix ?? "INV/"}${String(seq).padStart(5,"0")}/${fy}`; }
 function nextNumber(iso){ const seq = Math.max(1, Math.floor(+S.firm.nextNo||1)); return {seq, no:invNo(seq, iso)}; }
@@ -614,14 +614,14 @@ function buildInvoice(){
     ref:draft.ref||"", pay:draft.pay||"", order:draft.order||"", dispatch:draft.dispatch||"", dest:draft.dest||"", lines,
     taxable:c.taxable, cgst:c.cgst, sgst:c.sgst, igst:c.igst, roundOff:c.roundOff, total:c.total};
 }
-$("#preview-bill").addEventListener("click", () => { const inv=buildInvoice(); if(!inv.lines.length) return toast("Pehle koi item add karo", true); openInvoice(inv, false); });
-$("#clear-bill").addEventListener("click", e => armDelete(e.currentTarget, () => { draft=newDraft(); saveDraft(); fillBillForm(); toast("Form saaf ho gaya"); }));
+$("#preview-bill").addEventListener("click", () => { const inv=buildInvoice(); if(!inv.lines.length) return toast("Add at least one item first", true); openInvoice(inv, false); });
+$("#clear-bill").addEventListener("click", e => armDelete(e.currentTarget, () => { draft=newDraft(); saveDraft(); fillBillForm(); toast("Form cleared"); }));
 $("#save-bill").addEventListener("click", async e => {
   const btn=e.currentTarget;
-  if(!db) return toast("Data store connect nahi hai — bill save nahi ho sakta", true);
+  if(!db) return toast("Not connected to the database. The invoice cannot be saved.", true);
   const inv=buildInvoice();
-  if(!inv.party.name) { $("#b-pname").focus(); return toast("Party ka naam bharo", true); }
-  if(!inv.lines.length) { $("#add-item").focus(); return toast("Kam se kam ek item (qty ke saath) add karo", true); }
+  if(!inv.party.name) { $("#b-pname").focus(); return toast("Enter the party name", true); }
+  if(!inv.lines.length) { $("#add-item").focus(); return toast("Add at least one item with a quantity", true); }
   btn.disabled=true; btn.textContent="Saving…";
   try{
     const id = "inv-" + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
@@ -644,9 +644,9 @@ $("#save-bill").addEventListener("click", async e => {
     if(!S.parties.some(p => p.name.toLowerCase()===inv.party.name.toLowerCase())) await db.collection("parties").add({...inv.party, phone:""});
     draft=newDraft(); saveDraft(); fillBillForm();
     openInvoice({...inv, id}, true);
-    toast("Bill save ho gaya: "+inv.no);
+    toast("Invoice saved: "+inv.no);
   }catch(err){ toast(errMsg(err), true); }
-  finally{ btn.disabled=false; btn.textContent="Save & cut bill"; }
+  finally{ btn.disabled=false; btn.textContent="Save invoice"; }
 });
 
 // ================= INVOICE SHEET =================
@@ -739,7 +739,7 @@ window.addEventListener("resize", () => { if(!$("#modal").hidden) fitSheet(); })
 
 const pdfName = inv => "Invoice_"+inv.no.replace(/[\/\\:]+/g,"-")+".pdf";
 async function makePdf(inv){
-  if(!window.html2pdf) throw new Error("PDF tool load nahi hua — internet check karke page reload karo");
+  if(!window.html2pdf) throw new Error("PDF tool did not load. Check your internet connection and reload the page.");
   const host=document.createElement("div"); host.style.cssText="position:fixed;left:-10000px;top:0;width:794px;background:#fff";
   host.innerHTML=invoiceHTML(inv); document.body.appendChild(host);
   try{
@@ -747,14 +747,14 @@ async function makePdf(inv){
   } finally { host.remove(); }
 }
 async function withBtn(btn, busy, fn){ const old=btn.textContent; btn.disabled=true; btn.textContent=busy; try{ await fn(); } finally{ btn.disabled=false; btn.textContent=old; } }
-$("#m-pdf").addEventListener("click", e => { if(!current) return; const inv=current; withBtn(e.currentTarget, "PDF ban raha hai…", async () => {
-  try{ const blob=await makePdf(inv); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=pdfName(inv); document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 4000); toast("PDF download ho gaya"); }
-  catch(err){ toast("PDF nahi bana: "+(err&&err.message||err), true); }
+$("#m-pdf").addEventListener("click", e => { if(!current) return; const inv=current; withBtn(e.currentTarget, "Generating PDF…", async () => {
+  try{ const blob=await makePdf(inv); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=pdfName(inv); document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 4000); toast("PDF downloaded"); }
+  catch(err){ toast("Could not create PDF: "+(err&&err.message||err), true); }
 }); });
-$("#m-share").addEventListener("click", e => { if(!current) return; const inv=current; withBtn(e.currentTarget, "Taiyaar ho raha hai…", async () => {
+$("#m-share").addEventListener("click", e => { if(!current) return; const inv=current; withBtn(e.currentTarget, "Preparing…", async () => {
   try{ const blob=await makePdf(inv); const file=new File([blob], pdfName(inv), {type:"application/pdf"});
     await navigator.share({files:[file], title:inv.no, text:`${(inv.firm&&inv.firm.name)||""} — Invoice ${inv.no}, Amount ₹${(+inv.total).toLocaleString("en-IN")}`}); }
-  catch(err){ if(err && err.name!=="AbortError") toast("Share nahi hua: "+(err.message||err), true); }
+  catch(err){ if(err && err.name!=="AbortError") toast("Could not share: "+(err.message||err), true); }
 }); });
 $("#m-print").addEventListener("click", () => window.print());
 $("#m-del").addEventListener("click", e => armDelete(e.currentTarget, async () => {
@@ -765,7 +765,7 @@ $("#m-del").addEventListener("click", e => armDelete(e.currentTarget, async () =
     const batch = db.batch();
     for(const [iid,q] of Object.entries(used)){ if(S.items.some(x=>x.id===iid)) batch.update(db.doc("items/"+iid), {stock: INC(q)}); }
     await batch.commit();
-    closeModal(); toast("Bill delete ho gaya, stock wapas jud gaya");
+    closeModal(); toast("Invoice deleted and stock restored");
   }catch(err){ toast(errMsg(err), true); }
 }));
 
@@ -774,12 +774,12 @@ function renderBills(){
   const q=$("#bills-q").value.trim().toLowerCase(); const today=todayISO();
   let tMonth=0; S.invoices.forEach(i => { tMonth+=+i.total||0; });
   $("#t-today").textContent="₹"+S.todayTotal.toLocaleString("en-IN"); $("#t-month").textContent="₹"+tMonth.toLocaleString("en-IN"); $("#t-count").textContent=S.invoices.length;
-  $("#t-month-lbl").textContent = billsMonth ? new Date(billsMonth+"-01T00:00:00").toLocaleDateString("en-IN",{month:"long",year:"numeric"}) : "Saare bills (total)";
+  $("#t-month-lbl").textContent = billsMonth ? new Date(billsMonth+"-01T00:00:00").toLocaleDateString("en-IN",{month:"long",year:"numeric"}) : "All invoices (total)";
   const low=S.items.filter(isLow).length; $("#t-low").textContent=low; $("#t-low-tile").classList.toggle("alert", low>0);
   const list=S.invoices.filter(i => !q || (i.no||"").toLowerCase().includes(q) || (i.party&&i.party.name||"").toLowerCase().includes(q));
   $("#bills-body").innerHTML = list.map(i => `<tr class="click" data-inv="${esc(i.id)}" tabindex="0"><td class="num">${esc(i.no)}</td><td>${fmtDate(i.date)}</td><td>${esc(i.party&&i.party.name)}</td><td class="r">${(i.lines||[]).length}</td><td class="r num">${rupee(i.total)}</td></tr>`).join("");
   $("#bills-wrap").hidden=!list.length; $("#bills-empty").hidden=!!list.length;
-  $("#bills-empty").innerHTML = S.invoices.length ? "Is search se koi bill nahi mila." : "Koi bill nahi. <b>New Bill</b> tab se pehla bill banao.";
+  $("#bills-empty").innerHTML = S.invoices.length ? "No invoices match your search." : "No invoices yet. Create your first invoice from the <b>New Bill</b> tab.";
 }
 $("#bills-q").addEventListener("input", renderBills);
 let billsMonth = todayISO().slice(0,7), unsubBills = null;
@@ -789,13 +789,13 @@ function watchBills(){
   $("#bills-month").value = billsMonth || "";
   const base = db.collection("invoices");
   const q = billsMonth ? base.where("date", ">=", billsMonth+"-01").where("date", "<", nextMonth(billsMonth)+"-01").orderBy("date","desc") : base.orderBy("createdAt","desc").limit(2000);
-  unsubBills = q.onSnapshot(s => { S.invoices = s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)); renderBills(); }, err => toast("Bills load nahi hue: "+(err.message||err), true));
+  unsubBills = q.onSnapshot(s => { S.invoices = s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)); renderBills(); }, err => toast("Could not load invoices: "+(err.message||err), true));
 }
 $("#bills-month").addEventListener("change", e => { billsMonth = e.target.value || ""; watchBills(); });
 $("#bills-all").addEventListener("click", () => { billsMonth=""; watchBills(); });
 $("#bills-xlsx").addEventListener("click", () => {
-  if(!window.XLSX) return toast("Excel tool load nahi hua — page reload karo", true);
-  if(!S.invoices.length) return toast("Is mahine koi bill nahi hai", true);
+  if(!window.XLSX) return toast("Excel tool did not load. Please reload the page.", true);
+  if(!S.invoices.length) return toast("No invoices for this period", true);
   const list=[...S.invoices].sort((a,b)=>(a.date||"").localeCompare(b.date||"") || (a.seq||0)-(b.seq||0));
   const bills=list.map(i=>({"Invoice No":i.no,"Date":fmtDate(i.date),"Party":i.party&&i.party.name,"GSTIN":i.party&&i.party.gstin,"State":stateName(i.pos ?? (i.ship||i.party||{}).stateCode),"Taxable Value":i.taxable,"CGST":i.cgst,"SGST":i.sgst,"IGST":i.igst,"Round Off":i.roundOff,"Total":i.total,"Payment":i.pay,"Made by":i.createdBy||""}));
   const lines=[]; list.forEach(i=>{ const c=calc(i.lines||[], i.intra); c.lines.forEach(l=>lines.push({"Invoice No":i.no,"Date":fmtDate(i.date),"Party":i.party&&i.party.name,"Item":l.name,"HSN":l.hsn,"Qty":l.qty,"Unit":l.unit,"Rate":l.rate,"Disc %":l.disc,"Taxable":l.amount,"GST %":l.gst})); });
@@ -805,7 +805,7 @@ $("#bills-xlsx").addEventListener("click", () => {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lines), "Bill Items");
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(items), "Stock");
   XLSX.writeFile(wb, `Bills_${billsMonth||"all"}.xlsx`);
-  toast("Excel download ho gaya");
+  toast("Excel file downloaded");
 });
 function openBillRow(e){ const tr=e.target.closest("[data-inv]"); if(!tr) return; const inv=S.invoices.find(x=>x.id===tr.dataset.inv); if(inv) openInvoice(inv, true); }
 $("#bills-body").addEventListener("click", openBillRow);
@@ -824,21 +824,21 @@ function renderItems(){
   $("#itemList").innerHTML=S.items.map(i=>`<option value="${esc(i.name)}">₹${fmt(i.rate)} · stock ${fmtQ(i.stock||0)} ${esc(i.unit||"")}</option>`).join("");
 }
 $("#items-q").addEventListener("input", renderItems);
-function resetItemForm(){ editItem=null; $("#item-form").reset(); $("#it-unit").value="PCS"; $("#it-gst").value="18"; $("#it-stock").value="0"; $("#it-low").value="5"; $("#item-form-title").textContent="Naya item"; $("#it-cancel").hidden=true; }
+function resetItemForm(){ editItem=null; $("#item-form").reset(); $("#it-unit").value="PCS"; $("#it-gst").value="18"; $("#it-stock").value="0"; $("#it-low").value="5"; $("#item-form-title").textContent="New item"; $("#it-cancel").hidden=true; }
 $("#it-cancel").addEventListener("click", resetItemForm);
 $("#items-body").addEventListener("click", e => {
   const ed=e.target.closest("[data-edit]"), rm=e.target.closest("[data-rm]");
   if(ed){ const it=S.items.find(x=>x.id===ed.dataset.edit); if(!it) return; editItem=it.id;
     $("#it-name").value=it.name; $("#it-hsn").value=it.hsn||""; $("#it-unit").value=it.unit||"PCS"; $("#it-rate").value=it.rate??""; $("#it-gst").value=String(it.gst??18); $("#it-stock").value=it.stock??0; $("#it-low").value=it.low??5;
-    $("#item-form-title").textContent="Item edit karo"; $("#it-cancel").hidden=false; $("#it-name").focus(); window.scrollTo({top:0,behavior:"smooth"}); }
-  if(rm) armDelete(rm, async()=>{ try{ await db.doc("items/"+rm.dataset.rm).delete(); toast("Item delete ho gaya"); }catch(err){ toast(errMsg(err),true); } });
+    $("#item-form-title").textContent="Edit item"; $("#it-cancel").hidden=false; $("#it-name").focus(); window.scrollTo({top:0,behavior:"smooth"}); }
+  if(rm) armDelete(rm, async()=>{ try{ await db.doc("items/"+rm.dataset.rm).delete(); toast("Item deleted"); }catch(err){ toast(errMsg(err),true); } });
 });
 $("#item-form").addEventListener("submit", async e => {
-  e.preventDefault(); if(!db) return toast("Data store connect nahi hai", true);
+  e.preventDefault(); if(!db) return toast("Not connected to the database", true);
   const data={name:$("#it-name").value.trim(), hsn:$("#it-hsn").value.trim(), unit:$("#it-unit").value.trim()||"PCS", rate:+$("#it-rate").value||0, gst:+$("#it-gst").value, stock:+$("#it-stock").value||0, low:+$("#it-low").value||0};
   if(!data.name) return;
-  if(S.items.some(i=>i.id!==editItem && i.name.toLowerCase()===data.name.toLowerCase())) return toast("Is naam ka item pehle se hai", true);
-  try{ if(editItem) await db.doc("items/"+editItem).set(data); else await db.collection("items").add(data); toast(editItem?"Item update ho gaya":"Item add ho gaya"); resetItemForm(); }catch(err){ toast(errMsg(err),true); }
+  if(S.items.some(i=>i.id!==editItem && i.name.toLowerCase()===data.name.toLowerCase())) return toast("An item with this name already exists", true);
+  try{ if(editItem) await db.doc("items/"+editItem).set(data); else await db.collection("items").add(data); toast(editItem?"Item updated":"Item added"); resetItemForm(); }catch(err){ toast(errMsg(err),true); }
 });
 
 // ================= PARTIES =================
@@ -853,21 +853,21 @@ function renderParties(){
   $("#partyList").innerHTML=S.parties.map(p=>`<option value="${esc(p.name)}">${esc(p.gstin||p.address||"")}</option>`).join("");
 }
 $("#parties-q").addEventListener("input", renderParties);
-function resetPartyForm(){ editParty=null; $("#party-form").reset(); $("#party-form-title").textContent="Nayi party"; $("#pt-cancel").hidden=true; }
+function resetPartyForm(){ editParty=null; $("#party-form").reset(); $("#party-form-title").textContent="New party"; $("#pt-cancel").hidden=true; }
 $("#pt-cancel").addEventListener("click", resetPartyForm);
 $("#pt-gstin").addEventListener("input", e => { e.target.value=e.target.value.toUpperCase(); const sc=gstinState(e.target.value); if(sc) $("#pt-state").value=sc; });
 $("#parties-body").addEventListener("click", e => {
   const ed=e.target.closest("[data-edit]"), rm=e.target.closest("[data-rm]");
   if(ed){ const p=S.parties.find(x=>x.id===ed.dataset.edit); if(!p) return; editParty=p.id;
     $("#pt-name").value=p.name; $("#pt-addr").value=p.address||""; $("#pt-gstin").value=p.gstin||""; $("#pt-state").value=p.stateCode||""; $("#pt-phone").value=p.phone||"";
-    $("#party-form-title").textContent="Party edit karo"; $("#pt-cancel").hidden=false; $("#pt-name").focus(); window.scrollTo({top:0,behavior:"smooth"}); }
-  if(rm) armDelete(rm, async()=>{ try{ await db.doc("parties/"+rm.dataset.rm).delete(); toast("Party delete ho gayi"); }catch(err){ toast(errMsg(err),true); } });
+    $("#party-form-title").textContent="Edit party"; $("#pt-cancel").hidden=false; $("#pt-name").focus(); window.scrollTo({top:0,behavior:"smooth"}); }
+  if(rm) armDelete(rm, async()=>{ try{ await db.doc("parties/"+rm.dataset.rm).delete(); toast("Party deleted"); }catch(err){ toast(errMsg(err),true); } });
 });
 $("#party-form").addEventListener("submit", async e => {
-  e.preventDefault(); if(!db) return toast("Data store connect nahi hai", true);
+  e.preventDefault(); if(!db) return toast("Not connected to the database", true);
   const data={name:$("#pt-name").value.trim(), address:$("#pt-addr").value.trim(), gstin:$("#pt-gstin").value.trim().toUpperCase(), stateCode:$("#pt-state").value, phone:$("#pt-phone").value.trim()};
   if(!data.name) return;
-  try{ if(editParty) await db.doc("parties/"+editParty).set(data); else await db.collection("parties").add(data); toast(editParty?"Party update ho gayi":"Party add ho gayi"); resetPartyForm(); }catch(err){ toast(errMsg(err),true); }
+  try{ if(editParty) await db.doc("parties/"+editParty).set(data); else await db.collection("parties").add(data); toast(editParty?"Party updated":"Party added"); resetPartyForm(); }catch(err){ toast(errMsg(err),true); }
 });
 
 // ================= SETTINGS =================
@@ -881,14 +881,14 @@ function fillSettings(){
 function sampleNo(){ const fy=$("#st-fy").value.trim()||autoFY(); $("#st-sample").textContent=`${$("#st-prefix").value}${String(Math.max(1,+$("#st-next").value||1)).padStart(5,"0")}/${fy}`; }
 $("#settings-form").addEventListener("input", e => { settingsDirty=true; $("#st-state-msg").textContent="Unsaved changes"; if(e.target.id==="st-gstin"){ e.target.value=e.target.value.toUpperCase(); const sc=gstinState(e.target.value); if(sc) $("#st-state").value=sc; if(e.target.value.length>=12) $("#st-pan").value=e.target.value.slice(2,12); } if(e.target.id==="st-pan") e.target.value=e.target.value.toUpperCase(); sampleNo(); });
 $("#settings-form").addEventListener("submit", async e => {
-  e.preventDefault(); if(!db) return toast("Data store connect nahi hai", true);
+  e.preventDefault(); if(!db) return toast("Not connected to the database", true);
   const data={}; for(const [k,id] of Object.entries(ST)) data[k] = k==="nextNo" ? Math.max(1,Math.floor(+$("#"+id).value||1)) : $("#"+id).value.trim();
-  try{ await db.doc("settings/firm").set(data); settingsDirty=false; $("#st-state-msg").textContent="Saved"; toast("Settings save ho gayi"); }catch(err){ toast(errMsg(err),true); }
+  try{ await db.doc("settings/firm").set(data); settingsDirty=false; $("#st-state-msg").textContent="Saved"; toast("Settings saved"); }catch(err){ toast(errMsg(err),true); }
 });
 
 function onFirm(){
   const f=S.firm;
-  $("#firm-sub").textContent = f.name ? `${f.name}${f.gstin?" · "+f.gstin:""}` : "Firm details bharo → Settings";
+  $("#firm-sub").textContent = f.name ? `${f.name}${f.gstin?" · "+f.gstin:""}` : "Add your business details in Settings";
   $("#firm-notice").hidden = !!f.name || !dbReady;
   fillSettings(); updateSummary();
 }
@@ -901,7 +901,7 @@ const banner = m => { $("#banner").textContent=m; $("#banner").hidden=!m; };
 const CFG = window.FIREBASE_CONFIG;
 let auth=null, INC=null, unsubs=[];
 if(!window.firebase || !CFG || !CFG.apiKey || String(CFG.apiKey).includes("PASTE")){
-  $("#app").hidden=false; banner("Setup baaki hai: config.js mein Firebase ki details daalo (README dekho).");
+  $("#app").hidden=false; banner("Setup incomplete: add your Firebase details to config.js (see README).");
 } else {
   firebase.initializeApp(CFG);
   auth = firebase.auth(); db = firebase.firestore(); INC = n => firebase.firestore.FieldValue.increment(n);
@@ -910,9 +910,9 @@ if(!window.firebase || !CFG || !CFG.apiKey || String(CFG.apiKey).includes("PASTE
     unsubs.forEach(u=>u()); unsubs=[]; if(unsubBills){ unsubBills(); unsubBills=null; }
     if(!user){ dbReady=false; $("#app").hidden=true; $("#login").hidden=false; return; }
     $("#login").hidden=true; $("#app").hidden=false; $("#user-email").textContent=user.email; dbReady=true; banner("");
-    const fail = e => banner(e && e.code==="permission-denied" ? "Is ID ("+user.email+") ko data dekhne ki permission nahi hai — Firestore rules mein ye email jodo." : "Data load nahi ho paya: "+((e&&e.message)||e));
+    const fail = e => banner(e && e.code==="permission-denied" ? "This account ("+user.email+") does not have access to the data. Add this email to the Firestore rules." : "Could not load data: "+((e&&e.message)||e));
     unsubs.push(db.doc("settings/firm").onSnapshot(async s => {
-      if(!s.exists && window.SEED && !s.metadata.fromCache){ try{ const b=db.batch(); b.set(db.doc("settings/firm"), SEED.firm); (SEED.items||[]).forEach(it=>b.set(db.collection("items").doc(it.id), it.data)); await b.commit(); toast("Firm details aur items pehli baar bhar diye"); }catch(e){} return; }
+      if(!s.exists && window.SEED && !s.metadata.fromCache){ try{ const b=db.batch(); b.set(db.doc("settings/firm"), SEED.firm); (SEED.items||[]).forEach(it=>b.set(db.collection("items").doc(it.id), it.data)); await b.commit(); toast("Business details and items set up"); }catch(e){} return; }
       S.firm = s.exists ? {...s.data()} : {}; onFirm(); }, fail));
     unsubs.push(db.collection("items").onSnapshot(q => { S.items=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.name).localeCompare(String(b.name))); renderItems(); renderBills(); }, fail));
     unsubs.push(db.collection("parties").onSnapshot(q => { S.parties=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.name).localeCompare(String(b.name))); renderParties(); }, fail));
@@ -922,15 +922,15 @@ if(!window.firebase || !CFG || !CFG.apiKey || String(CFG.apiKey).includes("PASTE
 }
 $("#login-form").addEventListener("submit", async e => {
   e.preventDefault(); if(!auth) return; const err=$("#lg-err"); err.hidden=true;
-  await withBtn($("#lg-btn"), "Login ho raha hai…", async () => {
+  await withBtn($("#lg-btn"), "Signing in…", async () => {
     try{ await auth.signInWithEmailAndPassword($("#lg-email").value.trim(), $("#lg-pass").value); }
-    catch(x){ err.textContent = ["auth/invalid-credential","auth/wrong-password","auth/user-not-found","auth/invalid-login-credentials"].includes(x.code) ? "Email ya password galat hai." : x.code==="auth/too-many-requests" ? "Bahut baar galat try hua — thodi der baad try karo." : "Login nahi hua: "+(x.message||x.code); err.hidden=false; }
+    catch(x){ err.textContent = ["auth/invalid-credential","auth/wrong-password","auth/user-not-found","auth/invalid-login-credentials"].includes(x.code) ? "Incorrect email or password." : x.code==="auth/too-many-requests" ? "Too many failed attempts. Please try again later." : "Sign-in failed: "+(x.message||x.code); err.hidden=false; }
   });
 });
 $("#lg-forgot").addEventListener("click", async () => {
   const em=$("#lg-email").value.trim(); const err=$("#lg-err");
-  if(!em){ err.textContent="Pehle upar apna email likho, phir ye dabao."; err.hidden=false; return; }
-  try{ await auth.sendPasswordResetEmail(em); err.hidden=true; toast("Password reset ka link "+em+" pe bhej diya"); }catch(x){ err.textContent="Link nahi bheja ja saka: "+(x.message||x.code); err.hidden=false; }
+  if(!em){ err.textContent="Enter your email above first, then click this link."; err.hidden=false; return; }
+  try{ await auth.sendPasswordResetEmail(em); err.hidden=true; toast("Password reset link sent to "+em); }catch(x){ err.textContent="Could not send the reset link: "+(x.message||x.code); err.hidden=false; }
 });
 $("#logout").addEventListener("click", () => auth && auth.signOut());
 })();
