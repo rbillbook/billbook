@@ -1,0 +1,939 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2c3a8f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%232c3a8f%27/%3E%3Ctext x=%2716%27 y=%2722%27 font-size=%2716%27 text-anchor=%27middle%27 fill=%27white%27 font-family=%27Arial%27 font-weight=%27bold%27%3E%E2%82%B9%3C/text%3E%3C/svg%3E">
+<title>GST Bill Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: carbon-copy bill book — cool paper-toned app chrome, carbon-blue accent; the invoice sheet itself always stays white paper */
+:root{
+  --bg:#f2f3f8; --surface:#ffffff; --surface-2:#eceef6; --line:#d8dbe8; --fg:#1b1e2b; --muted:#5b6077;
+  --accent:#2c3a8f; --accent-ink:#ffffff; --accent-soft:#e2e6fa;
+  --good:#1f7a4d; --good-soft:#dcf2e6; --warn:#9a5700; --warn-soft:#fcefd6; --bad:#b3261e; --bad-soft:#fbe3e1;
+  --overlay:rgba(18,20,32,.55);
+  --font-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --font-body:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --font-num:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11131b; --surface:#1a1d29; --surface-2:#222637; --line:#2f3448; --fg:#e7e9f2; --muted:#9aa0b8;
+  --accent:#8e9cf5; --accent-ink:#0f1222; --accent-soft:#262c4f;
+  --good:#5cc994; --good-soft:#163526; --warn:#f0b35a; --warn-soft:#3a2a12; --bad:#f08a82; --bad-soft:#3d1a18;
+  --overlay:rgba(0,0,0,.65); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11131b; --surface:#1a1d29; --surface-2:#222637; --line:#2f3448; --fg:#e7e9f2; --muted:#9aa0b8;
+  --accent:#8e9cf5; --accent-ink:#0f1222; --accent-soft:#262c4f;
+  --good:#5cc994; --good-soft:#163526; --warn:#f0b35a; --warn-soft:#3a2a12; --bad:#f08a82; --bad-soft:#3d1a18;
+  --overlay:rgba(0,0,0,.65); color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:14px;line-height:1.45}
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+h1,h2,h3{font-family:var(--font-display);font-stretch:82%;margin:0;text-wrap:balance}
+h2{font-size:15px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{max-width:1180px;margin:0 auto;padding:10px 16px 0;display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 24px}
+.brand{display:flex;flex-direction:column;padding-bottom:10px;min-width:0}
+.brand h1{font-size:22px;font-weight:800;letter-spacing:-.01em}
+.brand h1 b{color:var(--accent)}
+.brand small{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+nav{display:flex;gap:2px;overflow-x:auto;margin-left:auto;max-width:100%}
+nav button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 12px;cursor:pointer;color:var(--muted);font-weight:600;white-space:nowrap}
+nav button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+main{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:18px 60px}
+.banner{max-width:1180px;margin:12px auto 0;padding:10px 14px;border-radius:var(--r);background:var(--warn-soft);color:var(--warn);font-weight:600}
+.banner-wrap{padding-inline:16px}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px 12px}
+.f{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--muted);min-width:0}
+.f.wide{grid-column:1/-1}
+.f input,.f select,.f textarea,.adder input,.lines input,.lines select,.search{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:14px;font-weight:400;color:var(--fg);width:100%;min-width:0}
+.f textarea{resize:vertical;min-height:64px}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--fg)}
+.hint{font-size:12px;color:var(--muted);margin:0}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 14px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{color:var(--bad)}
+.btn.danger[data-armed]{background:var(--bad);border-color:var(--bad);color:var(--surface)}
+.btn.sm{padding:5px 10px;font-size:12px}
+.btn:disabled{opacity:.55;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+/* New bill */
+.bill-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+@media (max-width:900px){.bill-grid{grid-template-columns:minmax(0,1fr)}}
+.summary{position:sticky;top:calc(env(safe-area-inset-top,0px) + 110px)}
+.inv-no{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
+.inv-no span{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.inv-no strong{font-family:var(--font-num);font-size:14px}
+.sum-row{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.sum-row span:first-child{color:var(--muted)}
+.sum-total{display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid var(--fg);padding-top:10px}
+.sum-total b{font-family:var(--font-display);font-stretch:82%;font-size:15px;text-transform:uppercase}
+.sum-total .num{font-size:26px;font-weight:600}
+.words{font-size:12px;color:var(--muted);font-style:italic}
+.supply{font-size:12px;padding:6px 10px;border-radius:6px;background:var(--accent-soft);color:var(--accent);font-weight:600}
+.adder{display:grid;grid-template-columns:minmax(0,1fr) 90px auto;gap:8px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table.grid{width:100%;border-collapse:collapse;font-size:13px}
+table.grid th{background:var(--surface-2);text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:8px 10px;white-space:nowrap}
+table.grid td{border-top:1px solid var(--line);padding:6px 10px;vertical-align:middle}
+table.grid td.r,table.grid th.r{text-align:right}
+.lines{min-width:780px}
+.lines th,.lines td{padding-left:6px;padding-right:6px}
+.lines input,.lines select{padding:6px 7px}
+.lines .w-name{min-width:150px}
+.lines .w-s{width:96px}
+.lines .w-xs{width:62px}
+.lines select{width:64px}
+.lines td.r.num{white-space:nowrap}
+.x{background:none;border:0;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:4px 8px;border-radius:6px}
+.x:hover{color:var(--bad);background:var(--bad-soft)}
+.empty{color:var(--muted);text-align:center;padding:18px 10px;margin:0;border:1px dashed var(--line);border-radius:8px}
+.notice{padding:10px 12px;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:13px}
+.notice button{background:none;border:0;color:inherit;text-decoration:underline;font-weight:700;cursor:pointer;padding:0}
+
+/* Lists */
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile span{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.tile b{font-family:var(--font-num);font-size:20px;font-weight:600;overflow-wrap:anywhere}
+.tile.alert b{color:var(--warn)}
+.listhead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.listhead .search{max-width:320px}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;font-family:var(--font-num)}
+.pill.ok{background:var(--good-soft);color:var(--good)}
+.pill.low{background:var(--warn-soft);color:var(--warn)}
+.pill.out{background:var(--bad-soft);color:var(--bad)}
+.two{display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.two{grid-template-columns:minmax(0,1fr)}}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--surface-2)}
+.muted{color:var(--muted)}
+
+/* Modal */
+.modal{position:fixed;inset:0;z-index:50;background:var(--overlay);display:flex;flex-direction:column}
+.modal-bar{background:var(--surface);border-bottom:1px solid var(--line);padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top,0px));display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.modal-bar h3{font-size:16px;margin-right:auto}
+.modal-body{flex:1;overflow:auto;padding:20px 16px 40px}
+.sheet-fit{margin:0 auto;width:794px;transform-origin:top left}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600;max-width:calc(100% - 32px);box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.toast.bad{background:var(--bad);color:#fff}
+
+/* ===== Invoice sheet: fixed white paper in every theme ===== */
+.iv{--ink:#000;--paper:#fff;width:794px;min-height:1123px;background:var(--paper);color:var(--ink);font-family:Arial,"Liberation Sans",Helvetica,sans-serif;font-size:11.5px;line-height:1.35;padding:26px 38px 20px;display:flex;flex-direction:column}
+.iv *{color:var(--ink)}
+.iv-title{text-align:center;font-weight:700;font-size:16px;margin-bottom:4px;letter-spacing:.02em}
+.iv-box{border:1px solid var(--ink);display:flex;flex-direction:column;flex:1}
+.iv-top{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--ink)}
+.iv-left{border-right:1px solid var(--ink);display:flex;flex-direction:column}
+.iv-cell{padding:4px 5px;border-bottom:1px solid var(--ink)}
+.iv-left .iv-cell:last-child{border-bottom:0;flex:1}
+.iv-firm{font-size:12px}
+.iv-firm .iv-b{font-size:13px}
+.iv-b{font-weight:700}
+.iv-lbl{font-size:10.5px}
+.iv-kv{display:grid;grid-template-columns:100px 1fr}
+.iv-meta{display:grid;grid-template-columns:1fr 1fr;align-content:start}
+.iv-meta > div{border-bottom:1px solid var(--ink);padding:3px 5px;min-height:35px}
+.iv-meta > div:nth-child(odd){border-right:1px solid var(--ink)}
+.iv-meta .iv-span{grid-column:1/-1;border-right:0!important;border-bottom:0;min-height:60px}
+.iv-meta .iv-v{font-weight:700;font-size:12px}
+table.iv-items{width:100%;border-collapse:collapse;flex:1}
+.iv-items th{border-bottom:1px solid var(--ink);border-right:1px solid var(--ink);font-weight:400;font-size:11px;padding:4px 3px;vertical-align:top}
+.iv-items td{border-right:1px solid var(--ink);padding:3px 4px;vertical-align:top}
+.iv-items th:last-child,.iv-items td:last-child{border-right:0}
+.iv-items .r{text-align:right}
+.iv-items .c{text-align:center}
+.iv-items .b{font-weight:700}
+.iv-items .tax td{padding-top:1px;padding-bottom:1px}
+.iv-items .taxlbl{text-align:right;font-weight:700;font-style:italic}
+.iv-items .tot td{border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);padding:4px}
+.iv-words{display:flex;justify-content:space-between;padding:3px 5px 6px;border-bottom:1px solid var(--ink)}
+.iv-words .iv-b{font-size:12.5px;margin-top:2px}
+table.iv-hsn{width:100%;border-collapse:collapse;font-size:11px}
+.iv-hsn th{font-weight:400;border-bottom:1px solid var(--ink);border-right:1px solid var(--ink);padding:2px 4px;text-align:center}
+.iv-hsn td{border-right:1px solid var(--ink);padding:2px 4px;text-align:right}
+.iv-hsn td:first-child{text-align:left}
+.iv-hsn th:last-child,.iv-hsn td:last-child{border-right:0}
+.iv-hsn tr.t td{border-top:1px solid var(--ink);font-weight:700}
+.iv-taxwords{padding:6px 5px;border-top:1px solid var(--ink)}
+.iv-foot{display:grid;grid-template-columns:1fr 1fr}
+.iv-foot > div{padding:4px 5px}
+.iv-bank .iv-kv{grid-template-columns:110px 1fr}
+.iv-decl u{display:inline-block;margin-top:6px}
+.iv-sign{border-left:1px solid var(--ink);border-top:1px solid var(--ink);display:flex;flex-direction:column;justify-content:space-between;min-height:62px;text-align:right;margin:4px -5px -4px 0;padding:4px 6px}
+.iv-cg{text-align:center;font-size:11px;margin-top:6px}
+[hidden]{display:none!important}
+body{margin:0}
+.userchip{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);padding-bottom:10px}
+.login-wrap{min-height:100vh;display:grid;place-items:center;padding:24px 16px}
+.login{width:100%;max-width:380px}
+.login h1{font-size:30px;font-weight:800}
+.login h1 b{color:var(--accent)}
+.err{color:var(--bad);font-size:13px;font-weight:600;margin:0}
+.linkbtn{background:none;border:0;color:var(--accent);font-weight:600;cursor:pointer;padding:0;text-decoration:underline}
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  body > *:not(#modal){display:none!important}
+  #modal{position:static;background:#fff;display:block}
+  .modal-bar{display:none!important}
+  .modal-body{padding:0;overflow:visible}
+  #sheet-fit{transform:none!important;width:auto;height:auto!important;margin:0}
+  .iv{padding:22px 34px}
+}
+</style>
+</head>
+<body>
+<div class="login-wrap" id="login" hidden>
+  <form class="panel login" id="login-form" autocomplete="on">
+    <h1>Bill<b>Book</b></h1>
+    <p class="hint" style="font-size:14px">Apni ID se login karo</p>
+    <label class="f">Email<input id="lg-email" type="email" autocomplete="username" required></label>
+    <label class="f">Password<input id="lg-pass" type="password" autocomplete="current-password" required></label>
+    <p class="err" id="lg-err" hidden></p>
+    <button class="btn primary" type="submit" id="lg-btn">Login</button>
+    <button class="linkbtn" type="button" id="lg-forgot">Password bhool gaye?</button>
+  </form>
+</div>
+<div id="app" hidden>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <h1>Bill<b>Book</b></h1>
+      <small id="firm-sub">Firm details bharo → Settings</small>
+    </div>
+    <div class="userchip"><span id="user-email"></span><button class="btn sm" id="logout">Logout</button></div>
+    <nav role="tablist" aria-label="Sections">
+      <button role="tab" data-tab="bill" aria-selected="true">New Bill</button>
+      <button role="tab" data-tab="bills" aria-selected="false">Bills</button>
+      <button role="tab" data-tab="items" aria-selected="false">Items &amp; Stock</button>
+      <button role="tab" data-tab="parties" aria-selected="false">Parties</button>
+      <button role="tab" data-tab="settings" aria-selected="false">Settings</button>
+    </nav>
+  </div>
+</header>
+<div class="banner-wrap"><div class="banner" id="banner" hidden></div></div>
+
+<main>
+  <!-- NEW BILL -->
+  <section id="tab-bill">
+    <div class="bill-grid">
+      <div class="stack">
+        <div class="notice" id="firm-notice" hidden>Invoice pe aapki firm ka naam, GSTIN aur bank details aayenge — pehle <button data-go="settings">Settings</button> mein bhar do.</div>
+        <div class="panel">
+          <h2>Buyer (Bill to)</h2>
+          <div class="fields">
+            <label class="f wide">Party name<input id="b-pname" list="partyList" autocomplete="off" placeholder="Naam likho ya list se chuno"></label>
+            <label class="f wide">Address<input id="b-paddr" autocomplete="off"></label>
+            <label class="f">GSTIN/UIN<input id="b-pgstin" autocomplete="off" maxlength="15" placeholder="09AAAAA0000A1Z5"></label>
+            <label class="f">State<select id="b-pstate" class="state-sel"></select></label>
+          </div>
+          <label class="chk"><input type="checkbox" id="b-same" checked> Consignee (Ship to) same as buyer</label>
+          <div class="fields" id="ship" hidden>
+            <label class="f wide">Consignee name<input id="b-sname" autocomplete="off"></label>
+            <label class="f wide">Address<input id="b-saddr" autocomplete="off"></label>
+            <label class="f">GSTIN/UIN<input id="b-sgstin" autocomplete="off" maxlength="15"></label>
+            <label class="f">State<select id="b-sstate" class="state-sel"></select></label>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Bill details</h2>
+          <div class="fields">
+            <label class="f">Date<input type="date" id="b-date"></label>
+            <label class="f">Reference No.<input id="b-ref" autocomplete="off"></label>
+            <label class="f">Mode/Terms of Payment<input id="b-pay" autocomplete="off" placeholder="Cash / UPI / Credit 30 days"></label>
+            <label class="f">Buyer's Order No.<input id="b-order" autocomplete="off"></label>
+            <label class="f">Dispatched through<input id="b-dispatch" autocomplete="off"></label>
+            <label class="f">Destination<input id="b-dest" autocomplete="off"></label>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Items</h2>
+          <div class="adder">
+            <input id="add-item" list="itemList" autocomplete="off" placeholder="Item ka naam likho / list se chuno" aria-label="Item">
+            <input id="add-qty" type="number" min="0" step="any" value="1" aria-label="Quantity">
+            <button class="btn primary" id="add-btn">Add</button>
+          </div>
+          <p class="hint">Item master mein ho to HSN, rate, GST apne aap aa jayega. Table mein rate / discount badal sakte ho.</p>
+          <div class="tablewrap" id="lines-wrap" hidden>
+            <table class="grid lines">
+              <thead><tr><th>Item</th><th>HSN/SAC</th><th class="r">Qty</th><th>Unit</th><th class="r">Rate</th><th class="r">Disc %</th><th>GST %</th><th class="r">Amount</th><th></th></tr></thead>
+              <tbody id="lines-body"></tbody>
+            </table>
+          </div>
+          <p class="empty" id="lines-empty">Abhi koi item nahi. Upar se item chuno aur <b>Add</b> dabao.</p>
+        </div>
+      </div>
+      <aside class="panel summary">
+        <div class="inv-no"><span>Invoice No.</span><strong id="s-no">—</strong></div>
+        <label class="f">GST type<select id="b-taxmode">
+          <option value="auto">Auto — party ke state se</option>
+          <option value="intra">Hamesha CGST + SGST</option>
+          <option value="inter">Hamesha IGST</option>
+        </select></label>
+        <div class="supply" id="s-supply">Same state: CGST + SGST</div>
+        <div class="sum-row"><span>Taxable value</span><span class="num" id="s-taxable">0.00</span></div>
+        <div class="sum-row" id="s-cgst-row"><span>CGST</span><span class="num" id="s-cgst">0.00</span></div>
+        <div class="sum-row" id="s-sgst-row"><span>SGST</span><span class="num" id="s-sgst">0.00</span></div>
+        <div class="sum-row" id="s-igst-row" hidden><span>IGST</span><span class="num" id="s-igst">0.00</span></div>
+        <div class="sum-row"><span>Round off</span><span class="num" id="s-round">0.00</span></div>
+        <div class="sum-total"><b>Total</b><span class="num" id="s-total">₹0</span></div>
+        <div class="words" id="s-words"></div>
+        <button class="btn primary" id="save-bill">Save &amp; cut bill</button>
+        <div class="row"><button class="btn" id="preview-bill" style="flex:1">Preview</button><button class="btn" id="clear-bill" style="flex:1">Clear</button></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- BILLS -->
+  <section id="tab-bills" hidden>
+    <div class="stack">
+      <div class="tiles">
+        <div class="tile"><span>Aaj ki sale</span><b id="t-today">₹0</b></div>
+        <div class="tile"><span id="t-month-lbl">Is mahine</span><b id="t-month">₹0</b></div>
+        <div class="tile"><span>Bills</span><b id="t-count">0</b></div>
+        <div class="tile" id="t-low-tile"><span>Low stock items</span><b id="t-low">0</b></div>
+      </div>
+      <div class="panel">
+        <div class="listhead"><h2>Saved bills</h2>
+          <div class="row" style="flex:1;justify-content:flex-end">
+            <label class="f" style="flex-direction:row;align-items:center;gap:6px">Mahina<input id="bills-month" type="month" style="width:auto"></label>
+            <button class="btn sm" id="bills-all">Saare bills</button>
+            <input class="search" id="bills-q" type="search" placeholder="Party ya invoice no. se dhundho" aria-label="Search bills">
+            <button class="btn" id="bills-xlsx">Excel export</button>
+          </div></div>
+        <div class="tablewrap" id="bills-wrap">
+          <table class="grid"><thead><tr><th>Invoice No.</th><th>Date</th><th>Party</th><th class="r">Items</th><th class="r">Amount</th></tr></thead><tbody id="bills-body"></tbody></table>
+        </div>
+        <p class="empty" id="bills-empty">Koi bill nahi mila. <b>New Bill</b> tab se pehla bill banao.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ITEMS -->
+  <section id="tab-items" hidden>
+    <div class="two">
+      <form class="panel" id="item-form" autocomplete="off">
+        <h2 id="item-form-title">Naya item</h2>
+        <div class="fields">
+          <label class="f wide">Item name<input id="it-name" required></label>
+          <label class="f">HSN/SAC<input id="it-hsn"></label>
+          <label class="f">Unit<input id="it-unit" value="PCS"></label>
+          <label class="f">Rate (₹)<input id="it-rate" type="number" step="any" min="0"></label>
+          <label class="f">GST %<select id="it-gst"><option>0</option><option>5</option><option>12</option><option selected>18</option><option>28</option></select></label>
+          <label class="f">Stock (qty)<input id="it-stock" type="number" step="any" value="0"></label>
+          <label class="f">Low stock alert at<input id="it-low" type="number" step="any" value="5"></label>
+        </div>
+        <div class="row"><button class="btn primary" type="submit" id="it-save">Save item</button><button class="btn" type="button" id="it-cancel" hidden>Cancel</button></div>
+        <p class="hint">Bill save karte hi stock apne aap kam ho jata hai. Naya maal aaye to item edit karke stock badha do.</p>
+      </form>
+      <div class="panel">
+        <div class="listhead"><h2>Items</h2><input class="search" id="items-q" type="search" placeholder="Item dhundho" aria-label="Search items"></div>
+        <div class="tablewrap" id="items-wrap">
+          <table class="grid"><thead><tr><th>Item</th><th>HSN</th><th class="r">Rate</th><th class="r">GST</th><th class="r">Stock</th><th></th></tr></thead><tbody id="items-body"></tbody></table>
+        </div>
+        <p class="empty" id="items-empty">Abhi koi item nahi. Baayi taraf form se apna pehla item add karo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PARTIES -->
+  <section id="tab-parties" hidden>
+    <div class="two">
+      <form class="panel" id="party-form" autocomplete="off">
+        <h2 id="party-form-title">Nayi party</h2>
+        <div class="fields">
+          <label class="f wide">Party name<input id="pt-name" required></label>
+          <label class="f wide">Address<input id="pt-addr"></label>
+          <label class="f">GSTIN/UIN<input id="pt-gstin" maxlength="15"></label>
+          <label class="f">State<select id="pt-state" class="state-sel"></select></label>
+          <label class="f">Phone<input id="pt-phone" inputmode="tel"></label>
+        </div>
+        <div class="row"><button class="btn primary" type="submit">Save party</button><button class="btn" type="button" id="pt-cancel" hidden>Cancel</button></div>
+        <p class="hint">Bill mein nayi party ka naam likhoge to wo yahan apne aap save ho jayegi.</p>
+      </form>
+      <div class="panel">
+        <div class="listhead"><h2>Parties</h2><input class="search" id="parties-q" type="search" placeholder="Party dhundho" aria-label="Search parties"></div>
+        <div class="tablewrap" id="parties-wrap">
+          <table class="grid"><thead><tr><th>Party</th><th>GSTIN</th><th>State</th><th>Phone</th><th></th></tr></thead><tbody id="parties-body"></tbody></table>
+        </div>
+        <p class="empty" id="parties-empty">Abhi koi party nahi.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="tab-settings" hidden>
+    <form class="panel" id="settings-form" autocomplete="off" style="max-width:820px">
+      <h2>Firm details (invoice pe chhapega)</h2>
+      <div class="fields">
+        <label class="f wide">Firm name<input id="st-name"></label>
+        <label class="f wide">Address<textarea id="st-addr" rows="2"></textarea></label>
+        <label class="f">Contact<input id="st-phone"></label>
+        <label class="f">E-Mail<input id="st-email" type="email"></label>
+        <label class="f">GSTIN/UIN<input id="st-gstin" maxlength="15"></label>
+        <label class="f">State<select id="st-state" class="state-sel"></select></label>
+        <label class="f">PAN<input id="st-pan" maxlength="10"></label>
+      </div>
+      <h2>Bank details</h2>
+      <div class="fields">
+        <label class="f">Bank name<input id="st-bank"></label>
+        <label class="f">A/c No.<input id="st-acno"></label>
+        <label class="f wide">Branch &amp; IFS Code<input id="st-ifsc"></label>
+      </div>
+      <h2>Invoice numbering</h2>
+      <div class="fields">
+        <label class="f">Prefix<input id="st-prefix" placeholder="INV/"></label>
+        <label class="f">Financial year<input id="st-fy" placeholder="auto (e.g. 26-27)"></label>
+        <label class="f">Next number<input id="st-next" type="number" min="1" step="1"></label>
+      </div>
+      <p class="hint">Number aisa banega: <b class="num" id="st-sample">INV/00001/26-27</b></p>
+      <label class="f wide">Declaration<textarea id="st-decl" rows="3"></textarea></label>
+      <div class="row"><button class="btn primary" type="submit">Save settings</button><span class="hint" id="st-state-msg"></span></div>
+    </form>
+  </section>
+</main>
+
+<datalist id="partyList"></datalist>
+<datalist id="itemList"></datalist>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-bar">
+    <h3 id="modal-title">Invoice</h3>
+    <button class="btn primary" id="m-share" hidden>WhatsApp / Share</button>
+    <button class="btn primary" id="m-pdf">Download PDF</button>
+    <button class="btn" id="m-print">Print</button>
+    <button class="btn danger" id="m-del" hidden>Delete bill</button>
+    <button class="btn" id="m-close">Close</button>
+  </div>
+  <div class="modal-body" id="modal-body"><div class="sheet-fit" id="sheet-fit"></div></div>
+</div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="config.js"></script>
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const nl = s => esc(s).replace(/\n/g,"<br>");
+const r2 = n => Math.round((+n + Number.EPSILON) * 100) / 100;
+const r3 = n => Math.round(+n * 1000) / 1000;
+const fmt = n => (+n||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtQ = n => (+n||0).toLocaleString("en-IN",{maximumFractionDigits:3});
+const rupee = n => "₹" + fmt(n);
+
+const STATES=[["01","Jammu & Kashmir"],["02","Himachal Pradesh"],["03","Punjab"],["04","Chandigarh"],["05","Uttarakhand"],["06","Haryana"],["07","Delhi"],["08","Rajasthan"],["09","Uttar Pradesh"],["10","Bihar"],["11","Sikkim"],["12","Arunachal Pradesh"],["13","Nagaland"],["14","Manipur"],["15","Mizoram"],["16","Tripura"],["17","Meghalaya"],["18","Assam"],["19","West Bengal"],["20","Jharkhand"],["21","Odisha"],["22","Chhattisgarh"],["23","Madhya Pradesh"],["24","Gujarat"],["26","Dadra & Nagar Haveli and Daman & Diu"],["27","Maharashtra"],["29","Karnataka"],["30","Goa"],["31","Lakshadweep"],["32","Kerala"],["33","Tamil Nadu"],["34","Puducherry"],["35","Andaman & Nicobar Islands"],["36","Telangana"],["37","Andhra Pradesh"],["38","Ladakh"],["97","Other Territory"]];
+const stateName = c => (STATES.find(s => s[0] === c) || [])[1] || "";
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function todayISO(){ const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
+function fmtDate(iso){ if(!iso) return ""; const [y,m,d]=iso.split("-"); return `${d}-${MON[+m-1]}-${y.slice(2)}`; }
+function autoFY(iso){ const [y,m]=(iso||todayISO()).split("-").map(Number); const s = m>=4 ? y : y-1; return `${String(s).slice(2)}-${String(s+1).slice(2)}`; }
+
+// ---- Amount in words (Indian system)
+const ONES=["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"];
+const TENS=["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"];
+function two(n){ return n<20 ? ONES[n] : TENS[Math.floor(n/10)] + (n%10 ? " "+ONES[n%10] : ""); }
+function three(n){ const h=Math.floor(n/100), r=n%100; return [h?ONES[h]+" Hundred":"", r?two(r):""].filter(Boolean).join(" "); }
+function words(n){
+  n=Math.floor(n); if(!n) return "Zero";
+  const crore=Math.floor(n/1e7), lakh=Math.floor(n/1e5)%100, th=Math.floor(n/1000)%100, rest=n%1000;
+  return [crore?words(crore)+" Crore":"", lakh?two(lakh)+" Lakh":"", th?two(th)+" Thousand":"", rest?three(rest):""].filter(Boolean).join(" ");
+}
+function amountWords(a){ a=Math.abs(r2(a)); const rs=Math.floor(a), ps=Math.round((a-rs)*100); return "INR " + words(rs) + (ps ? " and " + words(ps) + " paise" : "") + " Only"; }
+
+// ---- GST maths
+function calc(lines, intra){
+  const out = lines.map(l => { const q=+l.qty||0, rate=+l.rate||0, d=+l.disc||0; return {...l, amount:r2(q*rate*(1-d/100))}; });
+  const map = {};
+  out.forEach(l => { const k=(l.hsn||"")+"|"+(+l.gst||0); (map[k] ||= {hsn:l.hsn||"", rate:+l.gst||0, taxable:0}).taxable += l.amount; });
+  let cgst=0,sgst=0,igst=0;
+  const groups = Object.values(map).map(g => {
+    g.taxable=r2(g.taxable);
+    if(intra){ g.cgst=r2(g.taxable*g.rate/200); g.sgst=g.cgst; g.igst=0; } else { g.igst=r2(g.taxable*g.rate/100); g.cgst=g.sgst=0; }
+    g.tax=r2(g.cgst+g.sgst+g.igst); cgst+=g.cgst; sgst+=g.sgst; igst+=g.igst; return g;
+  });
+  cgst=r2(cgst); sgst=r2(sgst); igst=r2(igst);
+  const taxable = r2(out.reduce((s,l)=>s+l.amount,0));
+  const pre = r2(taxable+cgst+sgst+igst), total=Math.round(pre), roundOff=r2(total-pre);
+  return {lines:out, groups, taxable, cgst, sgst, igst, tax:r2(cgst+sgst+igst), total, roundOff};
+}
+const isIntra = (firmCode, buyerCode) => !firmCode || !buyerCode || firmCode === buyerCode;
+
+// ---- State
+const S = {firm:{}, items:[], parties:[], invoices:[], todayTotal:0};
+let db=null, dl=null, dbReady=false;
+const DRAFT_KEY="billbook-draft-v1";
+const newDraft = () => ({party:{name:"",address:"",gstin:"",stateCode:""}, same:true, ship:{name:"",address:"",gstin:"",stateCode:""}, date:todayISO(), ref:"", pay:"", order:"", dispatch:"", dest:"", taxMode:"auto", lines:[]});
+let draft = (()=>{ try{ const d=JSON.parse(localStorage.getItem(DRAFT_KEY)); if(d && Array.isArray(d.lines)) return Object.assign(newDraft(), d); }catch(e){} return newDraft(); })();
+let draftT; function saveDraft(){ clearTimeout(draftT); draftT=setTimeout(()=>{ try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); }catch(e){} }, 300); }
+
+function toast(msg, bad){ const t=$("#toast"); t.textContent=msg; t.className="toast"+(bad?" bad":""); t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true, 3200); }
+function errMsg(e){ const c=e&&e.code; if(c==="permission-denied"||c==="invalid_argument") return "Save nahi hua — is ID ko permission nahi hai (Firestore rules mein email jodo)."; if(c==="quota_exceeded") return "Storage bhar gaya — purane items/bills delete karo."; return "Save nahi hua, dobara try karo." + (e&&e.message? " ("+e.message+")":""); }
+function armDelete(btn, fn){ if(btn.dataset.armed){ fn(); return; } btn.dataset.armed="1"; const old=btn.textContent; btn.textContent="Pakka delete?"; setTimeout(()=>{ delete btn.dataset.armed; btn.textContent=old; }, 3000); }
+
+// ---- Tabs
+function showTab(name){
+  $$("nav button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab===name ? "true":"false"));
+  ["bill","bills","items","parties","settings"].forEach(t => $("#tab-"+t).hidden = t!==name);
+  try{ localStorage.setItem("billbook-tab", name); }catch(e){}
+  window.scrollTo(0,0);
+}
+$$("nav button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+document.addEventListener("click", e => { const g=e.target.closest("[data-go]"); if(g) showTab(g.dataset.go); });
+
+// ---- State selects
+$$(".state-sel").forEach(sel => { sel.innerHTML = `<option value="">— State —</option>` + STATES.map(([c,n]) => `<option value="${c}">${n} (${c})</option>`).join(""); });
+function gstinState(g){ const c=(g||"").trim().slice(0,2); return /^\d\d$/.test(c) && stateName(c) ? c : ""; }
+
+// ================= NEW BILL =================
+const bindMap = {"b-pname":["party","name"],"b-paddr":["party","address"],"b-pgstin":["party","gstin"],"b-pstate":["party","stateCode"],"b-sname":["ship","name"],"b-saddr":["ship","address"],"b-sgstin":["ship","gstin"],"b-sstate":["ship","stateCode"],"b-date":["date"],"b-ref":["ref"],"b-pay":["pay"],"b-order":["order"],"b-dispatch":["dispatch"],"b-dest":["dest"]};
+function fillBillForm(){
+  for(const [id,path] of Object.entries(bindMap)){ $("#"+id).value = path.length===2 ? (draft[path[0]][path[1]]||"") : (draft[path[0]]||""); }
+  $("#b-same").checked = draft.same; $("#ship").hidden = draft.same; $("#b-taxmode").value = draft.taxMode || "auto";
+  renderLines(); updateSummary();
+}
+for(const [id,path] of Object.entries(bindMap)){
+  const el=$("#"+id);
+  el.addEventListener("input", () => {
+    let v = el.value;
+    if(id.endsWith("gstin")){ v=v.toUpperCase(); el.value=v; const sc=gstinState(v); const sel = id==="b-pgstin" ? "b-pstate" : "b-sstate"; if(sc && v.length>=2){ $("#"+sel).value=sc; draft[path[0]].stateCode=sc; } }
+    if(path.length===2) draft[path[0]][path[1]]=v; else draft[path[0]]=v;
+    saveDraft(); updateSummary();
+  });
+}
+$("#b-pname").addEventListener("change", () => {
+  const p = S.parties.find(x => x.name.toLowerCase() === $("#b-pname").value.trim().toLowerCase());
+  if(!p) return;
+  Object.assign(draft.party, {name:p.name, address:p.address||"", gstin:p.gstin||"", stateCode:p.stateCode||""});
+  fillBillForm(); saveDraft();
+});
+$("#b-same").addEventListener("change", e => { draft.same=e.target.checked; $("#ship").hidden=draft.same; saveDraft(); renderLines(); updateSummary(); });
+$("#b-taxmode").addEventListener("change", e => { draft.taxMode=e.target.value; saveDraft(); renderLines(); updateSummary(); });
+
+function addLine(){
+  const name=$("#add-item").value.trim(); const qty=+$("#add-qty").value||1;
+  if(!name){ $("#add-item").focus(); return; }
+  const it = S.items.find(i => i.name.toLowerCase() === name.toLowerCase());
+  if(it){
+    const already = draft.lines.filter(l=>l.itemId===it.id).reduce((s,l)=>s+(+l.qty||0),0);
+    if((+it.stock||0) < qty+already) toast(`Dhyan do: ${it.name} ka stock sirf ${fmtQ(it.stock||0)} ${it.unit||""} hai`, true);
+    draft.lines.push({itemId:it.id, name:it.name, hsn:it.hsn||"", unit:it.unit||"PCS", qty, rate:+it.rate||0, disc:0, gst:+(it.gst ?? 18)});
+  } else {
+    draft.lines.push({itemId:"", name, hsn:"", unit:"PCS", qty, rate:0, disc:0, gst:18});
+    toast("Ye item master mein nahi hai — HSN aur rate table mein bhar do");
+  }
+  $("#add-item").value=""; $("#add-qty").value="1";
+  renderLines(); updateSummary(); saveDraft(); $("#add-item").focus();
+}
+$("#add-btn").addEventListener("click", addLine);
+$("#add-item").addEventListener("keydown", e => { if(e.key==="Enter"){ e.preventDefault(); $("#add-qty").focus(); $("#add-qty").select(); }});
+$("#add-qty").addEventListener("keydown", e => { if(e.key==="Enter"){ e.preventDefault(); addLine(); }});
+
+function renderLines(){
+  const tb=$("#lines-body");
+  $("#lines-wrap").hidden = !draft.lines.length; $("#lines-empty").hidden = !!draft.lines.length;
+  const intra = draftIntra();
+  const c = calc(draft.lines, intra);
+  tb.innerHTML = draft.lines.map((l,i) => `<tr>
+    <td><input class="w-name" id="ln-${i}-name" data-i="${i}" data-k="name" value="${esc(l.name)}" aria-label="Item name"></td>
+    <td><input class="w-s" id="ln-${i}-hsn" data-i="${i}" data-k="hsn" value="${esc(l.hsn)}" aria-label="HSN"></td>
+    <td><input class="w-xs num" id="ln-${i}-qty" data-i="${i}" data-k="qty" type="number" step="any" min="0" value="${esc(l.qty)}" aria-label="Qty" style="text-align:right"></td>
+    <td><input class="w-xs" id="ln-${i}-unit" data-i="${i}" data-k="unit" value="${esc(l.unit)}" aria-label="Unit"></td>
+    <td><input class="w-s num" id="ln-${i}-rate" data-i="${i}" data-k="rate" type="number" step="any" min="0" value="${esc(l.rate)}" aria-label="Rate" style="text-align:right"></td>
+    <td><input class="w-xs num" id="ln-${i}-disc" data-i="${i}" data-k="disc" type="number" step="any" min="0" max="100" value="${esc(l.disc)}" aria-label="Discount %" style="text-align:right"></td>
+    <td><select id="ln-${i}-gst" data-i="${i}" data-k="gst" aria-label="GST %">${[0,5,12,18,28].map(g=>`<option ${+l.gst===g?"selected":""}>${g}</option>`).join("")}</select></td>
+    <td class="r num" id="ln-${i}-amt">${fmt(c.lines[i].amount)}</td>
+    <td><button class="x" data-del="${i}" aria-label="Remove ${esc(l.name)}">×</button></td></tr>`).join("");
+}
+$("#lines-body").addEventListener("input", e => {
+  const el=e.target; if(!el.dataset.k) return; const i=+el.dataset.i, k=el.dataset.k;
+  draft.lines[i][k] = ["qty","rate","disc","gst"].includes(k) ? (el.value==="" ? "" : +el.value) : el.value;
+  const c=calc(draft.lines, draftIntra()); $("#ln-"+i+"-amt").textContent = fmt(c.lines[i].amount);
+  updateSummary(); saveDraft();
+});
+$("#lines-body").addEventListener("click", e => { const b=e.target.closest("[data-del]"); if(!b) return; draft.lines.splice(+b.dataset.del,1); renderLines(); updateSummary(); saveDraft(); });
+
+const posCode = () => (draft.same ? draft.party : draft.ship).stateCode || "";
+function draftIntra(){ if(draft.taxMode==="intra") return true; if(draft.taxMode==="inter") return false; return isIntra(S.firm.stateCode, posCode()); }
+function supplyText(intra){
+  const tax = intra ? "CGST + SGST" : "IGST";
+  if(draft.taxMode==="intra" || draft.taxMode==="inter") return `Aapne khud chuna: ${tax}`;
+  if(!S.firm.stateCode) return `Settings mein firm ka state nahi bhara — abhi ${tax} laga`;
+  const pc=posCode();
+  if(!pc) return `Party ka state nahi chuna — same state maan ke ${tax} laga`;
+  return pc===S.firm.stateCode ? `${stateName(pc)} — same state: ${tax}` : `${stateName(pc)} — doosra state: ${tax}`;
+}
+function invNo(seq, iso){ const f=S.firm; const fy=(f.fy||"").trim() || autoFY(iso); return `${f.prefix ?? "INV/"}${String(seq).padStart(5,"0")}/${fy}`; }
+function nextNumber(iso){ const seq = Math.max(1, Math.floor(+S.firm.nextNo||1)); return {seq, no:invNo(seq, iso)}; }
+
+function updateSummary(){
+  const intra=draftIntra(); const c=calc(draft.lines, intra);
+  $("#s-no").textContent = nextNumber(draft.date).no;
+  $("#s-supply").textContent = supplyText(intra);
+  $("#s-taxable").textContent=fmt(c.taxable); $("#s-cgst").textContent=fmt(c.cgst); $("#s-sgst").textContent=fmt(c.sgst); $("#s-igst").textContent=fmt(c.igst);
+  $("#s-cgst-row").hidden=!intra; $("#s-sgst-row").hidden=!intra; $("#s-igst-row").hidden=intra;
+  $("#s-round").textContent=(c.roundOff>0?"+":"")+fmt(c.roundOff);
+  $("#s-total").textContent="₹"+c.total.toLocaleString("en-IN")+".00";
+  $("#s-words").textContent = c.total ? amountWords(c.total) : "";
+}
+
+function firmSnapshot(){ const f=S.firm; return {name:f.name||"",address:f.address||"",phone:f.phone||"",email:f.email||"",gstin:f.gstin||"",stateCode:f.stateCode||"",pan:f.pan||"",bank:f.bank||"",acno:f.acno||"",ifsc:f.ifsc||"",decl:f.decl||DEFAULT_DECL}; }
+const DEFAULT_DECL="We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.";
+function cleanParty(p){ return {name:(p.name||"").trim(), address:(p.address||"").trim(), gstin:(p.gstin||"").trim().toUpperCase(), stateCode:p.stateCode||""}; }
+function buildInvoice(){
+  const lines = draft.lines.filter(l => String(l.name).trim() && +l.qty>0).map(l => ({itemId:l.itemId||"", name:String(l.name).trim(), hsn:String(l.hsn||"").trim(), unit:String(l.unit||"").trim(), qty:+l.qty||0, rate:+l.rate||0, disc:+l.disc||0, gst:+l.gst||0}));
+  const intra=draftIntra(); const {seq,no}=nextNumber(draft.date); const c=calc(lines,intra);
+  const party=cleanParty(draft.party);
+  return {no, seq, date:draft.date||todayISO(), createdAt:Date.now(), intra, pos:posCode(), firm:firmSnapshot(), party, ship: draft.same ? {...party} : cleanParty(draft.ship),
+    ref:draft.ref||"", pay:draft.pay||"", order:draft.order||"", dispatch:draft.dispatch||"", dest:draft.dest||"", lines,
+    taxable:c.taxable, cgst:c.cgst, sgst:c.sgst, igst:c.igst, roundOff:c.roundOff, total:c.total};
+}
+$("#preview-bill").addEventListener("click", () => { const inv=buildInvoice(); if(!inv.lines.length) return toast("Pehle koi item add karo", true); openInvoice(inv, false); });
+$("#clear-bill").addEventListener("click", e => armDelete(e.currentTarget, () => { draft=newDraft(); saveDraft(); fillBillForm(); toast("Form saaf ho gaya"); }));
+$("#save-bill").addEventListener("click", async e => {
+  const btn=e.currentTarget;
+  if(!db) return toast("Data store connect nahi hai — bill save nahi ho sakta", true);
+  const inv=buildInvoice();
+  if(!inv.party.name) { $("#b-pname").focus(); return toast("Party ka naam bharo", true); }
+  if(!inv.lines.length) { $("#add-item").focus(); return toast("Kam se kam ek item (qty ke saath) add karo", true); }
+  btn.disabled=true; btn.textContent="Saving…";
+  try{
+    const id = "inv-" + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+    const firmRef = db.doc("settings/firm"), invRef = db.collection("invoices").doc(id);
+    // number is taken inside a transaction so two people never get the same invoice no.
+    await db.runTransaction(async t => {
+      const fs = await t.get(firmRef); const f = fs.exists ? fs.data() : {};
+      let seq = Math.max(1, Math.floor(+f.nextNo||1)), no = invNo(seq, inv.date);
+      for(let k=0;k<50;k++){ const dup = await db.collection("invoices").where("no","==",no).limit(1).get(); if(dup.empty) break; seq++; no=invNo(seq, inv.date); }
+      inv.seq=seq; inv.no=no; inv.createdBy = (auth.currentUser && auth.currentUser.email) || "";
+      t.set(invRef, inv);
+      t.set(firmRef, {nextNo: seq+1}, {merge:true});
+    });
+    // stock minus (increment is safe even if two bills are saved together)
+    const used={}; inv.lines.forEach(l => { if(l.itemId) used[l.itemId]=(used[l.itemId]||0)+l.qty; });
+    const batch = db.batch();
+    for(const [iid,q] of Object.entries(used)){ if(S.items.some(x=>x.id===iid)) batch.update(db.doc("items/"+iid), {stock: INC(-q)}); }
+    await batch.commit();
+    // auto-save new party
+    if(!S.parties.some(p => p.name.toLowerCase()===inv.party.name.toLowerCase())) await db.collection("parties").add({...inv.party, phone:""});
+    draft=newDraft(); saveDraft(); fillBillForm();
+    openInvoice({...inv, id}, true);
+    toast("Bill save ho gaya: "+inv.no);
+  }catch(err){ toast(errMsg(err), true); }
+  finally{ btn.disabled=false; btn.textContent="Save & cut bill"; }
+});
+
+// ================= INVOICE SHEET =================
+function partyBlock(label, p){
+  return `<div class="iv-cell"><div class="iv-lbl">${label}</div><div class="iv-b">${esc(p.name)}</div>${p.address?`<div>${nl(p.address)}</div>`:""}
+    ${p.gstin?`<div class="iv-kv"><span>GSTIN/UIN</span><span>: ${esc(p.gstin)}</span></div>`:""}
+    ${p.stateCode?`<div class="iv-kv"><span>State Name</span><span>: ${esc(stateName(p.stateCode))}, Code : ${esc(p.stateCode)}</span></div>`:""}</div>`;
+}
+function invoiceHTML(inv){
+  const f=inv.firm||{}, c=calc(inv.lines, inv.intra);
+  const units=[...new Set(inv.lines.map(l=>l.unit||""))]; const qtyTot=inv.lines.reduce((s,l)=>s+(+l.qty||0),0);
+  const meta=(a,av,b,bv)=>`<div><div class="iv-lbl">${a}</div><div class="iv-v">${esc(av)}</div></div><div><div class="iv-lbl">${b}</div><div class="iv-v">${esc(bv)}</div></div>`;
+  const rows = c.lines.map((l,i)=>`<tr><td class="c">${i+1}</td><td class="b">${esc(l.name)}</td><td>${esc(l.hsn)}</td><td class="r b">${fmtQ(l.qty)} ${esc(l.unit)}</td><td class="r">${fmt(l.rate)}</td><td>${esc(l.unit)}</td><td class="r">${l.disc?fmtQ(l.disc)+" %":""}</td><td class="r b">${fmt(l.amount)}</td></tr>`).join("");
+  const taxRow=(lbl,amt)=>`<tr class="tax"><td></td><td class="taxlbl">${lbl}</td><td></td><td></td><td></td><td></td><td></td><td class="r b">${fmt(amt)}</td></tr>`;
+  const taxRows = (inv.intra ? taxRow("CGST",c.cgst)+taxRow("SGST",c.sgst) : taxRow("IGST",c.igst))
+    + (c.roundOff ? `<tr class="tax"><td></td><td><div style="display:flex;justify-content:space-between"><i>${c.roundOff<0?"Less :":"Add :"}</i><span class="taxlbl">Rounding Off</span></div></td><td></td><td></td><td></td><td></td><td></td><td class="r b">${c.roundOff<0?"(-)"+fmt(-c.roundOff):fmt(c.roundOff)}</td></tr>` : "");
+  const fill = Math.max(30, 330 - c.lines.length*20);
+  const hsnHead = inv.intra
+    ? `<tr><th rowspan="2" style="width:30%">HSN/SAC</th><th rowspan="2">Taxable<br>Value</th><th colspan="2">CGST</th><th colspan="2">SGST/UTGST</th><th rowspan="2">Total<br>Tax Amount</th></tr><tr><th>Rate</th><th>Amount</th><th>Rate</th><th>Amount</th></tr>`
+    : `<tr><th rowspan="2" style="width:34%">HSN/SAC</th><th rowspan="2">Taxable<br>Value</th><th colspan="2">IGST</th><th rowspan="2">Total<br>Tax Amount</th></tr><tr><th>Rate</th><th>Amount</th></tr>`;
+  const hsnRows = c.groups.map(g => inv.intra
+    ? `<tr><td>${esc(g.hsn)}</td><td>${fmt(g.taxable)}</td><td>${fmtQ(g.rate/2)}%</td><td>${fmt(g.cgst)}</td><td>${fmtQ(g.rate/2)}%</td><td>${fmt(g.sgst)}</td><td>${fmt(g.tax)}</td></tr>`
+    : `<tr><td>${esc(g.hsn)}</td><td>${fmt(g.taxable)}</td><td>${fmtQ(g.rate)}%</td><td>${fmt(g.igst)}</td><td>${fmt(g.tax)}</td></tr>`).join("");
+  const hsnTot = inv.intra
+    ? `<tr class="t"><td style="text-align:right">Total</td><td>${fmt(c.taxable)}</td><td></td><td>${fmt(c.cgst)}</td><td></td><td>${fmt(c.sgst)}</td><td>${fmt(c.tax)}</td></tr>`
+    : `<tr class="t"><td style="text-align:right">Total</td><td>${fmt(c.taxable)}</td><td></td><td>${fmt(c.igst)}</td><td>${fmt(c.tax)}</td></tr>`;
+  return `<div class="iv">
+  <div class="iv-title">TAX INVOICE</div>
+  <div class="iv-box">
+    <div class="iv-top">
+      <div class="iv-left">
+        <div class="iv-cell iv-firm"><div class="iv-b">${esc(f.name||"Your Firm Name")}</div>${f.address?`<div>${nl(f.address)}</div>`:""}
+          ${f.phone?`<div>Contact : ${esc(f.phone)}</div>`:""}${f.gstin?`<div>GSTIN/UIN: ${esc(f.gstin)}</div>`:""}
+          ${f.stateCode?`<div>State Name : ${esc(stateName(f.stateCode))}, Code : ${esc(f.stateCode)}</div>`:""}${f.email?`<div>E-Mail : ${esc(f.email)}</div>`:""}</div>
+        ${partyBlock("Consignee (Ship to)", inv.ship||inv.party)}
+        ${partyBlock("Buyer (Bill to)", inv.party).replace(/<\/div>$/, (()=>{ const pc = inv.pos ?? (inv.ship||inv.party||{}).stateCode; return pc ? `<div class="iv-kv"><span>Place of Supply</span><span>: ${esc(stateName(pc))}</span></div></div>` : "</div>"; })())}
+      </div>
+      <div class="iv-meta">
+        ${meta("Invoice No.",inv.no,"Dated",fmtDate(inv.date))}
+        ${meta("Delivery Note","","Mode/Terms of Payment",inv.pay)}
+        ${meta("Reference No. &amp; Date.",inv.ref,"Other References","")}
+        ${meta("Buyer's Order No.",inv.order,"Dated","")}
+        ${meta("Dispatch Doc No.","","Delivery Note Date","")}
+        ${meta("Dispatched through",inv.dispatch,"Destination",inv.dest)}
+        <div class="iv-span"><div class="iv-lbl">Terms of Delivery</div></div>
+      </div>
+    </div>
+    <table class="iv-items">
+      <thead><tr><th style="width:4%">Sl<br>No.</th><th style="width:33%">Description of<br>Goods and Services</th><th style="width:11%">HSN/SAC</th><th style="width:11%">Quantity</th><th style="width:11%">Rate</th><th style="width:5%">per</th><th style="width:7%">Disc. %</th><th style="width:18%">Amount</th></tr></thead>
+      <tbody>${rows}<tr style="height:10px"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>${taxRows}
+      <tr style="height:${fill}px"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr class="tot"><td></td><td class="r">Total</td><td></td><td class="r b">${fmtQ(qtyTot)} ${units.length===1?esc(units[0]):""}</td><td></td><td></td><td></td><td class="r b" style="font-size:13px">&#8377; ${fmt(c.total)}</td></tr></tbody>
+    </table>
+    <div class="iv-words"><div><div class="iv-lbl">Amount Chargeable (in words)</div><div class="iv-b">${amountWords(c.total)}</div></div><div><i>E. &amp; O.E</i></div></div>
+    <table class="iv-hsn"><thead>${hsnHead}</thead><tbody>${hsnRows}${hsnTot}</tbody></table>
+    <div class="iv-taxwords">Tax Amount (in words) : &nbsp;<b>${amountWords(c.tax)}</b></div>
+    <div class="iv-foot">
+      <div>
+        <div style="height:28px"></div>
+        ${f.pan?`<div class="iv-kv" style="grid-template-columns:120px 1fr"><span>Company's PAN</span><span>: <b>${esc(f.pan)}</b></span></div>`:""}
+        <div class="iv-decl"><u>Declaration</u><div>${nl(f.decl||DEFAULT_DECL)}</div></div>
+      </div>
+      <div class="iv-bank">
+        ${(f.bank||f.acno||f.ifsc)?`<div>Company's Bank Details</div>
+        <div class="iv-kv"><span>Bank Name</span><span>: <b>${esc(f.bank)}</b></span></div>
+        <div class="iv-kv"><span>A/c No.</span><span>: <b>${esc(f.acno)}</b></span></div>
+        <div class="iv-kv"><span>Branch &amp; IFS Code</span><span>: <b>${esc(f.ifsc)}</b></span></div>`:`<div style="height:20px"></div>`}
+        <div class="iv-sign"><b>for ${esc(f.name||"Your Firm Name")}</b><span>Authorised Signatory</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="iv-cg">This is a Computer Generated Invoice</div>
+</div>`;
+}
+
+let current=null;
+function fitSheet(){ const fit=$("#sheet-fit"); const avail=$("#modal-body").clientWidth-32; const s=Math.min(1, avail/794); fit.style.transform=`scale(${s})`; fit.style.marginLeft = s<1 ? "0" : "auto"; fit.style.height = (fit.firstElementChild ? fit.firstElementChild.offsetHeight*s : 0)+"px"; }
+function openInvoice(inv, saved){
+  current=inv;
+  $("#modal-title").textContent = (saved ? "" : "Preview · ") + inv.no;
+  $("#sheet-fit").innerHTML = invoiceHTML(inv);
+  $("#m-del").hidden = !(saved && inv.id);
+  $("#m-share").hidden = !(navigator.canShare && (()=>{ try{ return navigator.canShare({files:[new File(["x"],"a.pdf",{type:"application/pdf"})]}); }catch(e){ return false; } })()); delete $("#m-del").dataset.armed; $("#m-del").textContent="Delete bill";
+  $("#modal").hidden=false; document.body.style.overflow="hidden"; fitSheet();
+}
+function closeModal(){ $("#modal").hidden=true; document.body.style.overflow=""; current=null; }
+$("#m-close").addEventListener("click", closeModal);
+document.addEventListener("keydown", e => { if(e.key==="Escape" && !$("#modal").hidden) closeModal(); });
+window.addEventListener("resize", () => { if(!$("#modal").hidden) fitSheet(); });
+
+const pdfName = inv => "Invoice_"+inv.no.replace(/[\/\\:]+/g,"-")+".pdf";
+async function makePdf(inv){
+  if(!window.html2pdf) throw new Error("PDF tool load nahi hua — internet check karke page reload karo");
+  const host=document.createElement("div"); host.style.cssText="position:fixed;left:-10000px;top:0;width:794px;background:#fff";
+  host.innerHTML=invoiceHTML(inv); document.body.appendChild(host);
+  try{
+    return await html2pdf().set({margin:0, image:{type:"jpeg",quality:0.97}, html2canvas:{scale:2, backgroundColor:"#ffffff", windowWidth:794}, jsPDF:{unit:"px", format:[794,1123], hotfixes:["px_scaling"]}, pagebreak:{mode:["css"]}}).from(host.firstElementChild).outputPdf("blob");
+  } finally { host.remove(); }
+}
+async function withBtn(btn, busy, fn){ const old=btn.textContent; btn.disabled=true; btn.textContent=busy; try{ await fn(); } finally{ btn.disabled=false; btn.textContent=old; } }
+$("#m-pdf").addEventListener("click", e => { if(!current) return; const inv=current; withBtn(e.currentTarget, "PDF ban raha hai…", async () => {
+  try{ const blob=await makePdf(inv); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=pdfName(inv); document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 4000); toast("PDF download ho gaya"); }
+  catch(err){ toast("PDF nahi bana: "+(err&&err.message||err), true); }
+}); });
+$("#m-share").addEventListener("click", e => { if(!current) return; const inv=current; withBtn(e.currentTarget, "Taiyaar ho raha hai…", async () => {
+  try{ const blob=await makePdf(inv); const file=new File([blob], pdfName(inv), {type:"application/pdf"});
+    await navigator.share({files:[file], title:inv.no, text:`${(inv.firm&&inv.firm.name)||""} — Invoice ${inv.no}, Amount ₹${(+inv.total).toLocaleString("en-IN")}`}); }
+  catch(err){ if(err && err.name!=="AbortError") toast("Share nahi hua: "+(err.message||err), true); }
+}); });
+$("#m-print").addEventListener("click", () => window.print());
+$("#m-del").addEventListener("click", e => armDelete(e.currentTarget, async () => {
+  const inv=current; if(!inv||!inv.id||!db) return;
+  try{
+    await db.doc("invoices/"+inv.id).delete();
+    const used={}; (inv.lines||[]).forEach(l => { if(l.itemId) used[l.itemId]=(used[l.itemId]||0)+(+l.qty||0); });
+    const batch = db.batch();
+    for(const [iid,q] of Object.entries(used)){ if(S.items.some(x=>x.id===iid)) batch.update(db.doc("items/"+iid), {stock: INC(q)}); }
+    await batch.commit();
+    closeModal(); toast("Bill delete ho gaya, stock wapas jud gaya");
+  }catch(err){ toast(errMsg(err), true); }
+}));
+
+// ================= BILLS LIST =================
+function renderBills(){
+  const q=$("#bills-q").value.trim().toLowerCase(); const today=todayISO();
+  let tMonth=0; S.invoices.forEach(i => { tMonth+=+i.total||0; });
+  $("#t-today").textContent="₹"+S.todayTotal.toLocaleString("en-IN"); $("#t-month").textContent="₹"+tMonth.toLocaleString("en-IN"); $("#t-count").textContent=S.invoices.length;
+  $("#t-month-lbl").textContent = billsMonth ? new Date(billsMonth+"-01T00:00:00").toLocaleDateString("en-IN",{month:"long",year:"numeric"}) : "Saare bills (total)";
+  const low=S.items.filter(isLow).length; $("#t-low").textContent=low; $("#t-low-tile").classList.toggle("alert", low>0);
+  const list=S.invoices.filter(i => !q || (i.no||"").toLowerCase().includes(q) || (i.party&&i.party.name||"").toLowerCase().includes(q));
+  $("#bills-body").innerHTML = list.map(i => `<tr class="click" data-inv="${esc(i.id)}" tabindex="0"><td class="num">${esc(i.no)}</td><td>${fmtDate(i.date)}</td><td>${esc(i.party&&i.party.name)}</td><td class="r">${(i.lines||[]).length}</td><td class="r num">${rupee(i.total)}</td></tr>`).join("");
+  $("#bills-wrap").hidden=!list.length; $("#bills-empty").hidden=!!list.length;
+  $("#bills-empty").innerHTML = S.invoices.length ? "Is search se koi bill nahi mila." : "Koi bill nahi. <b>New Bill</b> tab se pehla bill banao.";
+}
+$("#bills-q").addEventListener("input", renderBills);
+let billsMonth = todayISO().slice(0,7), unsubBills = null;
+function nextMonth(m){ let [y,mo]=m.split("-").map(Number); mo++; if(mo>12){mo=1;y++;} return `${y}-${String(mo).padStart(2,"0")}`; }
+function watchBills(){
+  if(unsubBills) unsubBills();
+  $("#bills-month").value = billsMonth || "";
+  const base = db.collection("invoices");
+  const q = billsMonth ? base.where("date", ">=", billsMonth+"-01").where("date", "<", nextMonth(billsMonth)+"-01").orderBy("date","desc") : base.orderBy("createdAt","desc").limit(2000);
+  unsubBills = q.onSnapshot(s => { S.invoices = s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)); renderBills(); }, err => toast("Bills load nahi hue: "+(err.message||err), true));
+}
+$("#bills-month").addEventListener("change", e => { billsMonth = e.target.value || ""; watchBills(); });
+$("#bills-all").addEventListener("click", () => { billsMonth=""; watchBills(); });
+$("#bills-xlsx").addEventListener("click", () => {
+  if(!window.XLSX) return toast("Excel tool load nahi hua — page reload karo", true);
+  if(!S.invoices.length) return toast("Is mahine koi bill nahi hai", true);
+  const list=[...S.invoices].sort((a,b)=>(a.date||"").localeCompare(b.date||"") || (a.seq||0)-(b.seq||0));
+  const bills=list.map(i=>({"Invoice No":i.no,"Date":fmtDate(i.date),"Party":i.party&&i.party.name,"GSTIN":i.party&&i.party.gstin,"State":stateName(i.pos ?? (i.ship||i.party||{}).stateCode),"Taxable Value":i.taxable,"CGST":i.cgst,"SGST":i.sgst,"IGST":i.igst,"Round Off":i.roundOff,"Total":i.total,"Payment":i.pay,"Made by":i.createdBy||""}));
+  const lines=[]; list.forEach(i=>{ const c=calc(i.lines||[], i.intra); c.lines.forEach(l=>lines.push({"Invoice No":i.no,"Date":fmtDate(i.date),"Party":i.party&&i.party.name,"Item":l.name,"HSN":l.hsn,"Qty":l.qty,"Unit":l.unit,"Rate":l.rate,"Disc %":l.disc,"Taxable":l.amount,"GST %":l.gst})); });
+  const items=S.items.map(i=>({"Item":i.name,"HSN":i.hsn,"Unit":i.unit,"Rate":i.rate,"GST %":i.gst,"Stock":i.stock}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(bills), "Bills");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lines), "Bill Items");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(items), "Stock");
+  XLSX.writeFile(wb, `Bills_${billsMonth||"all"}.xlsx`);
+  toast("Excel download ho gaya");
+});
+function openBillRow(e){ const tr=e.target.closest("[data-inv]"); if(!tr) return; const inv=S.invoices.find(x=>x.id===tr.dataset.inv); if(inv) openInvoice(inv, true); }
+$("#bills-body").addEventListener("click", openBillRow);
+$("#bills-body").addEventListener("keydown", e => { if(e.key==="Enter") openBillRow(e); });
+
+// ================= ITEMS =================
+const isLow = it => (+it.stock||0) <= (it.low===undefined||it.low===""?5:+it.low);
+let editItem=null;
+function renderItems(){
+  const q=$("#items-q").value.trim().toLowerCase();
+  const list=S.items.filter(i=>!q||i.name.toLowerCase().includes(q)||(i.hsn||"").includes(q));
+  $("#items-body").innerHTML=list.map(i=>{ const st=+i.stock||0; const cls = st<=0?"out":isLow(i)?"low":"ok";
+    return `<tr><td><b>${esc(i.name)}</b></td><td class="num">${esc(i.hsn)}</td><td class="r num">${fmt(i.rate)}</td><td class="r">${esc(i.gst ?? 18)}%</td><td class="r"><span class="pill ${cls}">${fmtQ(st)} ${esc(i.unit||"")}</span></td>
+    <td class="r" style="white-space:nowrap"><button class="btn sm" data-edit="${esc(i.id)}">Edit</button> <button class="btn sm danger" data-rm="${esc(i.id)}">Delete</button></td></tr>`; }).join("");
+  $("#items-wrap").hidden=!list.length; $("#items-empty").hidden=!!list.length;
+  $("#itemList").innerHTML=S.items.map(i=>`<option value="${esc(i.name)}">₹${fmt(i.rate)} · stock ${fmtQ(i.stock||0)} ${esc(i.unit||"")}</option>`).join("");
+}
+$("#items-q").addEventListener("input", renderItems);
+function resetItemForm(){ editItem=null; $("#item-form").reset(); $("#it-unit").value="PCS"; $("#it-gst").value="18"; $("#it-stock").value="0"; $("#it-low").value="5"; $("#item-form-title").textContent="Naya item"; $("#it-cancel").hidden=true; }
+$("#it-cancel").addEventListener("click", resetItemForm);
+$("#items-body").addEventListener("click", e => {
+  const ed=e.target.closest("[data-edit]"), rm=e.target.closest("[data-rm]");
+  if(ed){ const it=S.items.find(x=>x.id===ed.dataset.edit); if(!it) return; editItem=it.id;
+    $("#it-name").value=it.name; $("#it-hsn").value=it.hsn||""; $("#it-unit").value=it.unit||"PCS"; $("#it-rate").value=it.rate??""; $("#it-gst").value=String(it.gst??18); $("#it-stock").value=it.stock??0; $("#it-low").value=it.low??5;
+    $("#item-form-title").textContent="Item edit karo"; $("#it-cancel").hidden=false; $("#it-name").focus(); window.scrollTo({top:0,behavior:"smooth"}); }
+  if(rm) armDelete(rm, async()=>{ try{ await db.doc("items/"+rm.dataset.rm).delete(); toast("Item delete ho gaya"); }catch(err){ toast(errMsg(err),true); } });
+});
+$("#item-form").addEventListener("submit", async e => {
+  e.preventDefault(); if(!db) return toast("Data store connect nahi hai", true);
+  const data={name:$("#it-name").value.trim(), hsn:$("#it-hsn").value.trim(), unit:$("#it-unit").value.trim()||"PCS", rate:+$("#it-rate").value||0, gst:+$("#it-gst").value, stock:+$("#it-stock").value||0, low:+$("#it-low").value||0};
+  if(!data.name) return;
+  if(S.items.some(i=>i.id!==editItem && i.name.toLowerCase()===data.name.toLowerCase())) return toast("Is naam ka item pehle se hai", true);
+  try{ if(editItem) await db.doc("items/"+editItem).set(data); else await db.collection("items").add(data); toast(editItem?"Item update ho gaya":"Item add ho gaya"); resetItemForm(); }catch(err){ toast(errMsg(err),true); }
+});
+
+// ================= PARTIES =================
+let editParty=null;
+function renderParties(){
+  const q=$("#parties-q").value.trim().toLowerCase();
+  const counts={}; S.invoices.forEach(i=>{ const n=(i.party&&i.party.name||"").toLowerCase(); counts[n]=(counts[n]||0)+1; });
+  const list=S.parties.filter(p=>!q||p.name.toLowerCase().includes(q)||(p.gstin||"").toLowerCase().includes(q));
+  $("#parties-body").innerHTML=list.map(p=>`<tr><td><b>${esc(p.name)}</b>${p.address?`<div class="muted" style="font-size:12px">${esc(p.address)}</div>`:""}</td><td class="num">${esc(p.gstin)}</td><td>${esc(stateName(p.stateCode))}</td><td>${esc(p.phone)}</td>
+    <td class="r" style="white-space:nowrap"><button class="btn sm" data-edit="${esc(p.id)}">Edit</button> <button class="btn sm danger" data-rm="${esc(p.id)}">Delete</button></td></tr>`).join("");
+  $("#parties-wrap").hidden=!list.length; $("#parties-empty").hidden=!!list.length;
+  $("#partyList").innerHTML=S.parties.map(p=>`<option value="${esc(p.name)}">${esc(p.gstin||p.address||"")}</option>`).join("");
+}
+$("#parties-q").addEventListener("input", renderParties);
+function resetPartyForm(){ editParty=null; $("#party-form").reset(); $("#party-form-title").textContent="Nayi party"; $("#pt-cancel").hidden=true; }
+$("#pt-cancel").addEventListener("click", resetPartyForm);
+$("#pt-gstin").addEventListener("input", e => { e.target.value=e.target.value.toUpperCase(); const sc=gstinState(e.target.value); if(sc) $("#pt-state").value=sc; });
+$("#parties-body").addEventListener("click", e => {
+  const ed=e.target.closest("[data-edit]"), rm=e.target.closest("[data-rm]");
+  if(ed){ const p=S.parties.find(x=>x.id===ed.dataset.edit); if(!p) return; editParty=p.id;
+    $("#pt-name").value=p.name; $("#pt-addr").value=p.address||""; $("#pt-gstin").value=p.gstin||""; $("#pt-state").value=p.stateCode||""; $("#pt-phone").value=p.phone||"";
+    $("#party-form-title").textContent="Party edit karo"; $("#pt-cancel").hidden=false; $("#pt-name").focus(); window.scrollTo({top:0,behavior:"smooth"}); }
+  if(rm) armDelete(rm, async()=>{ try{ await db.doc("parties/"+rm.dataset.rm).delete(); toast("Party delete ho gayi"); }catch(err){ toast(errMsg(err),true); } });
+});
+$("#party-form").addEventListener("submit", async e => {
+  e.preventDefault(); if(!db) return toast("Data store connect nahi hai", true);
+  const data={name:$("#pt-name").value.trim(), address:$("#pt-addr").value.trim(), gstin:$("#pt-gstin").value.trim().toUpperCase(), stateCode:$("#pt-state").value, phone:$("#pt-phone").value.trim()};
+  if(!data.name) return;
+  try{ if(editParty) await db.doc("parties/"+editParty).set(data); else await db.collection("parties").add(data); toast(editParty?"Party update ho gayi":"Party add ho gayi"); resetPartyForm(); }catch(err){ toast(errMsg(err),true); }
+});
+
+// ================= SETTINGS =================
+const ST = {name:"st-name",address:"st-addr",phone:"st-phone",email:"st-email",gstin:"st-gstin",stateCode:"st-state",pan:"st-pan",bank:"st-bank",acno:"st-acno",ifsc:"st-ifsc",prefix:"st-prefix",fy:"st-fy",nextNo:"st-next",decl:"st-decl"};
+let settingsDirty=false;
+function fillSettings(){
+  if(settingsDirty) return; const f=S.firm;
+  for(const [k,id] of Object.entries(ST)) $("#"+id).value = f[k] ?? (k==="prefix"?"INV/":k==="nextNo"?1:k==="decl"?DEFAULT_DECL:"");
+  sampleNo();
+}
+function sampleNo(){ const fy=$("#st-fy").value.trim()||autoFY(); $("#st-sample").textContent=`${$("#st-prefix").value}${String(Math.max(1,+$("#st-next").value||1)).padStart(5,"0")}/${fy}`; }
+$("#settings-form").addEventListener("input", e => { settingsDirty=true; $("#st-state-msg").textContent="Unsaved changes"; if(e.target.id==="st-gstin"){ e.target.value=e.target.value.toUpperCase(); const sc=gstinState(e.target.value); if(sc) $("#st-state").value=sc; if(e.target.value.length>=12) $("#st-pan").value=e.target.value.slice(2,12); } if(e.target.id==="st-pan") e.target.value=e.target.value.toUpperCase(); sampleNo(); });
+$("#settings-form").addEventListener("submit", async e => {
+  e.preventDefault(); if(!db) return toast("Data store connect nahi hai", true);
+  const data={}; for(const [k,id] of Object.entries(ST)) data[k] = k==="nextNo" ? Math.max(1,Math.floor(+$("#"+id).value||1)) : $("#"+id).value.trim();
+  try{ await db.doc("settings/firm").set(data); settingsDirty=false; $("#st-state-msg").textContent="Saved"; toast("Settings save ho gayi"); }catch(err){ toast(errMsg(err),true); }
+});
+
+function onFirm(){
+  const f=S.firm;
+  $("#firm-sub").textContent = f.name ? `${f.name}${f.gstin?" · "+f.gstin:""}` : "Firm details bharo → Settings";
+  $("#firm-notice").hidden = !!f.name || !dbReady;
+  fillSettings(); updateSummary();
+}
+
+// ================= BOOT =================
+fillBillForm(); renderItems(); renderParties(); renderBills(); fillSettings();
+try{ const t=localStorage.getItem("billbook-tab"); if(t && $("#tab-"+t)) showTab(t); }catch(e){}
+
+const banner = m => { $("#banner").textContent=m; $("#banner").hidden=!m; };
+const CFG = window.FIREBASE_CONFIG;
+let auth=null, INC=null, unsubs=[];
+if(!window.firebase || !CFG || !CFG.apiKey || String(CFG.apiKey).includes("PASTE")){
+  $("#app").hidden=false; banner("Setup baaki hai: config.js mein Firebase ki details daalo (README dekho).");
+} else {
+  firebase.initializeApp(CFG);
+  auth = firebase.auth(); db = firebase.firestore(); INC = n => firebase.firestore.FieldValue.increment(n);
+  db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+  auth.onAuthStateChanged(user => {
+    unsubs.forEach(u=>u()); unsubs=[]; if(unsubBills){ unsubBills(); unsubBills=null; }
+    if(!user){ dbReady=false; $("#app").hidden=true; $("#login").hidden=false; return; }
+    $("#login").hidden=true; $("#app").hidden=false; $("#user-email").textContent=user.email; dbReady=true; banner("");
+    const fail = e => banner(e && e.code==="permission-denied" ? "Is ID ("+user.email+") ko data dekhne ki permission nahi hai — Firestore rules mein ye email jodo." : "Data load nahi ho paya: "+((e&&e.message)||e));
+    unsubs.push(db.doc("settings/firm").onSnapshot(async s => {
+      if(!s.exists && window.SEED && !s.metadata.fromCache){ try{ const b=db.batch(); b.set(db.doc("settings/firm"), SEED.firm); (SEED.items||[]).forEach(it=>b.set(db.collection("items").doc(it.id), it.data)); await b.commit(); toast("Firm details aur items pehli baar bhar diye"); }catch(e){} return; }
+      S.firm = s.exists ? {...s.data()} : {}; onFirm(); }, fail));
+    unsubs.push(db.collection("items").onSnapshot(q => { S.items=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.name).localeCompare(String(b.name))); renderItems(); renderBills(); }, fail));
+    unsubs.push(db.collection("parties").onSnapshot(q => { S.parties=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.name).localeCompare(String(b.name))); renderParties(); }, fail));
+    unsubs.push(db.collection("invoices").where("date","==",todayISO()).onSnapshot(q => { S.todayTotal=q.docs.reduce((t,d)=>t+(+d.data().total||0),0); renderBills(); }, ()=>{}));
+    watchBills();
+  });
+}
+$("#login-form").addEventListener("submit", async e => {
+  e.preventDefault(); if(!auth) return; const err=$("#lg-err"); err.hidden=true;
+  await withBtn($("#lg-btn"), "Login ho raha hai…", async () => {
+    try{ await auth.signInWithEmailAndPassword($("#lg-email").value.trim(), $("#lg-pass").value); }
+    catch(x){ err.textContent = ["auth/invalid-credential","auth/wrong-password","auth/user-not-found","auth/invalid-login-credentials"].includes(x.code) ? "Email ya password galat hai." : x.code==="auth/too-many-requests" ? "Bahut baar galat try hua — thodi der baad try karo." : "Login nahi hua: "+(x.message||x.code); err.hidden=false; }
+  });
+});
+$("#lg-forgot").addEventListener("click", async () => {
+  const em=$("#lg-email").value.trim(); const err=$("#lg-err");
+  if(!em){ err.textContent="Pehle upar apna email likho, phir ye dabao."; err.hidden=false; return; }
+  try{ await auth.sendPasswordResetEmail(em); err.hidden=true; toast("Password reset ka link "+em+" pe bhej diya"); }catch(x){ err.textContent="Link nahi bheja ja saka: "+(x.message||x.code); err.hidden=false; }
+});
+$("#logout").addEventListener("click", () => auth && auth.signOut());
+})();
+</script>
+</body>
+</html>
