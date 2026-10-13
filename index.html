@@ -898,13 +898,18 @@ $("#bills-xlsx").addEventListener("click", () => {
   if(!window.XLSX) return toast("Excel tool did not load. Please reload the page.", true);
   if(!S.invoices.length) return toast("No invoices for this period", true);
   const list=[...S.invoices].sort((a,b)=>(a.date||"").localeCompare(b.date||"") || (a.seq||0)-(b.seq||0));
-  const bills=list.map(i=>({"Invoice No":i.no,"Date":fmtDate(i.date),"Party":i.party&&i.party.name,"GSTIN":i.party&&i.party.gstin,"State":stateName(i.pos ?? (i.ship||i.party||{}).stateCode),"Taxable Value":i.taxable,"CGST":i.cgst,"SGST":i.sgst,"IGST":i.igst,"Round Off":i.roundOff,"Total":i.total,"Payment":i.pay,"Made by":i.createdBy||""}));
-  const lines=[]; list.forEach(i=>{ const c=calc(i.lines||[], i.intra); c.lines.forEach(l=>lines.push({"Invoice No":i.no,"Date":fmtDate(i.date),"Party":i.party&&i.party.name,"Item":l.name,"HSN":l.hsn,"Qty":l.qty,"Unit":l.unit,"Rate":l.rate,"Disc %":l.disc,"Taxable":l.amount,"GST %":l.gst})); });
+  const sum=(arr,k)=>Math.round(arr.reduce((t,r)=>t+(+r[k]||0),0)*100)/100;
+  const bills=list.map(i=>{ const k=calc(i.lines||[], i.intra), c={}; ["taxable","cgst","sgst","igst","roundOff","total"].forEach(f=>c[f]=typeof i[f]==="number" ? i[f] : k[f]); const tax=r2(c.cgst+c.sgst+c.igst); const gstin=(i.party&&i.party.gstin)||"";
+    return {"Invoice No":i.no,"Date":fmtDate(i.date),"Party":i.party&&i.party.name,"GSTIN":gstin,"B2B / B2C":gstin?"B2B":"B2C","Place of Supply":stateName(i.pos ?? (i.ship||i.party||{}).stateCode),
+      "Taxable Value":c.taxable,"CGST":c.cgst,"SGST":c.sgst,"IGST":c.igst,"Total Tax":tax,"Round Off":c.roundOff,"Invoice Value":c.total,"Payment":i.pay||"","Made by":i.createdBy||""}; });
+  bills.push({"Invoice No":"TOTAL","Taxable Value":sum(bills,"Taxable Value"),"CGST":sum(bills,"CGST"),"SGST":sum(bills,"SGST"),"IGST":sum(bills,"IGST"),"Total Tax":sum(bills,"Total Tax"),"Round Off":sum(bills,"Round Off"),"Invoice Value":sum(bills,"Invoice Value")});
+  const lines=[]; list.forEach(i=>{ const c=calc(i.lines||[], i.intra); c.lines.forEach(l=>{ const g=r2(l.amount*(+l.gst||0)/100); lines.push({"Invoice No":i.no,"Date":fmtDate(i.date),"Party":i.party&&i.party.name,"Item":l.name,"HSN":l.hsn,"Qty":l.qty,"Unit":l.unit,"Rate":l.rate,"Disc %":l.disc,"Taxable Value":l.amount,"GST %":l.gst,"GST Amount":g,"Line Value":r2(l.amount+g)}); }); });
   const items=S.items.map(i=>({"Item":i.name,"HSN":i.hsn,"Unit":i.unit,"Rate":i.rate,"GST %":i.gst,"Stock":i.stock}));
+  const sheet=(rows,widths)=>{ const ws=XLSX.utils.json_to_sheet(rows); ws["!cols"]=widths.map(w=>({wch:w})); return ws; };
   const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(bills), "Bills");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lines), "Bill Items");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(items), "Stock");
+  XLSX.utils.book_append_sheet(wb, sheet(bills,[20,11,28,17,9,18,14,12,12,12,12,10,15,14,22]), "Bills");
+  XLSX.utils.book_append_sheet(wb, sheet(lines,[20,11,28,30,10,8,7,11,7,14,7,12,14]), "Bill Items");
+  XLSX.utils.book_append_sheet(wb, sheet(items,[30,10,7,11,7,9]), "Stock");
   XLSX.writeFile(wb, `Bills_${billsMonth||"all"}.xlsx`);
   toast("Excel file downloaded");
 });
