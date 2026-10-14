@@ -203,6 +203,13 @@ body{margin:0}
 .gst-ok{color:var(--good)!important} .gst-bad{color:var(--bad)!important}
 .userchip{flex-wrap:wrap}
 @media (max-width:640px){ .cosel select{max-width:140px} }
+.acct-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.acct-head h2{margin:0}
+.acct-bal{font-family:var(--font-num);font-size:20px;font-weight:700}
+.acct-bal.due{color:var(--bad)} .acct-bal.adv{color:var(--good)}
+.acct-form{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;align-items:end;padding:12px;border:1px dashed var(--line);border-radius:var(--r);margin-bottom:12px}
+@media (max-width:760px){.acct-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+table.grid tr.sub td{background:var(--surface-2);font-weight:700}
 .linkbtn{background:none;border:0;color:var(--accent);font-weight:600;cursor:pointer;padding:0;text-decoration:underline}
 @media print{
   @page{size:A4;margin:0}
@@ -367,7 +374,7 @@ body{margin:0}
       <div class="panel">
         <div class="listhead"><h2>Items</h2><input class="search" id="items-q" type="search" placeholder="Search items" aria-label="Search items"></div>
         <div class="tablewrap" id="items-wrap">
-          <table class="grid"><thead><tr><th>Item</th><th>HSN</th><th class="r">Rate</th><th class="r">GST</th><th class="r">Stock</th><th></th></tr></thead><tbody id="items-body"></tbody></table>
+          <table class="grid"><thead><tr><th class="r">Sr. No.</th><th>Item</th><th>HSN</th><th class="r">Rate</th><th class="r">GST</th><th class="r">Stock</th><th></th></tr></thead><tbody id="items-body"></tbody></table>
         </div>
         <p class="empty" id="items-empty">No items yet. Add your first item using the form.</p>
       </div>
@@ -385,6 +392,8 @@ body{margin:0}
           <label class="f">GSTIN/UIN<input id="pt-gstin" maxlength="15"></label>
           <label class="f">State<select id="pt-state" class="state-sel"></select></label>
           <label class="f">Phone<input id="pt-phone" inputmode="tel"></label>
+          <label class="f">Opening balance (₹)<input id="pt-open" type="number" step="any" min="0" value="0"></label>
+          <label class="f">Balance type<select id="pt-opentype"><option value="dr">Receivable (party owes us)</option><option value="cr">Advance (we owe party)</option></select></label>
         </div>
         <div class="row"><button class="btn primary" type="submit">Save party</button><button class="btn" type="button" id="pt-cancel" hidden>Cancel</button></div>
         <p class="hint">New parties are saved here automatically when you create an invoice for them.</p>
@@ -392,10 +401,25 @@ body{margin:0}
       <div class="panel">
         <div class="listhead"><h2>Parties</h2><input class="search" id="parties-q" type="search" placeholder="Search parties" aria-label="Search parties"></div>
         <div class="tablewrap" id="parties-wrap">
-          <table class="grid"><thead><tr><th>Party</th><th>GSTIN</th><th>State</th><th>Phone</th><th></th></tr></thead><tbody id="parties-body"></tbody></table>
+          <table class="grid"><thead><tr><th class="r">Sr. No.</th><th>Party</th><th>GSTIN</th><th>State</th><th>Phone</th><th></th></tr></thead><tbody id="parties-body"></tbody></table>
         </div>
         <p class="empty" id="parties-empty">No parties yet.</p>
       </div>
+    </div>
+    <div class="panel" id="acct" hidden style="margin-top:16px">
+      <div class="acct-head">
+        <div><h2 id="acct-title">Account</h2><small class="hint" id="acct-sub"></small></div>
+        <div style="text-align:right"><div class="hint" id="acct-bal-lbl">Balance</div><div class="acct-bal" id="acct-bal">₹0.00</div></div>
+      </div>
+      <form class="acct-form" id="acct-form" autocomplete="off">
+        <label class="f">Payment received on<input type="date" id="ac-date" required></label>
+        <label class="f">Amount (₹)<input type="number" id="ac-amt" step="any" min="0.01" required></label>
+        <label class="f">Mode<select id="ac-mode"><option>Cash</option><option>UPI</option><option>Bank transfer</option><option>Cheque</option></select></label>
+        <label class="f">Reference / note<input id="ac-ref" placeholder="UTR / cheque no."></label>
+        <button class="btn primary" type="submit" id="ac-save">Save payment</button>
+      </form>
+      <div class="row" style="margin-bottom:10px;flex-wrap:wrap"><button class="btn sm" id="acct-print" type="button">Print statement</button><button class="btn sm" id="acct-xlsx" type="button">Excel</button><button class="btn sm" id="acct-close" type="button">Close</button></div>
+      <div class="tablewrap"><table class="grid"><thead><tr><th>Date</th><th>Particulars</th><th>Voucher No.</th><th class="r">Debit (₹)</th><th class="r">Credit (₹)</th><th class="r">Balance (₹)</th><th></th></tr></thead><tbody id="acct-body"></tbody></table></div>
     </div>
   </section>
 
@@ -904,12 +928,12 @@ $("#bills-xlsx").addEventListener("click", () => {
       "Taxable Value":c.taxable,"CGST":c.cgst,"SGST":c.sgst,"IGST":c.igst,"Total Tax":tax,"Round Off":c.roundOff,"Invoice Value":c.total,"Payment":i.pay||"","Made by":i.createdBy||""}; });
   bills.push({"Invoice No":"TOTAL","Taxable Value":sum(bills,"Taxable Value"),"CGST":sum(bills,"CGST"),"SGST":sum(bills,"SGST"),"IGST":sum(bills,"IGST"),"Total Tax":sum(bills,"Total Tax"),"Round Off":sum(bills,"Round Off"),"Invoice Value":sum(bills,"Invoice Value")});
   const lines=[]; list.forEach(i=>{ const c=calc(i.lines||[], i.intra); c.lines.forEach(l=>{ const g=r2(l.amount*(+l.gst||0)/100); lines.push({"Invoice No":i.no,"Date":fmtDate(i.date),"Party":i.party&&i.party.name,"Item":l.name,"HSN":l.hsn,"Qty":l.qty,"Unit":l.unit,"Rate":l.rate,"Disc %":l.disc,"Taxable Value":l.amount,"GST %":l.gst,"GST Amount":g,"Line Value":r2(l.amount+g)}); }); });
-  const items=S.items.map(i=>({"Item":i.name,"HSN":i.hsn,"Unit":i.unit,"Rate":i.rate,"GST %":i.gst,"Stock":i.stock}));
+  const items=S.items.map((i,n)=>({"Sr. No.":n+1,"Item":i.name,"HSN":i.hsn,"Unit":i.unit,"Rate":i.rate,"GST %":i.gst,"Stock":i.stock}));
   const sheet=(rows,widths)=>{ const ws=XLSX.utils.json_to_sheet(rows); ws["!cols"]=widths.map(w=>({wch:w})); return ws; };
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, sheet(bills,[20,11,28,17,9,18,14,12,12,12,12,10,15,14,22]), "Bills");
   XLSX.utils.book_append_sheet(wb, sheet(lines,[20,11,28,30,10,8,7,11,7,14,7,12,14]), "Bill Items");
-  XLSX.utils.book_append_sheet(wb, sheet(items,[30,10,7,11,7,9]), "Stock");
+  XLSX.utils.book_append_sheet(wb, sheet(items,[7,30,10,7,11,7,9]), "Stock");
   XLSX.writeFile(wb, `Bills_${billsMonth||"all"}.xlsx`);
   toast("Excel file downloaded");
 });
@@ -923,8 +947,8 @@ let editItem=null;
 function renderItems(){
   const q=$("#items-q").value.trim().toLowerCase();
   const list=S.items.filter(i=>!q||i.name.toLowerCase().includes(q)||(i.hsn||"").includes(q));
-  $("#items-body").innerHTML=list.map(i=>{ const st=+i.stock||0; const cls = st<=0?"out":isLow(i)?"low":"ok";
-    return `<tr><td><b>${esc(i.name)}</b></td><td class="num">${esc(i.hsn)}</td><td class="r num">${fmt(i.rate)}</td><td class="r">${esc(i.gst ?? 18)}%</td><td class="r"><span class="pill ${cls}">${fmtQ(st)} ${esc(i.unit||"")}</span></td>
+  $("#items-body").innerHTML=list.map((i,n)=>{ const st=+i.stock||0; const cls = st<=0?"out":isLow(i)?"low":"ok";
+    return `<tr><td class="r num">${n+1}</td><td><b>${esc(i.name)}</b></td><td class="num">${esc(i.hsn)}</td><td class="r num">${fmt(i.rate)}</td><td class="r">${esc(i.gst ?? 18)}%</td><td class="r"><span class="pill ${cls}">${fmtQ(st)} ${esc(i.unit||"")}</span></td>
     <td class="r" style="white-space:nowrap"><button class="btn sm" data-edit="${esc(i.id)}">Edit</button> <button class="btn sm danger" data-rm="${esc(i.id)}">Delete</button></td></tr>`; }).join("");
   $("#items-wrap").hidden=!list.length; $("#items-empty").hidden=!!list.length;
   $("#itemList").innerHTML=S.items.map(i=>`<option value="${esc(i.name)}">₹${fmt(i.rate)} · stock ${fmtQ(i.stock||0)} ${esc(i.unit||"")}</option>`).join("");
@@ -953,8 +977,8 @@ function renderParties(){
   const q=$("#parties-q").value.trim().toLowerCase();
   const counts={}; S.invoices.forEach(i=>{ const n=(i.party&&i.party.name||"").toLowerCase(); counts[n]=(counts[n]||0)+1; });
   const list=S.parties.filter(p=>!q||p.name.toLowerCase().includes(q)||(p.gstin||"").toLowerCase().includes(q));
-  $("#parties-body").innerHTML=list.map(p=>`<tr><td><b>${esc(p.name)}</b>${p.address?`<div class="muted" style="font-size:12px">${esc(p.address)}</div>`:""}</td><td class="num">${esc(p.gstin)}</td><td>${esc(stateName(p.stateCode))}</td><td>${esc(p.phone)}</td>
-    <td class="r" style="white-space:nowrap"><button class="btn sm" data-edit="${esc(p.id)}">Edit</button> <button class="btn sm danger" data-rm="${esc(p.id)}">Delete</button></td></tr>`).join("");
+  $("#parties-body").innerHTML=list.map((p,n)=>`<tr><td class="r num">${n+1}</td><td><b>${esc(p.name)}</b>${p.address?`<div class="muted" style="font-size:12px">${esc(p.address)}</div>`:""}</td><td class="num">${esc(p.gstin)}</td><td>${esc(stateName(p.stateCode))}</td><td>${esc(p.phone)}</td>
+    <td class="r" style="white-space:nowrap"><button class="btn sm primary" data-acct="${esc(p.id)}">Account</button> <button class="btn sm" data-edit="${esc(p.id)}">Edit</button> <button class="btn sm danger" data-rm="${esc(p.id)}">Delete</button></td></tr>`).join("");
   $("#parties-wrap").hidden=!list.length; $("#parties-empty").hidden=!!list.length;
   $("#partyList").innerHTML=S.parties.map(p=>`<option value="${esc(p.name)}">${esc(p.gstin||p.address||"")}</option>`).join("");
 }
@@ -963,17 +987,101 @@ function resetPartyForm(){ editParty=null; $("#party-form").reset(); $("#party-f
 $("#pt-cancel").addEventListener("click", resetPartyForm);
 $("#pt-gstin").addEventListener("input", e => { e.target.value=e.target.value.toUpperCase(); const sc=gstinState(e.target.value); if(sc) $("#pt-state").value=sc; });
 $("#parties-body").addEventListener("click", e => {
-  const ed=e.target.closest("[data-edit]"), rm=e.target.closest("[data-rm]");
+  const ed=e.target.closest("[data-edit]"), rm=e.target.closest("[data-rm]"), ac=e.target.closest("[data-acct]");
+  if(ac){ const p=S.parties.find(x=>x.id===ac.dataset.acct); if(p) openAccount(p); return; }
   if(ed){ const p=S.parties.find(x=>x.id===ed.dataset.edit); if(!p) return; editParty=p.id;
-    $("#pt-name").value=p.name; $("#pt-addr").value=p.address||""; $("#pt-gstin").value=p.gstin||""; $("#pt-state").value=p.stateCode||""; $("#pt-phone").value=p.phone||"";
+    $("#pt-name").value=p.name; $("#pt-addr").value=p.address||""; $("#pt-gstin").value=p.gstin||""; $("#pt-state").value=p.stateCode||""; $("#pt-phone").value=p.phone||""; $("#pt-open").value=Math.abs(+p.opening||0); $("#pt-opentype").value=(+p.opening||0)<0?"cr":"dr";
     $("#party-form-title").textContent="Edit party"; $("#pt-cancel").hidden=false; $("#pt-name").focus(); window.scrollTo({top:0,behavior:"smooth"}); }
   if(rm) armDelete(rm, async()=>{ try{ await D("parties",rm.dataset.rm).delete(); toast("Party deleted"); }catch(err){ toast(errMsg(err),true); } });
 });
 $("#party-form").addEventListener("submit", async e => {
   e.preventDefault(); if(!db) return toast("Not connected to the database", true);
   const data={name:$("#pt-name").value.trim(), address:$("#pt-addr").value.trim(), gstin:$("#pt-gstin").value.trim().toUpperCase(), stateCode:$("#pt-state").value, phone:$("#pt-phone").value.trim()};
+  const oa=Math.abs(+$("#pt-open").value||0); data.opening = $("#pt-opentype").value==="cr" ? -oa : oa;
   if(!data.name) return;
+  if(S.parties.some(p=>p.id!==editParty && p.name.toLowerCase()===data.name.toLowerCase())) return toast("A party with this name already exists", true);
   try{ if(editParty) await D("parties",editParty).set(data); else await C("parties").add(data); toast(editParty?"Party updated":"Party added"); resetPartyForm(); }catch(err){ toast(errMsg(err),true); }
+});
+
+// ================= ACCOUNT (party ledger) =================
+let acct=null, acctUnsubs=[], acctInv=[], acctPay=[], acctRows=[];
+function closeAccount(){ acctUnsubs.forEach(u=>u()); acctUnsubs=[]; acct=null; acctRows=[]; $("#acct").hidden=true; }
+function openAccount(p){
+  if(!db) return toast("Not connected to the database", true);
+  closeAccount(); acct=p; acctInv=[]; acctPay=[];
+  $("#acct").hidden=false; $("#acct-title").textContent="Account · "+p.name;
+  $("#acct-sub").textContent=[p.gstin, p.phone].filter(Boolean).join(" · ");
+  $("#ac-date").value=todayISO(); $("#ac-amt").value=""; $("#ac-ref").value="";
+  renderAccount();
+  const fail=e=>toast("Could not load the account: "+((e&&e.message)||e), true);
+  acctUnsubs.push(C("invoices").where("party.name","==",p.name).onSnapshot(q=>{ acctInv=q.docs.map(d=>({id:d.id,...d.data()})); renderAccount(); }, fail));
+  acctUnsubs.push(C("payments").where("party.name","==",p.name).onSnapshot(q=>{ acctPay=q.docs.map(d=>({id:d.id,...d.data()})); renderAccount(); }, fail));
+  setTimeout(()=>$("#acct").scrollIntoView({behavior:"smooth", block:"start"}), 50);
+}
+function ledgerRows(){
+  const p=acct; const rows=[];
+  acctInv.forEach(i=>rows.push({date:i.date||"", at:i.createdAt||0, text:"Sales invoice", no:i.no, dr:+i.total||0, cr:0, inv:i}));
+  acctPay.forEach(x=>rows.push({date:x.date||"", at:x.createdAt||0, text:x.type==="payment" ? "Payment made"+(x.mode?" · "+x.mode:"") : "Payment received"+(x.mode?" · "+x.mode:"")+(x.ref?" · "+x.ref:""), no:x.no||"", dr:x.type==="payment"?+x.amount||0:0, cr:x.type==="payment"?0:+x.amount||0, pay:x}));
+  rows.sort((a,b)=>a.date.localeCompare(b.date) || a.at-b.at);
+  let bal=+(p.opening||0); rows.forEach(r=>{ bal=r2(bal+r.dr-r.cr); r.bal=bal; });
+  return {rows, opening:+(p.opening||0), closing:bal, dr:r2(rows.reduce((t,r)=>t+r.dr,0)), cr:r2(rows.reduce((t,r)=>t+r.cr,0))};
+}
+const balTxt = b => b>0 ? fmt(b)+" Dr" : b<0 ? fmt(-b)+" Cr" : "0.00";
+function renderAccount(){
+  if(!acct) return;
+  const L=ledgerRows(); acctRows=L.rows;
+  const b=$("#acct-bal"); b.textContent="₹"+fmt(Math.abs(L.closing)); b.className="acct-bal"+(L.closing>0?" due":L.closing<0?" adv":"");
+  $("#acct-bal-lbl").textContent = L.closing>0 ? "Amount to receive" : L.closing<0 ? "Advance (we owe party)" : "Settled";
+  $("#acct-body").innerHTML =
+    `<tr class="sub"><td></td><td>Opening balance</td><td></td><td class="r num">${L.opening>0?fmt(L.opening):""}</td><td class="r num">${L.opening<0?fmt(-L.opening):""}</td><td class="r num">${balTxt(L.opening)}</td><td></td></tr>` +
+    L.rows.map((r,k)=>`<tr${r.inv?` class="click" data-ainv="${k}"`:""}><td>${fmtDate(r.date)}</td><td>${esc(r.text)}</td><td class="num">${esc(r.no)}</td><td class="r num">${r.dr?fmt(r.dr):""}</td><td class="r num">${r.cr?fmt(r.cr):""}</td><td class="r num">${balTxt(r.bal)}</td><td class="r">${r.pay?`<button class="btn sm danger" data-apay="${esc(r.pay.id)}">Delete</button>`:""}</td></tr>`).join("") +
+    `<tr class="sub"><td></td><td>Total</td><td></td><td class="r num">${fmt(L.dr+(L.opening>0?L.opening:0))}</td><td class="r num">${fmt(L.cr+(L.opening<0?-L.opening:0))}</td><td class="r num">${balTxt(L.closing)}</td><td></td></tr>`;
+}
+$("#acct-body").addEventListener("click", e => {
+  const d=e.target.closest("[data-apay]");
+  if(d){ armDelete(d, async()=>{ try{ await D("payments", d.dataset.apay).delete(); toast("Payment entry deleted"); }catch(err){ toast(errMsg(err), true); } }); return; }
+  const tr=e.target.closest("[data-ainv]"); if(tr){ const r=acctRows[+tr.dataset.ainv]; if(r && r.inv) openInvoice(r.inv, true); }
+});
+$("#acct-close").addEventListener("click", closeAccount);
+$("#acct-form").addEventListener("submit", async e => {
+  e.preventDefault(); if(!acct||!db) return;
+  const amt=r2(+$("#ac-amt").value||0); if(amt<=0){ $("#ac-amt").focus(); return toast("Enter the amount received", true); }
+  const p=acct, btn=$("#ac-save");
+  await withBtn(btn, "Saving…", async () => {
+    try{
+      const id="rcpt-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6), ref=C("payments").doc(id), firmRef=FIRM();
+      const doc={type:"receipt", date:$("#ac-date").value||todayISO(), amount:amt, mode:$("#ac-mode").value, ref:$("#ac-ref").value.trim(), narration:"",
+        party:{name:p.name, address:p.address||"", gstin:p.gstin||"", stateCode:p.stateCode||""}, createdAt:Date.now(), createdBy:(auth.currentUser&&auth.currentUser.email)||""};
+      await db.runTransaction(async t => { const fs=await t.get(firmRef); const f=fs.exists?fs.data():{}; const n=Math.max(1, Math.floor(+f.nextRcpt||1)); doc.no="RCPT/"+String(n).padStart(4,"0"); t.set(ref, doc); t.set(firmRef, {nextRcpt:n+1}, {merge:true}); });
+      $("#ac-amt").value=""; $("#ac-ref").value=""; toast(`Payment of ₹${fmt(amt)} saved (${doc.no})`);
+    }catch(err){ toast(errMsg(err), true); }
+  });
+});
+function statementHTML(){
+  const L=ledgerRows(), f=S.firm||{}, p=acct;
+  const td='style="border:1px solid #000;padding:4px 6px"', tr='style="border:1px solid #000;padding:4px 6px;text-align:right"';
+  return `<div class="iv" style="padding:28px 34px;font-size:12px">
+    <div style="text-align:center"><div style="font-size:16px;font-weight:700">${esc(f.name||"")}</div><div>${nl(f.address||"")}</div>${f.gstin?`<div>GSTIN: ${esc(f.gstin)}</div>`:""}</div>
+    <div style="text-align:center;font-weight:700;font-size:14px;margin:12px 0 4px">Account Statement</div>
+    <div style="margin-bottom:8px"><b>${esc(p.name)}</b>${p.address?`<br>${nl(p.address)}`:""}${p.gstin?`<br>GSTIN: ${esc(p.gstin)}`:""}<br>As on ${fmtDate(todayISO())}</div>
+    <table style="width:100%;border-collapse:collapse"><thead><tr><th ${td}>Date</th><th ${td}>Particulars</th><th ${td}>Vch No.</th><th ${tr}>Debit</th><th ${tr}>Credit</th><th ${tr}>Balance</th></tr></thead><tbody>
+    <tr><td ${td}></td><td ${td}><b>Opening balance</b></td><td ${td}></td><td ${tr}>${L.opening>0?fmt(L.opening):""}</td><td ${tr}>${L.opening<0?fmt(-L.opening):""}</td><td ${tr}>${balTxt(L.opening)}</td></tr>
+    ${L.rows.map(r=>`<tr><td ${td}>${fmtDate(r.date)}</td><td ${td}>${esc(r.text)}</td><td ${td}>${esc(r.no)}</td><td ${tr}>${r.dr?fmt(r.dr):""}</td><td ${tr}>${r.cr?fmt(r.cr):""}</td><td ${tr}>${balTxt(r.bal)}</td></tr>`).join("")}
+    <tr><td ${td}></td><td ${td}><b>Closing balance</b></td><td ${td}></td><td ${tr}><b>${fmt(L.dr+(L.opening>0?L.opening:0))}</b></td><td ${tr}><b>${fmt(L.cr+(L.opening<0?-L.opening:0))}</b></td><td ${tr}><b>${balTxt(L.closing)}</b></td></tr>
+    </tbody></table>
+    <div style="margin-top:10px">${L.closing>0?`Amount due from party: <b>₹${fmt(L.closing)}</b> (${esc(amountWords(L.closing))})`:L.closing<0?`Advance held: <b>₹${fmt(-L.closing)}</b>`:"Account settled."}</div>
+    <div class="iv-cg" style="margin-top:18px">This is a Computer Generated Statement</div></div>`;
+}
+$("#acct-print").addEventListener("click", () => { if(acct) printHTML(statementHTML(), "Statement - "+acct.name); });
+$("#acct-xlsx").addEventListener("click", () => {
+  if(!acct) return; if(!window.XLSX) return toast("Excel tool did not load. Please reload the page.", true);
+  const L=ledgerRows();
+  const rows=[{"Date":"","Particulars":"Opening balance","Voucher No":"","Debit":L.opening>0?L.opening:"","Credit":L.opening<0?-L.opening:"","Balance":balTxt(L.opening)},
+    ...L.rows.map(r=>({"Date":fmtDate(r.date),"Particulars":r.text,"Voucher No":r.no,"Debit":r.dr||"","Credit":r.cr||"","Balance":balTxt(r.bal)})),
+    {"Date":"","Particulars":"Closing balance","Voucher No":"","Debit":r2(L.dr+(L.opening>0?L.opening:0)),"Credit":r2(L.cr+(L.opening<0?-L.opening:0)),"Balance":balTxt(L.closing)}];
+  const ws=XLSX.utils.json_to_sheet(rows); ws["!cols"]=[12,40,18,14,14,16].map(w=>({wch:w}));
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Account");
+  XLSX.writeFile(wb, `Account_${acct.name.replace(/[^\w]+/g,"_")}.xlsx`); toast("Excel file downloaded");
 });
 
 // ================= SETTINGS =================
@@ -1017,7 +1125,7 @@ if(!window.firebase || !CFG || !CFG.apiKey || String(CFG.apiKey).includes("PASTE
   auth = firebase.auth(); db = firebase.firestore(); INC = n => firebase.firestore.FieldValue.increment(n);
   db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
   auth.onAuthStateChanged(user => {
-    unsubs.forEach(u=>u()); unsubs=[]; unsubGlobal.forEach(u=>u()); unsubGlobal=[]; if(unsubBills){ unsubBills(); unsubBills=null; }
+    unsubs.forEach(u=>u()); unsubs=[]; unsubGlobal.forEach(u=>u()); unsubGlobal=[]; closeAccount(); if(unsubBills){ unsubBills(); unsubBills=null; }
     if(!user){ dbReady=false; $("#app").hidden=true; $("#login").hidden=false; return; }
     $("#login").hidden=true; $("#app").hidden=false; $("#user-email").textContent=user.email; dbReady=true; banner("");
     $("#lg-email").value=""; $("#lg-pass").value="";
@@ -1054,7 +1162,7 @@ function switchCompany(id){
   CID=id; try{ localStorage.setItem("billbook-company", id); }catch(e){}
   Object.assign(S, {firm:{}, items:[], parties:[], invoices:[], todayTotal:0}); settingsDirty=false;
   draft = (()=>{ try{ const d=JSON.parse(localStorage.getItem(DRAFT_KEY())); if(d && Array.isArray(d.lines)) return Object.assign(newDraft(), d); }catch(e){} return newDraft(); })();
-  resetItemForm(); resetPartyForm();
+  closeAccount(); resetItemForm(); resetPartyForm();
   fillBillForm(); renderItems(); renderParties(); renderBills(); onFirm(); renderCoSel();
   subscribeAll();
 }
