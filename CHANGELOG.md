@@ -1,5 +1,12 @@
 # BillBook changelog
 
+## v1.4 (14 Oct 2026)
+- **Party account (khata)**: Account button in Parties shows bills, payments received and running balance; record payments (Cash/UPI/Bank/Cheque); opening balance; print statement and Excel.
+- **Sr. No.** column in Items & Stock, Parties and the Excel Stock sheet.
+
+## v1.3 (13 Oct 2026)
+- Excel export: Invoice Value, Total Tax, B2B/B2C and a totals row.
+
 ## v1.2 (13 Oct 2026) — live
 Same simple screen as before, with these fixes:
 - **Print**: prints only the invoice on A4, straight to the printer dialog.
