@@ -260,6 +260,14 @@ tr.click:hover td,table.grid tbody tr:hover td{background:var(--hl-2)}
 .sum-total{border-top-color:var(--accent)}
 .login{border-top:4px solid var(--bar)}
 .login h1 b{color:var(--accent)}
+.rep-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rep-bar .f{flex-direction:row;align-items:center;gap:6px}
+.rep-bar input{width:auto}
+.gst-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.gst-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.vt{display:inline-block;padding:1px 7px;font-size:11.5px;font-weight:700;border:1px solid currentColor;border-radius:var(--r)}
+.vt.sales{color:var(--accent)} .vt.purchase{color:#7a4b00} .vt.receipt{color:var(--good)} .vt.payment{color:var(--bad)}
+table.grid tr.sub td{background:var(--surface-2);font-weight:700}
 /* Gateway */
 .gw{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:28px;align-items:start;max-width:1000px;margin:0 auto}
 @media (max-width:900px){.gw{grid-template-columns:minmax(0,1fr);gap:16px} .gw-box{order:-1}}
@@ -323,6 +331,8 @@ tr.click:hover td,table.grid tbody tr:hover td{background:var(--hl-2)}
     <button role="tab" data-tab="items" aria-selected="false">Items &amp; Stock</button>
     <button role="tab" data-tab="parties" aria-selected="false">Parties</button>
     <button role="tab" data-tab="outstanding" aria-selected="false">Outstanding</button>
+    <button role="tab" data-tab="daybook" aria-selected="false">Day Book</button>
+    <button role="tab" data-tab="gst" aria-selected="false">GST Reports</button>
     <button role="tab" data-tab="settings" aria-selected="false">Settings</button>
   </nav>
 </header>
@@ -336,6 +346,8 @@ tr.click:hover td,table.grid tbody tr:hover td{background:var(--hl-2)}
   <button type="button" data-go="items"><u>F4</u>: Items &amp; Stock</button>
   <button type="button" data-go="parties"><u>F7</u>: Parties</button>
   <button type="button" data-go="outstanding"><u>F10</u>: Outstanding</button>
+  <button type="button" data-go="daybook"><u>Alt+D</u>: Day Book</button>
+  <button type="button" data-go="gst"><u>Alt+R</u>: GST Reports</button>
   <div class="sep"></div>
   <button type="button" data-go="settings"><u>Alt+S</u>: Settings</button>
   <button type="button" data-act="company"><u>Alt+K</u>: Company</button>
@@ -369,6 +381,8 @@ tr.click:hover td,table.grid tbody tr:hover td{background:var(--hl-2)}
         <div class="gw-sec"><h4>REPORTS</h4>
           <button class="gw-item" role="menuitem" data-key="b" data-go="bills"><u>B</u>ills Register</button>
           <button class="gw-item" role="menuitem" data-key="o" data-go="outstanding"><u>O</u>utstanding</button>
+          <button class="gw-item" role="menuitem" data-key="d" data-go="daybook"><u>D</u>ay Book</button>
+          <button class="gw-item" role="menuitem" data-key="g" data-go="gst"><u>G</u>ST Reports</button>
           <button class="gw-item" role="menuitem" data-key="y" data-go="items">Stock Summar<u>y</u></button>
         </div>
         <div class="gw-sec"><h4>UTILITIES</h4>
@@ -616,6 +630,67 @@ tr.click:hover td,table.grid tbody tr:hover td{background:var(--hl-2)}
     </div>
   </section>
 
+  <section id="tab-daybook" hidden>
+    <div class="panel">
+      <div class="listhead"><h2>Day Book</h2>
+        <div class="rep-bar">
+          <button class="btn sm" type="button" id="db-prev" aria-label="Previous day">◀</button>
+          <label class="f">From<input type="date" id="db-from"></label>
+          <label class="f">To<input type="date" id="db-to"></label>
+          <button class="btn sm" type="button" id="db-next" aria-label="Next day">▶</button>
+          <button class="btn sm" type="button" id="db-today">Today</button>
+          <button class="btn sm" type="button" id="db-month">This month</button>
+          <button class="btn" type="button" id="db-xlsx">Excel export</button>
+        </div>
+      </div>
+      <div class="tiles" id="db-tiles">
+        <div class="tile"><span>Sales</span><b id="db-t-sales">₹0</b></div>
+        <div class="tile"><span>Purchase</span><b id="db-t-pur">₹0</b></div>
+        <div class="tile"><span>Payments received</span><b id="db-t-rcpt">₹0</b></div>
+        <div class="tile"><span>Payments made</span><b id="db-t-pay">₹0</b></div>
+      </div>
+      <div class="tablewrap" id="db-wrap"><table class="grid"><thead><tr><th class="r">Sr. No.</th><th>Date</th><th>Particulars</th><th>Vch Type</th><th>Vch No.</th><th class="r">Debit (₹)</th><th class="r">Credit (₹)</th></tr></thead><tbody id="db-body"></tbody></table></div>
+      <p class="empty" id="db-empty">Loading…</p>
+      <p class="hint">Debit = party owes more (sales, payment made). Credit = party owes less (purchase, payment received). Click a sales bill to open it.</p>
+    </div>
+  </section>
+
+  <section id="tab-gst" hidden>
+    <div class="stack">
+      <div class="panel">
+        <div class="listhead"><h2>GST Reports</h2>
+          <div class="rep-bar"><label class="f">Return period<input type="month" id="gst-month"></label><button class="btn" type="button" id="gst-xlsx">Excel export (GSTR-1 / 3B)</button></div>
+        </div>
+        <div class="gst-grid">
+          <div class="tile"><span>Output tax (sales)</span><b id="g-out">₹0</b></div>
+          <div class="tile"><span>Input tax credit (purchases)</span><b id="g-itc">₹0</b></div>
+          <div class="tile"><span>Net GST payable</span><b id="g-net">₹0</b></div>
+          <div class="tile"><span>Sales bills · Purchase bills</span><b id="g-count">0 · 0</b></div>
+        </div>
+        <p class="hint" id="gst-note">Figures are worked out from the bills saved in BillBook. Check them with your CA before filing.</p>
+      </div>
+      <div class="panel">
+        <h2>GSTR-3B summary</h2>
+        <div class="tablewrap"><table class="grid"><thead><tr><th>Section</th><th class="r">Taxable value</th><th class="r">IGST</th><th class="r">CGST</th><th class="r">SGST</th></tr></thead><tbody id="g3b"></tbody></table></div>
+      </div>
+      <div class="panel">
+        <h2>GSTR-1 · B2B invoices (buyers with GSTIN)</h2>
+        <div class="tablewrap" id="gb2b-wrap"><table class="grid"><thead><tr><th class="r">Sr. No.</th><th>GSTIN</th><th>Party</th><th>Invoice No.</th><th>Date</th><th>Place of supply</th><th class="r">Invoice value</th><th class="r">Taxable</th><th class="r">IGST</th><th class="r">CGST</th><th class="r">SGST</th></tr></thead><tbody id="gb2b"></tbody></table></div>
+        <p class="empty" id="gb2b-empty">No B2B invoices in this period.</p>
+      </div>
+      <div class="panel">
+        <h2>GSTR-1 · B2C summary (buyers without GSTIN)</h2>
+        <div class="tablewrap" id="gb2c-wrap"><table class="grid"><thead><tr><th>Place of supply</th><th class="r">GST rate</th><th class="r">Taxable</th><th class="r">IGST</th><th class="r">CGST</th><th class="r">SGST</th></tr></thead><tbody id="gb2c"></tbody></table></div>
+        <p class="empty" id="gb2c-empty">No B2C sales in this period.</p>
+      </div>
+      <div class="panel">
+        <h2>HSN summary (sales)</h2>
+        <div class="tablewrap" id="ghsn-wrap"><table class="grid"><thead><tr><th>HSN/SAC</th><th>Unit</th><th class="r">Total qty</th><th class="r">GST rate</th><th class="r">Taxable</th><th class="r">IGST</th><th class="r">CGST</th><th class="r">SGST</th><th class="r">Total value</th></tr></thead><tbody id="ghsn"></tbody></table></div>
+        <p class="empty" id="ghsn-empty">No sales in this period.</p>
+      </div>
+    </div>
+  </section>
+
   <section id="tab-settings" hidden>
     <form class="panel" id="settings-form" autocomplete="off" style="max-width:820px">
       <h2>Business details (printed on invoices)</h2>
@@ -761,7 +836,7 @@ function dialog({title, msg="", yes="Yes", no="Cancel", input=null}){
 }
 
 // ---- Tally-style navigation
-const SCREEN={home:"Gateway of BillBook", bill:"Sales Invoice Creation", bills:"Bills Register", purchase:"Purchase Voucher", items:"Stock Items", parties:"Party Ledgers", outstanding:"Outstanding Summary", settings:"Company Settings"};
+const SCREEN={home:"Gateway of BillBook", bill:"Sales Invoice Creation", bills:"Bills Register", purchase:"Purchase Voucher", items:"Stock Items", parties:"Party Ledgers", outstanding:"Outstanding Summary", settings:"Company Settings", daybook:"Day Book", gst:"GST Reports"};
 let gwSel=0;
 const gwItems = () => $$("#gw-menu .gw-item");
 function gwFocus(i){ const it=gwItems(); if(!it.length) return; gwSel=(i+it.length)%it.length; it.forEach((b,k)=>b.classList.toggle("sel", k===gwSel)); if(!$("#tab-home").hidden) it[gwSel].focus({preventScroll:true}); }
@@ -774,7 +849,7 @@ function renderGateway(){
 function doAct(a){
   if(a==="company"){ const sel=$("#co-sel"); sel.focus(); try{ sel.showPicker && sel.showPicker(); }catch(e){} }
   else if(a==="logout") $("#logout").click();
-  else if(a==="help") dialog({title:"Keyboard shortcuts", msg:"Esc: Gateway · F8: Sales · F9: Purchase · F2: Bills · F4: Items & Stock · F7: Parties · F10: Outstanding · Alt+S: Settings · Alt+K: Company · On the Gateway use ↑ ↓ Enter or the underlined letter.", yes:"OK", no:""});
+  else if(a==="help") dialog({title:"Keyboard shortcuts", msg:"Esc: Gateway · F8: Sales · F9: Purchase · F2: Bills · F4: Items & Stock · F7: Parties · F10: Outstanding · Alt+D: Day Book · Alt+R: GST Reports · Alt+S: Settings · Alt+K: Company · On the Gateway use ↑ ↓ Enter or the underlined letter.", yes:"OK", no:""});
 }
 document.addEventListener("click", e => { const a=e.target.closest("[data-act]"); if(a){ e.preventDefault(); doAct(a.dataset.act); } });
 $("#gw-menu").addEventListener("mousemove", e => { const b=e.target.closest(".gw-item"); if(b){ const i=gwItems().indexOf(b); if(i!==gwSel){ gwSel=i; gwItems().forEach((x,k)=>x.classList.toggle("sel",k===gwSel)); } } });
@@ -786,7 +861,7 @@ document.addEventListener("keydown", e => {
   if(!$("#modal").hidden) return;
   if(FKEYS[e.key]){ e.preventDefault(); showTab(FKEYS[e.key]); return; }
   if(e.key==="F1"){ e.preventDefault(); doAct("help"); return; }
-  if(e.altKey && !e.ctrlKey && !e.metaKey){ const k=(e.code||"").replace("Key","").toLowerCase(); if(k==="k"){ e.preventDefault(); doAct("company"); return; } if(k==="g"){ e.preventDefault(); showTab("home"); return; } if(k==="s"){ e.preventDefault(); showTab("settings"); return; } if(k==="b"){ e.preventDefault(); showTab("bills"); return; } }
+  if(e.altKey && !e.ctrlKey && !e.metaKey){ const k=(e.code||"").replace("Key","").toLowerCase(); if(k==="k"){ e.preventDefault(); doAct("company"); return; } if(k==="g"){ e.preventDefault(); showTab("home"); return; } if(k==="s"){ e.preventDefault(); showTab("settings"); return; } if(k==="b"){ e.preventDefault(); showTab("bills"); return; } if(k==="d"){ e.preventDefault(); showTab("daybook"); return; } if(k==="r"){ e.preventDefault(); showTab("gst"); return; } }
   if($("#tab-home").hidden || e.ctrlKey || e.metaKey || e.altKey) return;
   const tag=(document.activeElement&&document.activeElement.tagName)||""; if(/INPUT|SELECT|TEXTAREA/.test(tag)) return;
   if(e.key==="ArrowDown"){ e.preventDefault(); gwFocus(gwSel+1); }
@@ -800,7 +875,8 @@ window.addEventListener("resize", setTopHeight);
 // ---- Tabs
 function showTab(name){
   $$("nav button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab===name ? "true":"false"));
-  ["home","bill","bills","purchase","items","parties","outstanding","settings"].forEach(t => $("#tab-"+t).hidden = t!==name);
+  ["home","bill","bills","purchase","items","parties","outstanding","daybook","gst","settings"].forEach(t => $("#tab-"+t).hidden = t!==name);
+  if(name==="daybook") loadDaybook(); if(name==="gst") loadGst();
   $("#screen-title").textContent = SCREEN[name] || "BillBook";
   $$(".fbar [data-go]").forEach(b => b.setAttribute("aria-current", b.dataset.go===name ? "true":"false"));
   if(name==="home"){ renderGateway(); setTimeout(()=>gwFocus(gwSel), 0); }
@@ -1476,6 +1552,114 @@ $("#os-xlsx").addEventListener("click", () => {
   XLSX.writeFile(wb, `Outstanding_${todayISO()}.xlsx`); toast("Excel file downloaded");
 });
 
+// ================= DAY BOOK =================
+let dbFrom=todayISO(), dbTo=todayISO(), dbRows=[], dbSeq=0;
+const shiftDay=(iso,n)=>{ const d=new Date(iso+"T00:00:00"); d.setDate(d.getDate()+n); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); };
+const lastOfMonth=m=>shiftDay(nextMonth(m)+"-01",-1);
+async function rangeDocs(col, from, to){ const q=await C(col).where("date",">=",from).where("date","<=",to).get(); return q.docs.map(d=>({id:d.id,...d.data()})); }
+async function loadDaybook(){
+  if(!db || !dbReady) return; const my=++dbSeq;
+  if(dbTo<dbFrom) dbTo=dbFrom; $("#db-from").value=dbFrom; $("#db-to").value=dbTo;
+  $("#db-empty").hidden=false; $("#db-empty").textContent="Loading…"; $("#db-wrap").hidden=true;
+  try{
+    const [inv,pur,pay]=await Promise.all([rangeDocs("invoices",dbFrom,dbTo), rangeDocs("purchases",dbFrom,dbTo), rangeDocs("payments",dbFrom,dbTo)]);
+    if(my!==dbSeq) return;
+    dbRows=[...inv.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:"sales", label:"Sales", no:x.no, dr:+x.total||0, cr:0, inv:x})),
+      ...pur.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:"purchase", label:"Purchase", no:x.no, dr:0, cr:+x.total||0})),
+      ...pay.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:x.type==="payment"?"payment":"receipt", label:x.type==="payment"?"Payment":"Receipt", no:x.no, dr:x.type==="payment"?+x.amount||0:0, cr:x.type==="payment"?0:+x.amount||0}))]
+      .sort((a,b)=>(a.date||"").localeCompare(b.date||"") || a.at-b.at);
+    renderDaybook();
+  }catch(err){ $("#db-empty").textContent="Could not load: "+((err&&err.message)||err); }
+}
+function renderDaybook(){
+  const tot=t=>r2(dbRows.filter(r=>r.type===t).reduce((s,r)=>s+r.dr+r.cr,0));
+  $("#db-t-sales").textContent="₹"+fmt(tot("sales")); $("#db-t-pur").textContent="₹"+fmt(tot("purchase")); $("#db-t-rcpt").textContent="₹"+fmt(tot("receipt")); $("#db-t-pay").textContent="₹"+fmt(tot("payment"));
+  $("#db-body").innerHTML=dbRows.map((r,n)=>`<tr${r.inv?` class="click" data-dbinv="${n}"`:""}><td class="r num">${n+1}</td><td>${fmtDate(r.date)}</td><td><b>${esc(r.party)}</b></td><td><span class="vt ${r.type}">${r.label}</span></td><td class="num">${esc(r.no)}</td><td class="r num">${r.dr?fmt(r.dr):""}</td><td class="r num">${r.cr?fmt(r.cr):""}</td></tr>`).join("")
+    + (dbRows.length?`<tr class="sub"><td></td><td></td><td>Total</td><td></td><td></td><td class="r num">${fmt(dbRows.reduce((s,r)=>s+r.dr,0))}</td><td class="r num">${fmt(dbRows.reduce((s,r)=>s+r.cr,0))}</td></tr>`:"");
+  $("#db-wrap").hidden=!dbRows.length; $("#db-empty").hidden=!!dbRows.length; $("#db-empty").textContent = dbFrom===dbTo ? `No entries on ${fmtDate(dbFrom)}.` : `No entries from ${fmtDate(dbFrom)} to ${fmtDate(dbTo)}.`;
+}
+$("#db-body").addEventListener("click", e => { const tr=e.target.closest("[data-dbinv]"); if(tr){ const r=dbRows[+tr.dataset.dbinv]; if(r&&r.inv) openInvoice(r.inv, true); } });
+$("#db-from").addEventListener("change", e => { dbFrom=e.target.value||todayISO(); if(dbTo<dbFrom) dbTo=dbFrom; loadDaybook(); });
+$("#db-to").addEventListener("change", e => { dbTo=e.target.value||dbFrom; loadDaybook(); });
+$("#db-prev").addEventListener("click", () => { dbFrom=dbTo=shiftDay(dbFrom,-1); loadDaybook(); });
+$("#db-next").addEventListener("click", () => { dbFrom=dbTo=shiftDay(dbTo,1); loadDaybook(); });
+$("#db-today").addEventListener("click", () => { dbFrom=dbTo=todayISO(); loadDaybook(); });
+$("#db-month").addEventListener("click", () => { const m=todayISO().slice(0,7); dbFrom=m+"-01"; dbTo=lastOfMonth(m); loadDaybook(); });
+$("#db-xlsx").addEventListener("click", () => {
+  if(!window.XLSX) return toast("Excel tool did not load. Please reload the page.", true); if(!dbRows.length) return toast("No entries for this period", true);
+  const rows=dbRows.map((r,n)=>({"Sr. No.":n+1,"Date":fmtDate(r.date),"Particulars":r.party,"Vch Type":r.label,"Vch No.":r.no,"Debit":r.dr||"","Credit":r.cr||""}));
+  rows.push({"Particulars":"TOTAL","Debit":r2(dbRows.reduce((s,r)=>s+r.dr,0)),"Credit":r2(dbRows.reduce((s,r)=>s+r.cr,0))});
+  const ws=XLSX.utils.json_to_sheet(rows); ws["!cols"]=[7,11,30,10,18,14,14].map(w=>({wch:w})); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Day Book");
+  XLSX.writeFile(wb, `DayBook_${dbFrom}${dbTo!==dbFrom?"_to_"+dbTo:""}.xlsx`); toast("Excel file downloaded");
+});
+
+// ================= GST REPORTS =================
+let gstMonth=todayISO().slice(0,7), gstData=null, gstSeq=0;
+async function loadGst(){
+  if(!db || !dbReady) return; const my=++gstSeq; $("#gst-month").value=gstMonth;
+  $("#gst-note").textContent="Loading…";
+  try{
+    const from=gstMonth+"-01", to=lastOfMonth(gstMonth);
+    const [inv,pur]=await Promise.all([rangeDocs("invoices",from,to), rangeDocs("purchases",from,to)]);
+    if(my!==gstSeq) return;
+    inv.sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.seq||0)-(b.seq||0)); pur.sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+    const b2b=[], b2c={}, hsn={}, out={taxable:0,igst:0,cgst:0,sgst:0}, itc={taxable:0,igst:0,cgst:0,sgst:0};
+    inv.forEach(i=>{ const c=calc(i.lines||[], i.intra), g=String((i.party||{}).gstin||"").trim(), pos=i.pos ?? (i.ship||i.party||{}).stateCode ?? "";
+      out.taxable+=c.taxable; out.igst+=c.igst; out.cgst+=c.cgst; out.sgst+=c.sgst;
+      if(g) b2b.push({gstin:g, party:(i.party||{}).name, no:i.no, date:i.date, pos, value:+i.total||c.total, taxable:c.taxable, igst:c.igst, cgst:c.cgst, sgst:c.sgst});
+      else c.groups.forEach(gr=>{ const k=pos+"|"+gr.rate; const o=(b2c[k] ||= {pos, rate:gr.rate, taxable:0, igst:0, cgst:0, sgst:0}); o.taxable+=gr.taxable; o.igst+=gr.igst; o.cgst+=gr.cgst; o.sgst+=gr.sgst; });
+      c.lines.forEach(l=>{ const k=(l.hsn||"—")+"|"+(+l.gst||0)+"|"+(l.unit||""); const o=(hsn[k] ||= {hsn:l.hsn||"—", unit:l.unit||"", rate:+l.gst||0, qty:0, taxable:0, igst:0, cgst:0, sgst:0}); const t=l.amount*(+l.gst||0)/100;
+        o.qty+=+l.qty||0; o.taxable+=l.amount; if(i.intra){ o.cgst+=t/2; o.sgst+=t/2; } else o.igst+=t; });
+    });
+    pur.forEach(p=>{ itc.taxable+=+p.taxable||0; itc.igst+=+p.igst||0; itc.cgst+=+p.cgst||0; itc.sgst+=+p.sgst||0; });
+    const rd=o=>{ for(const k in o) if(typeof o[k]==="number") o[k]=r2(o[k]); return o; };
+    gstData={inv, pur, b2b, b2c:Object.values(b2c).map(rd).sort((a,b)=>a.pos.localeCompare(b.pos)||a.rate-b.rate), hsn:Object.values(hsn).map(rd).sort((a,b)=>a.hsn.localeCompare(b.hsn)), out:rd(out), itc:rd(itc)};
+    renderGst();
+  }catch(err){ $("#gst-note").textContent="Could not load: "+((err&&err.message)||err); }
+}
+function setOff(o,t){
+  const L={igst:o.igst,cgst:o.cgst,sgst:o.sgst}, Cr={igst:t.igst,cgst:t.cgst,sgst:t.sgst};
+  const use=(from,to)=>{ const a=Math.min(Cr[from],L[to]); Cr[from]=r2(Cr[from]-a); L[to]=r2(L[to]-a); };
+  use("igst","igst"); use("igst","cgst"); use("igst","sgst"); use("cgst","cgst"); use("cgst","igst"); use("sgst","sgst"); use("sgst","igst");
+  return {pay:L, cf:Cr};
+}
+function renderGst(){
+  const d=gstData; if(!d) return; const o=d.out, t=d.itc;
+  const outTax=r2(o.igst+o.cgst+o.sgst), itcTax=r2(t.igst+t.cgst+t.sgst);
+  const net=setOff(o,t);
+  $("#g-out").textContent="₹"+fmt(outTax); $("#g-itc").textContent="₹"+fmt(itcTax);
+  const n=r2(net.pay.igst+net.pay.cgst+net.pay.sgst); $("#g-net").textContent="₹"+fmt(n); $("#g-count").textContent=`${d.inv.length} · ${d.pur.length}`;
+  $("#gst-note").textContent=`${new Date(gstMonth+"-01T00:00:00").toLocaleDateString("en-IN",{month:"long",year:"numeric"})}: figures are worked out from the bills saved in BillBook. Check them with your CA before filing. Net payable uses the standard set-off order (IGST credit first, then CGST and SGST credit).`;
+  const row=(lbl,a,b)=>`<tr><td>${lbl}</td><td class="r num">${a.taxable!==undefined&&a.taxable!==""?fmt(a.taxable):""}</td><td class="r num">${fmt(a.igst)}</td><td class="r num">${fmt(a.cgst)}</td><td class="r num">${fmt(a.sgst)}</td></tr>`;
+  $("#g3b").innerHTML = row("3.1 (a) Outward taxable supplies", o) + row("4 (A)(5) Input tax credit (all other ITC)", t)
+    + `<tr class="sub"><td>Tax payable in cash (after set-off)</td><td></td><td class="r num">${fmt(net.pay.igst)}</td><td class="r num">${fmt(net.pay.cgst)}</td><td class="r num">${fmt(net.pay.sgst)}</td></tr>`
+    + `<tr><td>Credit carried forward</td><td></td><td class="r num">${fmt(net.cf.igst)}</td><td class="r num">${fmt(net.cf.cgst)}</td><td class="r num">${fmt(net.cf.sgst)}</td></tr>`;
+  $("#gb2b").innerHTML=d.b2b.map((r,i)=>`<tr><td class="r num">${i+1}</td><td class="num">${esc(r.gstin)}</td><td>${esc(r.party)}</td><td class="num">${esc(r.no)}</td><td>${fmtDate(r.date)}</td><td>${esc(r.pos?r.pos+"-"+stateName(r.pos):"")}</td><td class="r num">${fmt(r.value)}</td><td class="r num">${fmt(r.taxable)}</td><td class="r num">${fmt(r.igst)}</td><td class="r num">${fmt(r.cgst)}</td><td class="r num">${fmt(r.sgst)}</td></tr>`).join("");
+  $("#gb2b-wrap").hidden=!d.b2b.length; $("#gb2b-empty").hidden=!!d.b2b.length;
+  $("#gb2c").innerHTML=d.b2c.map(r=>`<tr><td>${esc(r.pos?r.pos+"-"+stateName(r.pos):"Not set")}</td><td class="r">${r.rate}%</td><td class="r num">${fmt(r.taxable)}</td><td class="r num">${fmt(r.igst)}</td><td class="r num">${fmt(r.cgst)}</td><td class="r num">${fmt(r.sgst)}</td></tr>`).join("");
+  $("#gb2c-wrap").hidden=!d.b2c.length; $("#gb2c-empty").hidden=!!d.b2c.length;
+  $("#ghsn").innerHTML=d.hsn.map(r=>`<tr><td class="num">${esc(r.hsn)}</td><td>${esc(r.unit)}</td><td class="r num">${fmtQ(r.qty)}</td><td class="r">${r.rate}%</td><td class="r num">${fmt(r.taxable)}</td><td class="r num">${fmt(r.igst)}</td><td class="r num">${fmt(r.cgst)}</td><td class="r num">${fmt(r.sgst)}</td><td class="r num">${fmt(r2(r.taxable+r.igst+r.cgst+r.sgst))}</td></tr>`).join("");
+  $("#ghsn-wrap").hidden=!d.hsn.length; $("#ghsn-empty").hidden=!!d.hsn.length;
+}
+$("#gst-month").addEventListener("change", e => { gstMonth=e.target.value||todayISO().slice(0,7); loadGst(); });
+$("#gst-xlsx").addEventListener("click", () => {
+  const d=gstData; if(!window.XLSX) return toast("Excel tool did not load. Please reload the page.", true); if(!d) return toast("Load a period first", true);
+  const sh=(rows,w)=>{ const ws=XLSX.utils.json_to_sheet(rows.length?rows:[{"Note":"No entries"}]); ws["!cols"]=w.map(x=>({wch:x})); return ws; };
+  const o=d.out, t=d.itc;
+  const s3b=[{"Section":"3.1(a) Outward taxable supplies","Taxable Value":o.taxable,"IGST":o.igst,"CGST":o.cgst,"SGST":o.sgst},{"Section":"4(A)(5) ITC - all other","Taxable Value":t.taxable,"IGST":t.igst,"CGST":t.cgst,"SGST":t.sgst},(()=>{ const n=setOff(o,t); return {"Section":"Tax payable in cash (after set-off)","Taxable Value":"","IGST":n.pay.igst,"CGST":n.pay.cgst,"SGST":n.pay.sgst}; })(), (()=>{ const n=setOff(o,t); return {"Section":"Credit carried forward","Taxable Value":"","IGST":n.cf.igst,"CGST":n.cf.cgst,"SGST":n.cf.sgst}; })()];
+  const b2b=d.b2b.map(r=>({"GSTIN of Recipient":r.gstin,"Receiver Name":r.party,"Invoice Number":r.no,"Invoice Date":fmtDate(r.date),"Invoice Value":r.value,"Place Of Supply":r.pos?r.pos+"-"+stateName(r.pos):"","Reverse Charge":"N","Invoice Type":"Regular B2B","Taxable Value":r.taxable,"IGST":r.igst,"CGST":r.cgst,"SGST":r.sgst}));
+  const b2c=d.b2c.map(r=>({"Type":"OE","Place Of Supply":r.pos?r.pos+"-"+stateName(r.pos):"","Rate":r.rate,"Taxable Value":r.taxable,"IGST":r.igst,"CGST":r.cgst,"SGST":r.sgst}));
+  const hsn=d.hsn.map(r=>({"HSN":r.hsn,"UQC":r.unit,"Total Quantity":r.qty,"Rate":r.rate,"Taxable Value":r.taxable,"Integrated Tax Amount":r.igst,"Central Tax Amount":r.cgst,"State/UT Tax Amount":r.sgst,"Total Value":r2(r.taxable+r.igst+r.cgst+r.sgst)}));
+  const purs=d.pur.map(p=>({"Supplier GSTIN":(p.party||{}).gstin||"","Supplier":(p.party||{}).name,"Bill No":p.no,"Date":fmtDate(p.date),"Taxable Value":p.taxable,"IGST":p.igst,"CGST":p.cgst,"SGST":p.sgst,"Bill Value":p.total}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, sh(s3b,[34,14,12,12,12]), "GSTR-3B Summary");
+  XLSX.utils.book_append_sheet(wb, sh(b2b,[17,28,18,12,13,20,8,12,13,11,11,11]), "b2b");
+  XLSX.utils.book_append_sheet(wb, sh(b2c,[6,20,6,13,11,11,11]), "b2cs");
+  XLSX.utils.book_append_sheet(wb, sh(hsn,[10,7,10,6,13,13,13,13,13]), "hsn");
+  XLSX.utils.book_append_sheet(wb, sh(purs,[17,28,16,12,13,11,11,11,13]), "Purchases (ITC)");
+  XLSX.writeFile(wb, `GST_${gstMonth}.xlsx`); toast("Excel file downloaded");
+});
+
 // ================= SETTINGS =================
 const ST = {name:"st-name",address:"st-addr",phone:"st-phone",email:"st-email",gstin:"st-gstin",stateCode:"st-state",pan:"st-pan",bank:"st-bank",acno:"st-acno",ifsc:"st-ifsc",prefix:"st-prefix",fy:"st-fy",nextNo:"st-next",decl:"st-decl"};
 let settingsDirty=false;
@@ -1533,7 +1717,7 @@ function subscribeAll(){
   unsubs.push(C("items").onSnapshot(q => { S.items=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.name).localeCompare(String(b.name))); renderItems(); renderBills(); }, fail));
   unsubs.push(C("parties").onSnapshot(q => { S.parties=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.name).localeCompare(String(b.name))); renderParties(); }, fail));
   unsubs.push(C("invoices").where("date","==",todayISO()).onSnapshot(q => { S.todayTotal=q.docs.reduce((t,d)=>t+(+d.data().total||0),0); renderBills(); }, ()=>{}));
-  watchBills(); if(!$("#tab-purchase").hidden) watchPurchases(); if(!$("#tab-outstanding").hidden) loadOutstanding();
+  watchBills(); if(!$("#tab-purchase").hidden) watchPurchases(); if(!$("#tab-outstanding").hidden) loadOutstanding(); if(!$("#tab-daybook").hidden) loadDaybook(); if(!$("#tab-gst").hidden) loadGst();
 }
 
 // ================= COMPANIES =================
