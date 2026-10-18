@@ -11,33 +11,25 @@
 <title>GST Bill Book</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&display=swap">
 <style>
 /* Layout: carbon-copy bill book — cool paper-toned app chrome, carbon-blue accent; the invoice sheet itself always stays white paper */
 :root{
-  --bg:#f2f3f8; --surface:#ffffff; --surface-2:#eceef6; --line:#d8dbe8; --fg:#1b1e2b; --muted:#5b6077;
-  --accent:#2c3a8f; --accent-ink:#ffffff; --accent-soft:#e2e6fa;
-  --good:#1f7a4d; --good-soft:#dcf2e6; --warn:#9a5700; --warn-soft:#fcefd6; --bad:#b3261e; --bad-soft:#fbe3e1;
-  --overlay:rgba(18,20,32,.55);
-  --font-display:"Archivo","Helvetica Neue",Arial,sans-serif;
-  --font-body:"Archivo","Helvetica Neue",Arial,sans-serif;
-  --font-num:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
-  --r:10px;
+  --bg:#eef2f6; --surface:#ffffff; --surface-2:#e4ecf4; --line:#c3cfdb; --fg:#1b2633; --muted:#55657a;
+  --accent:#1f4e79; --accent-ink:#ffffff; --accent-soft:#dfe9f4;
+  --good:#1d7a45; --good-soft:#dcf1e4; --warn:#8a5a00; --warn-soft:#fbefd2; --bad:#b3261e; --bad-soft:#fbe3e1;
+  --bar:#16385c; --bar-2:#d3dfec; --hl:#fde68a; --hl-2:#fff7d1;
+  --overlay:rgba(16,28,44,.55);
+  --font-display:"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --font-body:"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --font-num:"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --r:2px; color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#11131b; --surface:#1a1d29; --surface-2:#222637; --line:#2f3448; --fg:#e7e9f2; --muted:#9aa0b8;
-  --accent:#8e9cf5; --accent-ink:#0f1222; --accent-soft:#262c4f;
-  --good:#5cc994; --good-soft:#163526; --warn:#f0b35a; --warn-soft:#3a2a12; --bad:#f08a82; --bad-soft:#3d1a18;
-  --overlay:rgba(0,0,0,.65); color-scheme:dark }}
-:root[data-theme="dark"]{
-  --bg:#11131b; --surface:#1a1d29; --surface-2:#222637; --line:#2f3448; --fg:#e7e9f2; --muted:#9aa0b8;
-  --accent:#8e9cf5; --accent-ink:#0f1222; --accent-soft:#262c4f;
-  --good:#5cc994; --good-soft:#163526; --warn:#f0b35a; --warn-soft:#3a2a12; --bad:#f08a82; --bad-soft:#3d1a18;
-  --overlay:rgba(0,0,0,.65); color-scheme:dark }
 
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:14px;line-height:1.45}
 .num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.num,.tile b,.sum-total .num{font-variant-numeric:tabular-nums}
 h1,h2,h3{font-family:var(--font-display);font-stretch:82%;margin:0;text-wrap:balance}
 h2{font-size:15px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -79,7 +71,7 @@ main{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:18px 60px}
 /* New bill */
 .bill-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
 @media (max-width:900px){.bill-grid{grid-template-columns:minmax(0,1fr)}}
-.summary{position:sticky;top:calc(env(safe-area-inset-top,0px) + 110px)}
+.summary{position:sticky;top:calc(var(--tophead,88px) + 12px)}
 .inv-no{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
 .inv-no span{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
 .inv-no strong{font-family:var(--font-num);font-size:14px}
@@ -214,6 +206,75 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
 @media (max-width:760px){.os-tiles{grid-template-columns:minmax(0,1fr)}}
 .amt-due{color:var(--bad);font-weight:700} .amt-pay{color:var(--good);font-weight:700}
 .linkbtn{background:none;border:0;color:var(--accent);font-weight:600;cursor:pointer;padding:0;text-decoration:underline}
+/* ===== TallyPrime-style chrome ===== */
+body{font-size:13.5px}
+h1,h2,h3{font-stretch:normal}
+.top{background:var(--bar);border-bottom:0;color:#fff}
+.tbar{max-width:none;display:flex;align-items:center;gap:6px 18px;padding:6px 14px;flex-wrap:wrap}
+.tbrand{font-size:19px;font-weight:700;letter-spacing:.01em;white-space:nowrap;color:#fff}
+.tbrand b{color:#ffd54a;font-weight:700}
+.tmenu{display:flex;flex-wrap:wrap;gap:2px;margin-right:auto}
+.tmenu button{background:none;border:0;color:#e6eef7;padding:5px 9px;font-size:12.5px;cursor:pointer;border-radius:2px;white-space:nowrap}
+.tmenu button:hover{background:rgba(255,255,255,.12);color:#fff}
+.tmenu u{text-decoration:none;font-weight:700;color:#ffd54a}
+.top .userchip{padding-bottom:0;color:#c9d7e6}
+.top .userchip .btn{background:transparent;border-color:rgba(255,255,255,.35);color:#fff}
+.top .userchip .btn:hover{background:rgba(255,255,255,.12)}
+.top .cosel select{background:#0f2b47;color:#fff;border-color:rgba(255,255,255,.35)}
+.sbar{background:var(--bar-2);color:var(--bar);border-bottom:1px solid #b7c7d8}
+.sbar-in{display:flex;align-items:center;gap:12px;padding:5px 14px;font-size:13px}
+.sbar-in b{font-weight:700;letter-spacing:.01em}
+.sbar-in #firm-sub{margin-left:auto;color:#2c4a68;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sbar .x{color:var(--bar)}
+nav{display:none}
+@media (max-width:900px){
+  nav{display:flex;background:#fff;border-bottom:1px solid var(--line);padding:0 8px;margin:0}
+  nav button{color:var(--muted)}
+  .tmenu{display:none}
+}
+main{max-width:1240px}
+@media (min-width:1101px){ main{margin-right:150px} .banner-wrap{margin-right:150px} }
+.fbar{display:none}
+@media (min-width:1101px){
+  .fbar{display:flex;flex-direction:column;position:fixed;right:0;top:var(--tophead,88px);bottom:0;width:140px;background:#e7edf3;border-left:1px solid var(--line);padding:6px 0;overflow:auto;z-index:15}
+  .fbar button{background:none;border:0;border-bottom:1px solid #d3dce6;text-align:left;padding:8px 12px;font-size:12.5px;color:var(--fg);cursor:pointer}
+  .fbar button:hover,.fbar button[aria-current="true"]{background:var(--hl)}
+  .fbar u{text-decoration:none;font-weight:700;color:var(--accent)}
+  .fbar .sep{height:10px;border-bottom:1px solid #d3dce6}
+}
+.panel{border-radius:var(--r);box-shadow:none;padding:14px}
+.panel > h2,.panel > .listhead,.panel > .acct-head{background:var(--surface-2);margin:-14px -14px 2px;padding:8px 14px;border-bottom:1px solid var(--line)}
+.panel > h2,.listhead h2,.acct-head h2{color:var(--accent);font-size:12.5px;letter-spacing:.07em}
+.btn{border-radius:var(--r);background:#f3f6f9;border-color:#b9c6d4;font-weight:600}
+.btn:hover{background:var(--hl-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.f input,.f select,.f textarea,.adder input,.lines input,.lines select,.search{border-radius:var(--r);border-color:#b9c6d4}
+.f input:focus,.f select:focus,.f textarea:focus,.adder input:focus,.lines input:focus,.lines select:focus,.search:focus{background:var(--hl-2);border-color:#c79a16;outline:none;box-shadow:0 0 0 1px #c79a16}
+:focus-visible{outline:2px solid #c79a16;outline-offset:1px}
+.tablewrap{border-radius:var(--r)}
+table.grid th{background:#dbe5ef;color:#1f3b57;font-weight:700}
+tr.click:hover td,table.grid tbody tr:hover td{background:var(--hl-2)}
+.tile{border-radius:var(--r);border-top:3px solid var(--accent)}
+.empty,.notice,.supply,.pill,.toast,.banner{border-radius:var(--r)}
+.supply{background:var(--accent-soft);color:var(--accent)}
+.sum-total{border-top-color:var(--accent)}
+.login{border-top:4px solid var(--bar)}
+.login h1 b{color:var(--accent)}
+/* Gateway */
+.gw{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:28px;align-items:start;max-width:1000px;margin:0 auto}
+@media (max-width:900px){.gw{grid-template-columns:minmax(0,1fr);gap:16px} .gw-box{order:-1}}
+.gw-info{background:#fff;border:1px solid var(--line);padding:16px 18px;display:grid;gap:14px;align-content:start}
+.gw-info .k{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.gw-info .v{font-size:14px;font-weight:600;color:var(--fg)}
+.gw-info .big{font-size:18px;color:var(--accent);font-weight:700}
+.gw-box{background:#fff;border:1px solid #9fb3c8;box-shadow:0 2px 0 #c9d6e3}
+.gw-title{background:var(--bar);color:#fff;text-align:center;padding:7px;font-weight:700;letter-spacing:.03em;font-size:13.5px}
+.gw-sec{padding:6px 0 4px}
+.gw-sec h4{margin:6px 0 2px;text-align:center;font-size:11px;letter-spacing:.14em;color:#5a7089;font-weight:700}
+.gw-item{display:block;width:100%;text-align:center;background:none;border:0;padding:5px 10px;font-size:14px;color:var(--fg);cursor:pointer}
+.gw-item u{text-decoration:none;font-weight:700;color:var(--accent)}
+.gw-item.sel,.gw-item:hover{background:var(--hl)}
+.gw-hint{text-align:center;font-size:12px;color:var(--muted);padding:8px;border-top:1px solid var(--line)}
 @media print{
   @page{size:A4;margin:0}
   body{background:#fff}
@@ -240,29 +301,89 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
 </div>
 <div id="app" hidden>
 
-<header class="top">
-  <div class="top-in">
-    <div class="brand">
-      <h1>Bill<b>Book</b></h1>
-      <small id="firm-sub">Add your business details in Settings</small>
+<header class="top" id="tophead">
+  <div class="tbar">
+    <span class="tbrand">Bill<b>Book</b></span>
+    <div class="tmenu" role="menubar" aria-label="Main menu">
+      <button type="button" data-act="company" title="Alt+K"><u>K</u>: Company</button>
+      <button type="button" data-go="home" title="Alt+G"><u>G</u>: Gateway</button>
+      <button type="button" data-go="bill" title="F8"><u>F8</u>: Sales</button>
+      <button type="button" data-go="purchase" title="F9"><u>F9</u>: Purchase</button>
+      <button type="button" data-go="bills" title="Alt+B"><u>B</u>: Bills</button>
+      <button type="button" data-act="help" title="F1"><u>F1</u>: Help</button>
     </div>
     <div class="userchip"><label class="cosel" title="Switch company"><span class="sr">Company</span><select id="co-sel" aria-label="Company"></select></label><button class="btn sm" id="install-btn" type="button" hidden>Install app</button><span id="user-email"></span><button class="btn sm" id="logout">Sign out</button></div>
-    <nav role="tablist" aria-label="Sections">
-      <button role="tab" data-tab="bill" aria-selected="true">New Bill</button>
-      <button role="tab" data-tab="bills" aria-selected="false">Bills</button>
-      <button role="tab" data-tab="purchase" aria-selected="false">Purchase</button>
-      <button role="tab" data-tab="items" aria-selected="false">Items &amp; Stock</button>
-      <button role="tab" data-tab="parties" aria-selected="false">Parties</button>
-      <button role="tab" data-tab="outstanding" aria-selected="false">Outstanding</button>
-      <button role="tab" data-tab="settings" aria-selected="false">Settings</button>
-    </nav>
   </div>
+  <div class="sbar"><div class="sbar-in"><b id="screen-title">Gateway of BillBook</b><span id="firm-sub">Add your business details in Settings</span></div></div>
+  <nav role="tablist" aria-label="Sections">
+    <button role="tab" data-tab="home" aria-selected="true">Gateway</button>
+    <button role="tab" data-tab="bill" aria-selected="false">Sales</button>
+    <button role="tab" data-tab="bills" aria-selected="false">Bills</button>
+    <button role="tab" data-tab="purchase" aria-selected="false">Purchase</button>
+    <button role="tab" data-tab="items" aria-selected="false">Items &amp; Stock</button>
+    <button role="tab" data-tab="parties" aria-selected="false">Parties</button>
+    <button role="tab" data-tab="outstanding" aria-selected="false">Outstanding</button>
+    <button role="tab" data-tab="settings" aria-selected="false">Settings</button>
+  </nav>
 </header>
+<aside class="fbar" aria-label="Shortcuts">
+  <button type="button" data-go="home"><u>Esc</u>: Gateway</button>
+  <div class="sep"></div>
+  <button type="button" data-go="bill"><u>F8</u>: Sales</button>
+  <button type="button" data-go="purchase"><u>F9</u>: Purchase</button>
+  <button type="button" data-go="bills"><u>F2</u>: Bills</button>
+  <div class="sep"></div>
+  <button type="button" data-go="items"><u>F4</u>: Items &amp; Stock</button>
+  <button type="button" data-go="parties"><u>F7</u>: Parties</button>
+  <button type="button" data-go="outstanding"><u>F10</u>: Outstanding</button>
+  <div class="sep"></div>
+  <button type="button" data-go="settings"><u>Alt+S</u>: Settings</button>
+  <button type="button" data-act="company"><u>Alt+K</u>: Company</button>
+  <button type="button" data-act="help"><u>F1</u>: Help</button>
+</aside>
 <div class="banner-wrap"><div class="banner" id="banner" hidden></div></div>
 
 <main>
   <!-- NEW BILL -->
-  <section id="tab-bill">
+  <section id="tab-home">
+    <div class="gw">
+      <div class="gw-info">
+        <div><div class="k">Current period</div><div class="v" id="gw-period">—</div></div>
+        <div><div class="k">Current date</div><div class="v" id="gw-date">—</div></div>
+        <div><div class="k">Name of company</div><div class="big" id="gw-co">—</div><div class="hint" id="gw-gstin"></div></div>
+        <div class="tiles" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+          <div class="tile"><span>Today's sales</span><b id="gw-today">₹0</b></div>
+          <div class="tile"><span>Low stock items</span><b id="gw-low">0</b></div>
+        </div>
+      </div>
+      <div class="gw-box" role="menu" aria-label="Gateway of BillBook" id="gw-menu">
+        <div class="gw-title">Gateway of BillBook</div>
+        <div class="gw-sec"><h4>MASTERS</h4>
+          <button class="gw-item" role="menuitem" data-key="i" data-go="items"><u>I</u>tems &amp; Stock</button>
+          <button class="gw-item" role="menuitem" data-key="l" data-go="parties">Party <u>L</u>edgers</button>
+        </div>
+        <div class="gw-sec"><h4>TRANSACTIONS</h4>
+          <button class="gw-item" role="menuitem" data-key="s" data-go="bill"><u>S</u>ales (New Bill)</button>
+          <button class="gw-item" role="menuitem" data-key="p" data-go="purchase"><u>P</u>urchase</button>
+        </div>
+        <div class="gw-sec"><h4>REPORTS</h4>
+          <button class="gw-item" role="menuitem" data-key="b" data-go="bills"><u>B</u>ills Register</button>
+          <button class="gw-item" role="menuitem" data-key="o" data-go="outstanding"><u>O</u>utstanding</button>
+          <button class="gw-item" role="menuitem" data-key="y" data-go="items">Stock Summar<u>y</u></button>
+        </div>
+        <div class="gw-sec"><h4>UTILITIES</h4>
+          <button class="gw-item" role="menuitem" data-key="t" data-go="settings">Se<u>t</u>tings</button>
+          <button class="gw-item" role="menuitem" data-key="k" data-act="company">Change Company (<u>K</u>)</button>
+        </div>
+        <div class="gw-sec"><h4>QUIT</h4>
+          <button class="gw-item" role="menuitem" data-key="q" data-act="logout"><u>Q</u>uit (Sign out)</button>
+        </div>
+        <div class="gw-hint">↑ ↓ to move · Enter to open · or press the underlined letter</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-bill" hidden>
     <div class="bill-grid">
       <div class="stack">
         <div class="notice" id="firm-notice" hidden>Your business name, GSTIN and bank details appear on every invoice. Add them in <button data-go="settings">Settings</button> first.</div>
@@ -639,10 +760,50 @@ function dialog({title, msg="", yes="Yes", no="Cancel", input=null}){
   });
 }
 
+// ---- Tally-style navigation
+const SCREEN={home:"Gateway of BillBook", bill:"Sales Invoice Creation", bills:"Bills Register", purchase:"Purchase Voucher", items:"Stock Items", parties:"Party Ledgers", outstanding:"Outstanding Summary", settings:"Company Settings"};
+let gwSel=0;
+const gwItems = () => $$("#gw-menu .gw-item");
+function gwFocus(i){ const it=gwItems(); if(!it.length) return; gwSel=(i+it.length)%it.length; it.forEach((b,k)=>b.classList.toggle("sel", k===gwSel)); if(!$("#tab-home").hidden) it[gwSel].focus({preventScroll:true}); }
+function fyRange(){ const d=new Date(); const y=d.getMonth()>=3?d.getFullYear():d.getFullYear()-1; return `1-Apr-${String(y).slice(2)} to 31-Mar-${String(y+1).slice(2)}`; }
+function renderGateway(){
+  $("#gw-period").textContent=fyRange(); $("#gw-date").textContent=new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"short",year:"numeric"});
+  $("#gw-co").textContent=S.firm.name||"—"; $("#gw-gstin").textContent=[S.firm.gstin, stateName(S.firm.stateCode)].filter(Boolean).join(" · ");
+  $("#gw-today").textContent="₹"+(+S.todayTotal||0).toLocaleString("en-IN"); $("#gw-low").textContent=S.items.filter(isLow).length;
+}
+function doAct(a){
+  if(a==="company"){ const sel=$("#co-sel"); sel.focus(); try{ sel.showPicker && sel.showPicker(); }catch(e){} }
+  else if(a==="logout") $("#logout").click();
+  else if(a==="help") dialog({title:"Keyboard shortcuts", msg:"Esc: Gateway · F8: Sales · F9: Purchase · F2: Bills · F4: Items & Stock · F7: Parties · F10: Outstanding · Alt+S: Settings · Alt+K: Company · On the Gateway use ↑ ↓ Enter or the underlined letter.", yes:"OK", no:""});
+}
+document.addEventListener("click", e => { const a=e.target.closest("[data-act]"); if(a){ e.preventDefault(); doAct(a.dataset.act); } });
+$("#gw-menu").addEventListener("mousemove", e => { const b=e.target.closest(".gw-item"); if(b){ const i=gwItems().indexOf(b); if(i!==gwSel){ gwSel=i; gwItems().forEach((x,k)=>x.classList.toggle("sel",k===gwSel)); } } });
+const FKEYS={F8:"bill", F9:"purchase", F2:"bills", F4:"items", F7:"parties", F10:"outstanding"};
+document.addEventListener("keydown", e => {
+  if(!$("#app") || $("#app").hidden) return;
+  if(!$("#dlg").hidden) return;
+  if(e.key==="Escape"){ if(!$("#modal").hidden) return; e.preventDefault(); if(document.activeElement && document.activeElement!==document.body) document.activeElement.blur(); showTab("home"); return; }
+  if(!$("#modal").hidden) return;
+  if(FKEYS[e.key]){ e.preventDefault(); showTab(FKEYS[e.key]); return; }
+  if(e.key==="F1"){ e.preventDefault(); doAct("help"); return; }
+  if(e.altKey && !e.ctrlKey && !e.metaKey){ const k=(e.code||"").replace("Key","").toLowerCase(); if(k==="k"){ e.preventDefault(); doAct("company"); return; } if(k==="g"){ e.preventDefault(); showTab("home"); return; } if(k==="s"){ e.preventDefault(); showTab("settings"); return; } if(k==="b"){ e.preventDefault(); showTab("bills"); return; } }
+  if($("#tab-home").hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+  const tag=(document.activeElement&&document.activeElement.tagName)||""; if(/INPUT|SELECT|TEXTAREA/.test(tag)) return;
+  if(e.key==="ArrowDown"){ e.preventDefault(); gwFocus(gwSel+1); }
+  else if(e.key==="ArrowUp"){ e.preventDefault(); gwFocus(gwSel-1); }
+  else if(e.key==="Enter"){ e.preventDefault(); gwItems()[gwSel].click(); }
+  else if(e.key.length===1){ const b=gwItems().find(x=>x.dataset.key===e.key.toLowerCase()); if(b){ e.preventDefault(); gwSel=gwItems().indexOf(b); b.click(); } }
+});
+function setTopHeight(){ const h=$("#tophead"); if(h) document.documentElement.style.setProperty("--tophead", h.offsetHeight+"px"); }
+window.addEventListener("resize", setTopHeight);
+
 // ---- Tabs
 function showTab(name){
   $$("nav button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab===name ? "true":"false"));
-  ["bill","bills","purchase","items","parties","outstanding","settings"].forEach(t => $("#tab-"+t).hidden = t!==name);
+  ["home","bill","bills","purchase","items","parties","outstanding","settings"].forEach(t => $("#tab-"+t).hidden = t!==name);
+  $("#screen-title").textContent = SCREEN[name] || "BillBook";
+  $$(".fbar [data-go]").forEach(b => b.setAttribute("aria-current", b.dataset.go===name ? "true":"false"));
+  if(name==="home"){ renderGateway(); setTimeout(()=>gwFocus(gwSel), 0); }
   if(name==="purchase") renderPurchases(); if(name==="outstanding") loadOutstanding();
   try{ localStorage.setItem("billbook-tab", name); }catch(e){}
   window.scrollTo(0,0);
@@ -972,7 +1133,7 @@ function renderBills(){
   let tMonth=0; S.invoices.forEach(i => { tMonth+=+i.total||0; });
   $("#t-today").textContent="₹"+S.todayTotal.toLocaleString("en-IN"); $("#t-month").textContent="₹"+tMonth.toLocaleString("en-IN"); $("#t-count").textContent=S.invoices.length;
   $("#t-month-lbl").textContent = billsMonth ? new Date(billsMonth+"-01T00:00:00").toLocaleDateString("en-IN",{month:"long",year:"numeric"}) : "All invoices (total)";
-  const low=S.items.filter(isLow).length; $("#t-low").textContent=low; $("#t-low-tile").classList.toggle("alert", low>0);
+  const low=S.items.filter(isLow).length; $("#t-low").textContent=low; $("#t-low-tile").classList.toggle("alert", low>0); if(!$("#tab-home").hidden) renderGateway();
   const list=S.invoices.filter(i => !q || (i.no||"").toLowerCase().includes(q) || (i.party&&i.party.name||"").toLowerCase().includes(q));
   $("#bills-body").innerHTML = list.map(i => `<tr class="click" data-inv="${esc(i.id)}" tabindex="0"><td class="num">${esc(i.no)}</td><td>${fmtDate(i.date)}</td><td>${esc(i.party&&i.party.name)}</td><td class="r">${(i.lines||[]).length}</td><td class="r num">${rupee(i.total)}</td></tr>`).join("");
   $("#bills-wrap").hidden=!list.length; $("#bills-empty").hidden=!!list.length;
@@ -1339,12 +1500,12 @@ function onFirm(){
   const f=S.firm;
   $("#firm-sub").textContent = f.name ? `${f.name}${f.gstin?" · "+f.gstin:""}` : "Add your business details in Settings";
   $("#firm-notice").hidden = !!f.name || !dbReady;
-  fillSettings(); updateSummary(); updatePur();
+  fillSettings(); updateSummary(); updatePur(); if(!$("#tab-home").hidden) renderGateway(); setTopHeight();
 }
 
 // ================= BOOT =================
 fillBillForm(); fillPur(); renderItems(); renderParties(); renderBills(); fillSettings();
-try{ const t=localStorage.getItem("billbook-tab"); if(t && $("#tab-"+t)) showTab(t); }catch(e){}
+showTab("home"); setTimeout(setTopHeight, 50);
 
 const banner = m => { $("#banner").textContent=m; $("#banner").hidden=!m; };
 const CFG = window.FIREBASE_CONFIG;
