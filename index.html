@@ -268,6 +268,11 @@ tr.click:hover td,table.grid tbody tr:hover td{background:var(--hl-2)}
 .vt{display:inline-block;padding:1px 7px;font-size:11.5px;font-weight:700;border:1px solid currentColor;border-radius:var(--r)}
 .vt.sales{color:var(--accent)} .vt.purchase{color:#7a4b00} .vt.receipt{color:var(--good)} .vt.payment{color:var(--bad)}
 table.grid tr.sub td{background:var(--surface-2);font-weight:700}
+.vt.credit{color:#6b2fa0} .vt.debit{color:#0f6b6b}
+.editbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--hl);border:1px solid #d9b84a;color:#3b2f00;font-weight:600;font-size:13px}
+.seg{display:inline-flex;border:1px solid #b9c6d4}
+.seg button{background:#f3f6f9;border:0;padding:6px 12px;font-weight:600;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
 /* Gateway */
 .gw{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:28px;align-items:start;max-width:1000px;margin:0 auto}
 @media (max-width:900px){.gw{grid-template-columns:minmax(0,1fr);gap:16px} .gw-box{order:-1}}
@@ -333,6 +338,9 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
     <button role="tab" data-tab="outstanding" aria-selected="false">Outstanding</button>
     <button role="tab" data-tab="daybook" aria-selected="false">Day Book</button>
     <button role="tab" data-tab="gst" aria-selected="false">GST Reports</button>
+    <button role="tab" data-tab="notes" aria-selected="false">Credit/Debit Note</button>
+    <button role="tab" data-tab="stock" aria-selected="false">Stock Summary</button>
+    <button role="tab" data-tab="cash" aria-selected="false">Cash/Bank</button>
     <button role="tab" data-tab="settings" aria-selected="false">Settings</button>
   </nav>
 </header>
@@ -348,6 +356,9 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
   <button type="button" data-go="outstanding"><u>F10</u>: Outstanding</button>
   <button type="button" data-go="daybook"><u>Alt+D</u>: Day Book</button>
   <button type="button" data-go="gst"><u>Alt+R</u>: GST Reports</button>
+  <button type="button" data-go="notes"><u>Alt+N</u>: Cr/Dr Note</button>
+  <button type="button" data-go="stock"><u>Alt+I</u>: Stock Summary</button>
+  <button type="button" data-go="cash"><u>Alt+C</u>: Cash/Bank</button>
   <div class="sep"></div>
   <button type="button" data-go="settings"><u>Alt+S</u>: Settings</button>
   <button type="button" data-act="company"><u>Alt+K</u>: Company</button>
@@ -377,17 +388,20 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
         <div class="gw-sec"><h4>TRANSACTIONS</h4>
           <button class="gw-item" role="menuitem" data-key="s" data-go="bill"><u>S</u>ales (New Bill)</button>
           <button class="gw-item" role="menuitem" data-key="p" data-go="purchase"><u>P</u>urchase</button>
+          <button class="gw-item" role="menuitem" data-key="n" data-go="notes">Credit / Debit <u>N</u>ote</button>
         </div>
         <div class="gw-sec"><h4>REPORTS</h4>
           <button class="gw-item" role="menuitem" data-key="b" data-go="bills"><u>B</u>ills Register</button>
           <button class="gw-item" role="menuitem" data-key="o" data-go="outstanding"><u>O</u>utstanding</button>
           <button class="gw-item" role="menuitem" data-key="d" data-go="daybook"><u>D</u>ay Book</button>
           <button class="gw-item" role="menuitem" data-key="g" data-go="gst"><u>G</u>ST Reports</button>
-          <button class="gw-item" role="menuitem" data-key="y" data-go="items">Stock Summar<u>y</u></button>
+          <button class="gw-item" role="menuitem" data-key="y" data-go="stock">Stock Summar<u>y</u> &amp; Profit</button>
+          <button class="gw-item" role="menuitem" data-key="c" data-go="cash"><u>C</u>ash / Bank Book</button>
         </div>
         <div class="gw-sec"><h4>UTILITIES</h4>
           <button class="gw-item" role="menuitem" data-key="t" data-go="settings">Se<u>t</u>tings</button>
           <button class="gw-item" role="menuitem" data-key="k" data-act="company">Change Company (<u>K</u>)</button>
+          <button class="gw-item" role="menuitem" data-key="u" data-act="backup">Back<u>u</u>p / Restore</button>
         </div>
         <div class="gw-sec"><h4>QUIT</h4>
           <button class="gw-item" role="menuitem" data-key="q" data-act="logout"><u>Q</u>uit (Sign out)</button>
@@ -400,6 +414,7 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
   <section id="tab-bill" hidden>
     <div class="bill-grid">
       <div class="stack">
+        <div class="editbar" id="b-editbar" hidden><span id="b-edittext">Altering invoice</span><button class="btn sm" type="button" id="b-editcancel">Cancel alteration</button></div>
         <div class="notice" id="firm-notice" hidden>Your business name, GSTIN and bank details appear on every invoice. Add them in <button data-go="settings">Settings</button> first.</div>
         <div class="panel">
           <h2>Buyer (Bill to)</h2>
@@ -626,7 +641,7 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
       <div class="listhead"><h2>Outstanding</h2><div class="row"><label class="chk"><input type="checkbox" id="os-all"> Show settled parties</label><input class="search" id="os-q" type="search" placeholder="Search party" aria-label="Search party"><button class="btn" id="os-refresh" type="button">Refresh</button><button class="btn" id="os-xlsx" type="button">Excel export</button></div></div>
       <div class="tablewrap" id="os-wrap"><table class="grid"><thead><tr><th class="r">Sr. No.</th><th>Party</th><th>Phone</th><th class="r">To receive (₹)</th><th class="r">To pay (₹)</th><th></th></tr></thead><tbody id="os-body"></tbody></table></div>
       <p class="empty" id="os-empty">Loading…</p>
-      <p class="hint" style="margin-top:8px">To receive = sales bills + opening − payments received. To pay = purchases − payments made. Click a party to open its account.</p>
+      <p class="hint" style="margin-top:8px">To receive = sales bills + opening − payments received − credit notes. To pay = purchases − payments made − debit notes. Click a party to open its account.</p>
     </div>
   </section>
 
@@ -651,7 +666,7 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
       </div>
       <div class="tablewrap" id="db-wrap"><table class="grid"><thead><tr><th class="r">Sr. No.</th><th>Date</th><th>Particulars</th><th>Vch Type</th><th>Vch No.</th><th class="r">Debit (₹)</th><th class="r">Credit (₹)</th></tr></thead><tbody id="db-body"></tbody></table></div>
       <p class="empty" id="db-empty">Loading…</p>
-      <p class="hint">Debit = party owes more (sales, payment made). Credit = party owes less (purchase, payment received). Click a sales bill to open it.</p>
+      <p class="hint">Debit = party owes more (sales, payment made, debit note). Credit = party owes less (purchase, payment received, credit note). Click a sales bill to open it.</p>
     </div>
   </section>
 
@@ -684,10 +699,114 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
         <p class="empty" id="gb2c-empty">No B2C sales in this period.</p>
       </div>
       <div class="panel">
+        <h2>Credit / Debit notes (GSTR-1 CDNR · ITC reversal)</h2>
+        <div class="tablewrap" id="gcdn-wrap"><table class="grid"><thead><tr><th class="r">Sr. No.</th><th>Type</th><th>GSTIN</th><th>Party</th><th>Note No.</th><th>Date</th><th>Against bill</th><th class="r">Note value</th><th class="r">Taxable</th><th class="r">IGST</th><th class="r">CGST</th><th class="r">SGST</th></tr></thead><tbody id="gcdn"></tbody></table></div>
+        <p class="empty" id="gcdn-empty">No credit or debit notes in this period.</p>
+      </div>
+      <div class="panel">
         <h2>HSN summary (sales)</h2>
         <div class="tablewrap" id="ghsn-wrap"><table class="grid"><thead><tr><th>HSN/SAC</th><th>Unit</th><th class="r">Total qty</th><th class="r">GST rate</th><th class="r">Taxable</th><th class="r">IGST</th><th class="r">CGST</th><th class="r">SGST</th><th class="r">Total value</th></tr></thead><tbody id="ghsn"></tbody></table></div>
         <p class="empty" id="ghsn-empty">No sales in this period.</p>
       </div>
+    </div>
+  </section>
+
+  <section id="tab-notes" hidden>
+    <div class="bill-grid">
+      <div class="stack">
+        <div class="panel">
+          <h2>Credit / Debit Note</h2>
+          <div class="row"><div class="seg" role="group" aria-label="Note type"><button type="button" id="n-type-credit" aria-pressed="true">Credit Note · sales return</button><button type="button" id="n-type-debit" aria-pressed="false">Debit Note · purchase return</button></div></div>
+          <p class="hint" id="n-type-hint">Goods came back from a buyer. Stock goes up and the buyer owes you less.</p>
+          <div class="fields">
+            <label class="f wide"><span id="n-party-lbl">Buyer name</span><input id="n-name" list="partyList" autocomplete="off" placeholder="Type a name or pick from the list"></label>
+            <label class="f wide">Address<input id="n-addr" autocomplete="off"></label>
+            <label class="f">GSTIN/UIN<input id="n-gstin" autocomplete="off" maxlength="15"></label>
+            <label class="f">State<select id="n-state" class="state-sel"></select></label>
+            <label class="f">Against bill no.<input id="n-against" autocomplete="off" placeholder="Original bill number"></label>
+            <label class="f">Date<input type="date" id="n-date"></label>
+            <label class="f wide">Reason<input id="n-reason" autocomplete="off" placeholder="e.g. Damaged pieces returned"></label>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Items returned</h2>
+          <div class="adder">
+            <input id="n-add-item" list="itemList" autocomplete="off" placeholder="Type an item name or pick from the list" aria-label="Item">
+            <input id="n-add-qty" type="number" min="0" step="any" value="1" aria-label="Quantity">
+            <button class="btn primary" id="n-add-btn" type="button">Add</button>
+          </div>
+          <div class="tablewrap" id="n-lines-wrap" hidden>
+            <table class="grid lines">
+              <thead><tr><th>Item</th><th>HSN/SAC</th><th class="r">Qty</th><th>Unit</th><th class="r">Rate</th><th>GST %</th><th class="r">Amount</th><th></th></tr></thead>
+              <tbody id="n-lines-body"></tbody>
+            </table>
+          </div>
+          <p class="empty" id="n-lines-empty">No items yet. Pick an item above and click <b>Add</b>, or open a saved bill and press <b>Sales return</b>.</p>
+        </div>
+      </div>
+      <aside class="panel summary">
+        <div class="inv-no"><span id="n-no-lbl">Credit note no.</span><strong id="n-no">—</strong></div>
+        <div class="supply" id="n-supply">Intra-state: CGST + SGST</div>
+        <div class="sum-row"><span>Taxable value</span><span class="num" id="n-taxable">0.00</span></div>
+        <div class="sum-row" id="n-cgst-row"><span>CGST</span><span class="num" id="n-cgst">0.00</span></div>
+        <div class="sum-row" id="n-sgst-row"><span>SGST</span><span class="num" id="n-sgst">0.00</span></div>
+        <div class="sum-row" id="n-igst-row" hidden><span>IGST</span><span class="num" id="n-igst">0.00</span></div>
+        <div class="sum-row"><span>Round off</span><span class="num" id="n-round">0.00</span></div>
+        <div class="sum-total"><b>Total</b><span class="num" id="n-total">₹0</span></div>
+        <button class="btn primary" id="n-save" type="button">Save note</button>
+        <button class="btn" id="n-clear" type="button">Clear</button>
+      </aside>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="listhead"><h2>Credit &amp; debit notes</h2><div class="row"><label class="f" style="flex-direction:row;align-items:center;gap:6px">Month<input id="nt-month" type="month" style="width:auto"></label></div></div>
+      <div class="tablewrap" id="nt-wrap"><table class="grid"><thead><tr><th class="r">Sr. No.</th><th>Date</th><th>Type</th><th>Note No.</th><th>Party</th><th>Against</th><th class="r">Amount</th><th></th></tr></thead><tbody id="nt-body"></tbody></table></div>
+      <p class="empty" id="nt-empty">No notes for this month.</p>
+    </div>
+  </section>
+
+  <section id="tab-stock" hidden>
+    <div class="panel">
+      <div class="listhead"><h2>Stock Summary &amp; Gross Profit</h2>
+        <div class="rep-bar">
+          <label class="f">From<input type="date" id="sk-from"></label>
+          <label class="f">To<input type="date" id="sk-to"></label>
+          <button class="btn sm" type="button" id="sk-month">This month</button>
+          <button class="btn sm" type="button" id="sk-fy">This year (FY)</button>
+          <input class="search" id="sk-q" type="search" placeholder="Search item" aria-label="Search item" style="max-width:200px">
+          <button class="btn" type="button" id="sk-xlsx">Excel export</button>
+        </div>
+      </div>
+      <div class="tiles">
+        <div class="tile"><span>Closing stock value</span><b id="sk-t-value">₹0</b></div>
+        <div class="tile"><span>Net sales (before GST)</span><b id="sk-t-sales">₹0</b></div>
+        <div class="tile"><span>Gross profit</span><b id="sk-t-profit">₹0</b></div>
+        <div class="tile"><span>Margin</span><b id="sk-t-margin">0%</b></div>
+      </div>
+      <div class="tablewrap" id="sk-wrap"><table class="grid"><thead><tr><th class="r">Sr. No.</th><th>Item</th><th class="r">Opening</th><th class="r">Inward</th><th class="r">Outward</th><th class="r">Closing</th><th class="r">Cost rate</th><th class="r">Closing value</th><th class="r">Net sales</th><th class="r">Cost of sales</th><th class="r">Gross profit</th><th class="r">Margin</th></tr></thead><tbody id="sk-body"></tbody></table></div>
+      <p class="empty" id="sk-empty">Loading…</p>
+      <p class="hint">Inward = purchases + sales returns. Outward = sales + purchase returns. Cost rate is the latest purchase rate of the item (or its selling rate if it was never purchased). Stock changed by hand through Items &amp; Stock is counted in the opening figure.</p>
+    </div>
+  </section>
+
+  <section id="tab-cash" hidden>
+    <div class="panel">
+      <div class="listhead"><h2 id="cb-title">Cash Book</h2>
+        <div class="rep-bar">
+          <div class="seg" role="group" aria-label="Book"><button type="button" id="cb-cash" aria-pressed="true">Cash</button><button type="button" id="cb-bank" aria-pressed="false">Bank / UPI</button></div>
+          <label class="f">From<input type="date" id="cb-from"></label>
+          <label class="f">To<input type="date" id="cb-to"></label>
+          <button class="btn sm" type="button" id="cb-month">This month</button>
+          <button class="btn" type="button" id="cb-xlsx">Excel export</button>
+        </div>
+      </div>
+      <div class="tiles">
+        <div class="tile"><span>Opening balance</span><b id="cb-t-open">₹0</b></div>
+        <div class="tile"><span>Money in</span><b id="cb-t-in">₹0</b></div>
+        <div class="tile"><span>Money out</span><b id="cb-t-out">₹0</b></div>
+        <div class="tile"><span>Closing balance</span><b id="cb-t-close">₹0</b></div>
+      </div>
+      <div class="tablewrap" id="cb-wrap"><table class="grid"><thead><tr><th>Date</th><th>Particulars</th><th>Vch Type</th><th>Vch No.</th><th>Mode / Ref</th><th class="r">Money in (₹)</th><th class="r">Money out (₹)</th><th class="r">Balance (₹)</th></tr></thead><tbody id="cb-body"></tbody></table></div>
+      <p class="hint">Built from payments received and made (Parties → Account). Cash entries go to the Cash Book; UPI, bank transfer and cheque go to the Bank Book. Set the opening balances in Settings.</p>
     </div>
   </section>
 
@@ -717,8 +836,18 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
       </div>
       <p class="hint">Invoice numbers will look like: <b class="num" id="st-sample">INV/00001/26-27</b></p>
       <label class="f wide">Declaration<textarea id="st-decl" rows="3"></textarea></label>
+      <h2>Cash &amp; bank opening balance</h2>
+      <div class="fields">
+        <label class="f">Cash in hand (opening ₹)<input id="st-cashopen" type="number" step="any" placeholder="0"></label>
+        <label class="f">Bank balance (opening ₹)<input id="st-bankopen" type="number" step="any" placeholder="0"></label>
+      </div>
       <div class="row"><button class="btn primary" type="submit">Save settings</button><span class="hint" id="st-state-msg"></span></div>
     </form>
+    <div class="panel" id="backup-panel" style="max-width:820px;margin-top:16px">
+      <h2>Backup / Restore</h2>
+      <p class="hint">Download a backup file of this company: business details, items, parties, bills, purchases, payments and credit/debit notes. Keep it on your computer or Google Drive. Restore adds the records from a backup file into the company you are in now; records with the same ID are replaced, nothing else is deleted.</p>
+      <div class="row"><button class="btn primary" type="button" id="bk-download">Download backup</button><label class="btn" for="bk-file" style="cursor:pointer">Restore from backup…</label><input type="file" id="bk-file" accept=".json,application/json" hidden><span class="hint" id="bk-msg"></span></div>
+    </div>
   </section>
 </main>
 
@@ -731,6 +860,8 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
     <button class="btn primary" id="m-share" hidden>WhatsApp / Share</button>
     <button class="btn primary" id="m-pdf">Download PDF</button>
     <button class="btn" id="m-print">Print</button>
+    <button class="btn" id="m-alter" hidden>Alter</button>
+    <button class="btn" id="m-return" hidden>Sales return</button>
     <button class="btn danger" id="m-del" hidden>Delete bill</button>
     <button class="btn" id="m-close">Close</button>
   </div>
@@ -836,7 +967,7 @@ function dialog({title, msg="", yes="Yes", no="Cancel", input=null}){
 }
 
 // ---- Tally-style navigation
-const SCREEN={home:"Gateway of BillBook", bill:"Sales Invoice Creation", bills:"Bills Register", purchase:"Purchase Voucher", items:"Stock Items", parties:"Party Ledgers", outstanding:"Outstanding Summary", settings:"Company Settings", daybook:"Day Book", gst:"GST Reports"};
+const SCREEN={home:"Gateway of BillBook", bill:"Sales Invoice Creation", bills:"Bills Register", purchase:"Purchase Voucher", items:"Stock Items", parties:"Party Ledgers", outstanding:"Outstanding Summary", settings:"Company Settings", daybook:"Day Book", gst:"GST Reports", notes:"Credit / Debit Note", stock:"Stock Summary", cash:"Cash / Bank Book"};
 let gwSel=0;
 const gwItems = () => $$("#gw-menu .gw-item");
 function gwFocus(i){ const it=gwItems(); if(!it.length) return; gwSel=(i+it.length)%it.length; it.forEach((b,k)=>b.classList.toggle("sel", k===gwSel)); if(!$("#tab-home").hidden) it[gwSel].focus({preventScroll:true}); }
@@ -849,7 +980,8 @@ function renderGateway(){
 function doAct(a){
   if(a==="company"){ const sel=$("#co-sel"); sel.focus(); try{ sel.showPicker && sel.showPicker(); }catch(e){} }
   else if(a==="logout") $("#logout").click();
-  else if(a==="help") dialog({title:"Keyboard shortcuts", msg:"Esc: Gateway · F8: Sales · F9: Purchase · F2: Bills · F4: Items & Stock · F7: Parties · F10: Outstanding · Alt+D: Day Book · Alt+R: GST Reports · Alt+S: Settings · Alt+K: Company · On the Gateway use ↑ ↓ Enter or the underlined letter.", yes:"OK", no:""});
+  else if(a==="backup"){ showTab("settings"); setTimeout(()=>{ const el=$("#backup-panel"); el.scrollIntoView({behavior:"smooth", block:"start"}); $("#bk-download").focus(); }, 50); }
+  else if(a==="help") dialog({title:"Keyboard shortcuts", msg:"Esc: Gateway · F8: Sales · F9: Purchase · F2: Bills · F4: Items & Stock · F7: Parties · F10: Outstanding · Alt+D: Day Book · Alt+R: GST Reports · Alt+N: Credit/Debit Note · Alt+I: Stock Summary · Alt+C: Cash/Bank · Alt+S: Settings · Alt+K: Company · On the Gateway use ↑ ↓ Enter or the underlined letter.", yes:"OK", no:""});
 }
 document.addEventListener("click", e => { const a=e.target.closest("[data-act]"); if(a){ e.preventDefault(); doAct(a.dataset.act); } });
 $("#gw-menu").addEventListener("mousemove", e => { const b=e.target.closest(".gw-item"); if(b){ const i=gwItems().indexOf(b); if(i!==gwSel){ gwSel=i; gwItems().forEach((x,k)=>x.classList.toggle("sel",k===gwSel)); } } });
@@ -861,7 +993,7 @@ document.addEventListener("keydown", e => {
   if(!$("#modal").hidden) return;
   if(FKEYS[e.key]){ e.preventDefault(); showTab(FKEYS[e.key]); return; }
   if(e.key==="F1"){ e.preventDefault(); doAct("help"); return; }
-  if(e.altKey && !e.ctrlKey && !e.metaKey){ const k=(e.code||"").replace("Key","").toLowerCase(); if(k==="k"){ e.preventDefault(); doAct("company"); return; } if(k==="g"){ e.preventDefault(); showTab("home"); return; } if(k==="s"){ e.preventDefault(); showTab("settings"); return; } if(k==="b"){ e.preventDefault(); showTab("bills"); return; } if(k==="d"){ e.preventDefault(); showTab("daybook"); return; } if(k==="r"){ e.preventDefault(); showTab("gst"); return; } }
+  if(e.altKey && !e.ctrlKey && !e.metaKey){ const k=(e.code||"").replace("Key","").toLowerCase(); if(k==="k"){ e.preventDefault(); doAct("company"); return; } if(k==="g"){ e.preventDefault(); showTab("home"); return; } if(k==="s"){ e.preventDefault(); showTab("settings"); return; } if(k==="b"){ e.preventDefault(); showTab("bills"); return; } if(k==="d"){ e.preventDefault(); showTab("daybook"); return; } if(k==="r"){ e.preventDefault(); showTab("gst"); return; } if(k==="n"){ e.preventDefault(); showTab("notes"); return; } if(k==="i"){ e.preventDefault(); showTab("stock"); return; } if(k==="c"){ e.preventDefault(); showTab("cash"); return; } }
   if($("#tab-home").hidden || e.ctrlKey || e.metaKey || e.altKey) return;
   const tag=(document.activeElement&&document.activeElement.tagName)||""; if(/INPUT|SELECT|TEXTAREA/.test(tag)) return;
   if(e.key==="ArrowDown"){ e.preventDefault(); gwFocus(gwSel+1); }
@@ -875,7 +1007,8 @@ window.addEventListener("resize", setTopHeight);
 // ---- Tabs
 function showTab(name){
   $$("nav button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab===name ? "true":"false"));
-  ["home","bill","bills","purchase","items","parties","outstanding","daybook","gst","settings"].forEach(t => $("#tab-"+t).hidden = t!==name);
+  ["home","bill","bills","purchase","items","parties","outstanding","daybook","gst","notes","stock","cash","settings"].forEach(t => $("#tab-"+t).hidden = t!==name);
+  if(name==="notes") renderNotesList(); if(name==="stock") loadStock(); if(name==="cash") loadCash();
   if(name==="daybook") loadDaybook(); if(name==="gst") loadGst();
   $("#screen-title").textContent = SCREEN[name] || "BillBook";
   $$(".fbar [data-go]").forEach(b => b.setAttribute("aria-current", b.dataset.go===name ? "true":"false"));
@@ -916,6 +1049,8 @@ function fillBillForm(){
   $("#b-same").checked = draft.same; $("#ship").hidden = draft.same; $("#b-taxmode").value = draft.taxMode || "auto";
   $("#b-noauto").checked = draft.noAuto!==false; $("#b-nomanual").value = draft.noManual||""; $("#b-nomanual-wrap").hidden = draft.noAuto!==false;
   gstHint(draft.party.gstin||"", false);
+  const ed=!!draft.editId; $("#b-editbar").hidden=!ed; $("#b-edittext").textContent = ed ? `Altering invoice ${draft.editNo}. Save to update it; stock is adjusted for the changes.` : "";
+  $("#b-noauto").closest("label").hidden=ed; if(ed) $("#b-nomanual-wrap").hidden=true; $("#save-bill").textContent = ed ? "Save alteration" : "Save invoice";
   renderLines(); updateSummary();
 }
 for(const [id,path] of Object.entries(bindMap)){
@@ -997,7 +1132,7 @@ function nextNumber(iso){ const seq = Math.max(1, Math.floor(+S.firm.nextNo||1))
 
 function updateSummary(){
   const intra=draftIntra(); const c=calc(draft.lines, intra);
-  $("#s-no").textContent = draft.noAuto===false ? (String(draft.noManual||"").trim() || "—") : nextNumber(draft.date).no;
+  $("#s-no").textContent = draft.editId ? draft.editNo : draft.noAuto===false ? (String(draft.noManual||"").trim() || "—") : nextNumber(draft.date).no;
   $("#s-supply").textContent = supplyText(intra);
   $("#s-taxable").textContent=fmt(c.taxable); $("#s-cgst").textContent=fmt(c.cgst); $("#s-sgst").textContent=fmt(c.sgst); $("#s-igst").textContent=fmt(c.igst);
   $("#s-cgst-row").hidden=!intra; $("#s-sgst-row").hidden=!intra; $("#s-igst-row").hidden=intra;
@@ -1011,9 +1146,9 @@ const DEFAULT_DECL="We declare that this invoice shows the actual price of the g
 function cleanParty(p){ return {name:(p.name||"").trim(), address:(p.address||"").trim(), gstin:(p.gstin||"").trim().toUpperCase(), stateCode:p.stateCode||""}; }
 function buildInvoice(){
   const lines = draft.lines.filter(l => String(l.name).trim() && +l.qty>0).map(l => ({itemId:l.itemId||"", name:String(l.name).trim(), hsn:String(l.hsn||"").trim(), unit:String(l.unit||"").trim(), qty:+l.qty||0, rate:+l.rate||0, disc:+l.disc||0, gst:+l.gst||0}));
-  const intra=draftIntra(); const manual = draft.noAuto===false; let {seq,no}=nextNumber(draft.date); if(manual){ seq=null; no=String(draft.noManual||"").trim(); } const c=calc(lines,intra);
+  const intra=draftIntra(); const manual = draft.editId ? !!draft.editManual : draft.noAuto===false; let {seq,no}=nextNumber(draft.date); if(draft.editId){ seq=draft.editSeq??null; no=draft.editNo; } else if(manual){ seq=null; no=String(draft.noManual||"").trim(); } const c=calc(lines,intra);
   const party=cleanParty(draft.party);
-  return {no, seq, manualNo:manual, date:draft.date||todayISO(), createdAt:Date.now(), intra, pos:posCode(), firm:firmSnapshot(), party, ship: draft.same ? {...party} : cleanParty(draft.ship),
+  return {no, seq, manualNo:manual, date:draft.date||todayISO(), createdAt:draft.editId ? (draft.editCreatedAt||Date.now()) : Date.now(), intra, pos:posCode(), firm:firmSnapshot(), party, ship: draft.same ? {...party} : cleanParty(draft.ship),
     ref:draft.ref||"", pay:draft.pay||"", order:draft.order||"", dispatch:draft.dispatch||"", dest:draft.dest||"", lines,
     taxable:c.taxable, cgst:c.cgst, sgst:c.sgst, igst:c.igst, roundOff:c.roundOff, total:c.total};
 }
@@ -1026,6 +1161,7 @@ $("#save-bill").addEventListener("click", async e => {
   if(!inv.party.name) { $("#b-pname").focus(); return toast("Enter the party name", true); }
   if(!inv.lines.length) { $("#add-item").focus(); return toast("Add at least one item with a quantity", true); }
   if(inv.manualNo && !inv.no) { $("#b-nomanual").focus(); return toast("Type the invoice number, or tick Auto invoice number", true); }
+  if(draft.editId) return saveAlteration(btn, inv);
   btn.disabled=true; btn.textContent="Saving…";
   try{
     const id = "inv-" + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
@@ -1056,8 +1192,32 @@ $("#save-bill").addEventListener("click", async e => {
     openInvoice({...inv, id}, true);
     toast("Invoice saved: "+inv.no);
   }catch(err){ toast(errMsg(err), true); }
-  finally{ btn.disabled=false; btn.textContent="Save invoice"; }
+  finally{ btn.disabled=false; btn.textContent= draft.editId ? "Save alteration" : "Save invoice"; }
 });
+function qtyMap(lines){ const m={}; (lines||[]).forEach(l=>{ if(l.itemId) m[l.itemId]=(m[l.itemId]||0)+(+l.qty||0); }); return m; }
+function startAlter(inv){
+  const same = JSON.stringify(cleanParty(inv.ship||inv.party||{}))===JSON.stringify(cleanParty(inv.party||{}));
+  const firmIntra = isIntra(S.firm.stateCode, inv.pos ?? (inv.ship||inv.party||{}).stateCode);
+  draft = Object.assign(newDraft(), {party:{...cleanParty(inv.party||{})}, same, ship:{...cleanParty(inv.ship||inv.party||{})}, date:inv.date||todayISO(), ref:inv.ref||"", pay:inv.pay||"", order:inv.order||"", dispatch:inv.dispatch||"", dest:inv.dest||"",
+    taxMode: firmIntra===!!inv.intra ? "auto" : (inv.intra?"intra":"inter"), lines:(inv.lines||[]).map(l=>({...l})),
+    editId:inv.id, editNo:inv.no, editSeq:inv.seq??null, editManual:!!inv.manualNo, editCreatedAt:inv.createdAt||0, editBy:inv.createdBy||"", oldLines:(inv.lines||[]).map(l=>({itemId:l.itemId||"", qty:+l.qty||0}))});
+  saveDraft(); fillBillForm(); showTab("bill"); toast(`Altering ${inv.no}`);
+}
+$("#b-editcancel").addEventListener("click", () => { draft=newDraft(); saveDraft(); fillBillForm(); toast("Alteration cancelled"); });
+async function saveAlteration(btn, inv){
+  btn.disabled=true; btn.textContent="Saving…";
+  try{
+    const id=draft.editId; inv.createdBy=draft.editBy||""; inv.alteredAt=Date.now(); inv.alteredBy=(auth.currentUser&&auth.currentUser.email)||"";
+    const oldQ=qtyMap(draft.oldLines), newQ=qtyMap(inv.lines), b=db.batch();
+    b.set(D("invoices", id), inv);
+    new Set([...Object.keys(oldQ),...Object.keys(newQ)]).forEach(iid=>{ const diff=(oldQ[iid]||0)-(newQ[iid]||0); if(diff && S.items.some(x=>x.id===iid)) b.update(D("items", iid), {stock:INC(diff)}); });
+    if(!S.parties.some(p=>p.name.toLowerCase()===inv.party.name.toLowerCase())) b.set(C("parties").doc(), {...inv.party, phone:""});
+    await b.commit();
+    draft=newDraft(); saveDraft(); fillBillForm();
+    openInvoice({...inv, id}, true); toast("Invoice altered: "+inv.no);
+  }catch(err){ toast(errMsg(err), true); }
+  finally{ btn.disabled=false; btn.textContent= draft.editId ? "Save alteration" : "Save invoice"; }
+}
 
 // ================= INVOICE SHEET =================
 function partyBlock(label, p){
@@ -1084,7 +1244,7 @@ function invoiceHTML(inv){
     ? `<tr class="t"><td style="text-align:right">Total</td><td>${fmt(c.taxable)}</td><td></td><td>${fmt(c.cgst)}</td><td></td><td>${fmt(c.sgst)}</td><td>${fmt(c.tax)}</td></tr>`
     : `<tr class="t"><td style="text-align:right">Total</td><td>${fmt(c.taxable)}</td><td></td><td>${fmt(c.igst)}</td><td>${fmt(c.tax)}</td></tr>`;
   return `<div class="iv">
-  <div class="iv-title">TAX INVOICE</div>
+  <div class="iv-title">${esc(inv.__docTitle||"TAX INVOICE")}</div>
   <div class="iv-box">
     <div class="iv-top">
       <div class="iv-left">
@@ -1136,9 +1296,9 @@ let current=null;
 function fitSheet(){ const fit=$("#sheet-fit"); const avail=$("#modal-body").clientWidth-32; const s=Math.min(1, avail/794); fit.style.transform=`scale(${s})`; fit.style.marginLeft = s<1 ? "0" : "auto"; fit.style.height = (fit.firstElementChild ? fit.firstElementChild.offsetHeight*s : 0)+"px"; }
 function openInvoice(inv, saved){
   current=inv;
-  $("#modal-title").textContent = (saved ? "" : "Preview · ") + inv.no;
+  $("#modal-title").textContent = inv.__docTitle ? inv.__docTitle.replace(/\b\w/g,c=>c.toUpperCase()).replace(/\B\w+/g,w=>w.toLowerCase())+" · "+inv.no : (saved ? "" : "Preview · ") + inv.no;
   $("#sheet-fit").innerHTML = invoiceHTML(inv);
-  $("#m-del").hidden = !(saved && inv.id);
+  $("#m-del").hidden = !(saved && inv.id && !inv.__docTitle); $("#m-alter").hidden = $("#m-del").hidden; $("#m-return").hidden = $("#m-del").hidden;
   $("#m-share").hidden = !(navigator.canShare && (()=>{ try{ return navigator.canShare({files:[new File(["x"],"a.pdf",{type:"application/pdf"})]}); }catch(e){ return false; } })()); delete $("#m-del").dataset.armed; $("#m-del").textContent="Delete bill";
   $("#modal").hidden=false; document.body.style.overflow="hidden"; fitSheet();
 }
@@ -1202,6 +1362,9 @@ $("#m-del").addEventListener("click", e => armDelete(e.currentTarget, async () =
     closeModal(); toast("Invoice deleted and stock restored");
   }catch(err){ toast(errMsg(err), true); }
 }));
+
+$("#m-alter").addEventListener("click", () => { const inv=current; if(!inv||!inv.id) return; closeModal(); startAlter(inv); });
+$("#m-return").addEventListener("click", () => { const inv=current; if(!inv||!inv.id) return; closeModal(); startReturnFrom(inv); });
 
 // ================= BILLS LIST =================
 function renderBills(){
@@ -1313,11 +1476,11 @@ $("#party-form").addEventListener("submit", async e => {
 });
 
 // ================= ACCOUNT (party ledger) =================
-let acct=null, acctUnsubs=[], acctInv=[], acctPay=[], acctPur=[], acctRows=[];
+let acct=null, acctUnsubs=[], acctInv=[], acctPay=[], acctPur=[], acctRet=[], acctRows=[];
 function closeAccount(){ acctUnsubs.forEach(u=>u()); acctUnsubs=[]; acct=null; acctRows=[]; $("#acct").hidden=true; }
 function openAccount(p){
   if(!db) return toast("Not connected to the database", true);
-  closeAccount(); acct=p; acctInv=[]; acctPay=[]; acctPur=[];
+  closeAccount(); acct=p; acctInv=[]; acctPay=[]; acctPur=[]; acctRet=[];
   $("#acct").hidden=false; $("#acct-title").textContent="Account · "+p.name;
   $("#acct-sub").textContent=[p.gstin, p.phone].filter(Boolean).join(" · ");
   $("#ac-date").value=todayISO(); $("#ac-amt").value=""; $("#ac-ref").value="";
@@ -1326,12 +1489,14 @@ function openAccount(p){
   acctUnsubs.push(C("invoices").where("party.name","==",p.name).onSnapshot(q=>{ acctInv=q.docs.map(d=>({id:d.id,...d.data()})); renderAccount(); }, fail));
   acctUnsubs.push(C("payments").where("party.name","==",p.name).onSnapshot(q=>{ acctPay=q.docs.map(d=>({id:d.id,...d.data()})); renderAccount(); }, fail));
   acctUnsubs.push(C("purchases").where("party.name","==",p.name).onSnapshot(q=>{ acctPur=q.docs.map(d=>({id:d.id,...d.data()})); renderAccount(); }, fail));
+  acctUnsubs.push(C("returns").where("party.name","==",p.name).onSnapshot(q=>{ acctRet=q.docs.map(d=>({id:d.id,...d.data()})); renderAccount(); }, fail));
   setTimeout(()=>$("#acct").scrollIntoView({behavior:"smooth", block:"start"}), 50);
 }
 function ledgerRows(){
   const p=acct; const rows=[];
   acctInv.forEach(i=>rows.push({date:i.date||"", at:i.createdAt||0, text:"Sales invoice", no:i.no, dr:+i.total||0, cr:0, inv:i}));
   acctPur.forEach(x=>rows.push({date:x.date||"", at:x.createdAt||0, text:"Purchase bill", no:x.no||"", dr:0, cr:+x.total||0}));
+  acctRet.forEach(x=>rows.push({date:x.date||"", at:x.createdAt||0, text:x.type==="debit"?"Debit note (purchase return)":"Credit note (sales return)", no:x.no||"", dr:x.type==="debit"?+x.total||0:0, cr:x.type==="debit"?0:+x.total||0}));
   acctPay.forEach(x=>rows.push({date:x.date||"", at:x.createdAt||0, text:x.type==="payment" ? "Payment made"+(x.mode?" · "+x.mode:"") : "Payment received"+(x.mode?" · "+x.mode:"")+(x.ref?" · "+x.ref:""), no:x.no||"", dr:x.type==="payment"?+x.amount||0:0, cr:x.type==="payment"?0:+x.amount||0, pay:x}));
   rows.sort((a,b)=>a.date.localeCompare(b.date) || a.at-b.at);
   let bal=+(p.opening||0); rows.forEach(r=>{ bal=r2(bal+r.dr-r.cr); r.bal=bal; });
@@ -1404,7 +1569,7 @@ let pur = loadPur();
 const savePur = () => { try{ localStorage.setItem(PKEY(), JSON.stringify(pur)); }catch(e){} };
 const PMAP = {"p-name":"name","p-addr":"address","p-gstin":"gstin","p-state":"stateCode","p-no":"no","p-date":"date"};
 const purIntra = () => isIntra(S.firm.stateCode, pur.stateCode);
-function fillPur(){ for(const [id,k] of Object.entries(PMAP)) $("#"+id).value = pur[k]||""; renderPurLines(); updatePur(); }
+function fillPur(){ for(const [id,k] of Object.entries(PMAP)) $("#"+id).value = pur[k]||""; $("#p-save").textContent = pur.editId ? "Save alteration" : "Save purchase"; $("#p-clear").textContent = pur.editId ? "Cancel alteration" : "Clear"; renderPurLines(); updatePur(); }
 for(const [id,k] of Object.entries(PMAP)){
   $("#"+id).addEventListener("input", e => {
     let v=e.target.value;
@@ -1448,13 +1613,13 @@ $("#p-lines-body").addEventListener("change", e => { if(e.target.dataset.k==="gs
 $("#p-lines-body").addEventListener("click", e => { const b=e.target.closest("[data-pdel]"); if(!b) return; pur.lines.splice(+b.dataset.pdel,1); savePur(); renderPurLines(); updatePur(); });
 function updatePur(){
   const intra=purIntra(), c=calc(pur.lines, intra);
-  $("#p-tag").textContent = pur.no ? pur.no : "—";
+  $("#p-tag").textContent = (pur.editId ? "Altering " : "") + (pur.no ? pur.no : "—");
   $("#p-supply").textContent = !S.firm.stateCode ? "Business state not set in Settings" : !pur.stateCode ? "Supplier state not selected; treating as intra-state (CGST + SGST)" : intra ? `${stateName(pur.stateCode)}: intra-state, CGST + SGST` : `${stateName(pur.stateCode)}: inter-state, IGST`;
   $("#p-taxable").textContent=fmt(c.taxable); $("#p-cgst").textContent=fmt(c.cgst); $("#p-sgst").textContent=fmt(c.sgst); $("#p-igst").textContent=fmt(c.igst);
   $("#p-cgst-row").hidden=!intra; $("#p-sgst-row").hidden=!intra; $("#p-igst-row").hidden=intra;
   $("#p-round").textContent=(c.roundOff>0?"+":"")+fmt(c.roundOff); $("#p-total").textContent="₹"+c.total.toLocaleString("en-IN")+".00";
 }
-$("#p-clear").addEventListener("click", e => armDelete(e.currentTarget, () => { pur=newPur(); savePur(); fillPur(); toast("Form cleared"); }));
+$("#p-clear").addEventListener("click", e => { if(pur.editId){ pur=newPur(); savePur(); fillPur(); toast("Alteration cancelled"); return; } armDelete(e.currentTarget, () => { pur=newPur(); savePur(); fillPur(); toast("Form cleared"); }); });
 $("#p-save").addEventListener("click", e => {
   if(!db) return toast("Not connected to the database", true);
   const party=cleanParty(pur), no=String(pur.no||"").trim();
@@ -1465,18 +1630,19 @@ $("#p-save").addEventListener("click", e => {
   withBtn(e.currentTarget, "Saving…", async () => {
     try{
       const dup=await C("purchases").where("no","==",no).get();
-      if(dup.docs.some(d=>String((d.data().party||{}).name||"").toLowerCase()===party.name.toLowerCase())){ $("#p-no").focus(); return toast(`Bill ${no} from ${party.name} is already entered`, true); }
-      const intra=purIntra(), c=calc(lines, intra), b=db.batch();
+      if(dup.docs.some(d=>d.id!==pur.editId && String((d.data().party||{}).name||"").toLowerCase()===party.name.toLowerCase())){ $("#p-no").focus(); return toast(`Bill ${no} from ${party.name} is already entered`, true); }
+      const intra=purIntra(), c=calc(lines, intra), b=db.batch(), editing=!!pur.editId, oldQ=editing?qtyMap(pur.oldLines):{};
       for(const l of lines){
         const it = l.itemId ? S.items.find(x=>x.id===l.itemId) : S.items.find(x=>x.name.toLowerCase()===l.name.toLowerCase());
-        if(it){ l.itemId=it.id; b.update(D("items", it.id), {stock:INC(l.qty), prate:l.rate}); }
+        if(it){ l.itemId=it.id; const add=l.qty-(oldQ[it.id]||0); delete oldQ[it.id]; b.update(D("items", it.id), add ? {stock:INC(add), prate:l.rate} : {prate:l.rate}); }
         else { const ref=C("items").doc(); l.itemId=ref.id; b.set(ref, {name:l.name, hsn:l.hsn, unit:l.unit||"PCS", rate:l.rate, prate:l.rate, gst:l.gst, stock:l.qty, low:5}); }
       }
-      const id="pur-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-      b.set(C("purchases").doc(id), {no, date:pur.date||todayISO(), party, intra, pos:party.stateCode||"", lines, taxable:c.taxable, cgst:c.cgst, sgst:c.sgst, igst:c.igst, roundOff:c.roundOff, total:c.total, createdAt:Date.now(), createdBy:(auth.currentUser&&auth.currentUser.email)||""});
+      for(const [iid,q] of Object.entries(oldQ)) if(q && S.items.some(x=>x.id===iid)) b.update(D("items", iid), {stock:INC(-q)});
+      const id=pur.editId || ("pur-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)), me=(auth.currentUser&&auth.currentUser.email)||"";
+      b.set(C("purchases").doc(id), {no, date:pur.date||todayISO(), party, intra, pos:party.stateCode||"", lines, taxable:c.taxable, cgst:c.cgst, sgst:c.sgst, igst:c.igst, roundOff:c.roundOff, total:c.total, createdAt:editing?(pur.editCreatedAt||Date.now()):Date.now(), createdBy:editing?(pur.editBy||""):me, ...(editing?{alteredAt:Date.now(), alteredBy:me}:{})});
       if(!S.parties.some(p=>p.name.toLowerCase()===party.name.toLowerCase())) b.set(C("parties").doc(), {...party, phone:"", type:"supplier", opening:0});
       await b.commit();
-      pur=newPur(); savePur(); fillPur(); toast(`Purchase saved: ${no} · ₹${fmt(c.total)} · stock updated`);
+      pur=newPur(); savePur(); fillPur(); toast(`${editing?"Purchase altered":"Purchase saved"}: ${no} · ₹${fmt(c.total)} · stock updated`);
     }catch(err){ toast(errMsg(err), true); }
   });
 });
@@ -1491,12 +1657,13 @@ function renderPurchases(fromSnap){
   if(!fromSnap && !unsubPur) return watchPurchases();
   const q=$("#pur-q").value.trim().toLowerCase();
   const list=purList.filter(p=>!q || String(p.no||"").toLowerCase().includes(q) || String((p.party||{}).name||"").toLowerCase().includes(q));
-  $("#pur-body").innerHTML=list.map((p,n)=>`<tr><td class="r num">${n+1}</td><td>${fmtDate(p.date)}</td><td>${esc((p.party||{}).name)}</td><td class="num">${esc(p.no)}</td><td class="r">${(p.lines||[]).length}</td><td class="r num">${rupee(p.total)}</td><td class="r"><button class="btn sm danger" type="button" data-purdel="${esc(p.id)}">Delete</button></td></tr>`).join("");
+  $("#pur-body").innerHTML=list.map((p,n)=>`<tr><td class="r num">${n+1}</td><td>${fmtDate(p.date)}</td><td>${esc((p.party||{}).name)}</td><td class="num">${esc(p.no)}</td><td class="r">${(p.lines||[]).length}</td><td class="r num">${rupee(p.total)}</td><td class="r" style="white-space:nowrap"><button class="btn sm" type="button" data-puralt="${esc(p.id)}">Alter</button> <button class="btn sm danger" type="button" data-purdel="${esc(p.id)}">Delete</button></td></tr>`).join("");
   $("#pur-wrap").hidden=!list.length; $("#pur-empty").hidden=!!list.length;
 }
 $("#pur-q").addEventListener("input", ()=>renderPurchases(true));
 $("#pur-month").addEventListener("change", e => { purMonth=e.target.value||""; watchPurchases(); });
-$("#pur-body").addEventListener("click", e => { const b=e.target.closest("[data-purdel]"); if(!b) return;
+$("#pur-body").addEventListener("click", e => { const a=e.target.closest("[data-puralt]"); if(a){ const p=purList.find(x=>x.id===a.dataset.puralt); if(p){ pur=Object.assign(newPur(), {...cleanParty(p.party||{}), no:p.no||"", date:p.date||todayISO(), lines:(p.lines||[]).map(l=>({...l})), editId:p.id, editCreatedAt:p.createdAt||0, editBy:p.createdBy||"", oldLines:(p.lines||[]).map(l=>({itemId:l.itemId||"", qty:+l.qty||0}))}); savePur(); fillPur(); window.scrollTo({top:0,behavior:"smooth"}); toast("Altering purchase "+p.no); } return; }
+  const b=e.target.closest("[data-purdel]"); if(!b) return;
   armDelete(b, async () => { const p=purList.find(x=>x.id===b.dataset.purdel); if(!p) return;
     try{ const bt=db.batch(); bt.delete(D("purchases", p.id)); const used={}; (p.lines||[]).forEach(l=>{ if(l.itemId && S.items.some(x=>x.id===l.itemId)) used[l.itemId]=(used[l.itemId]||0)+(+l.qty||0); });
       for(const [iid,q] of Object.entries(used)) bt.update(D("items", iid), {stock:INC(-q)}); await bt.commit(); toast("Purchase deleted and stock reduced"); }catch(err){ toast(errMsg(err), true); } }); });
@@ -1516,13 +1683,14 @@ let osRows=[], osSeq=0;
 async function loadOutstanding(){
   if(!db || !dbReady) return; const my=++osSeq; $("#os-empty").hidden=false; $("#os-empty").textContent="Loading…"; $("#os-wrap").hidden=true;
   try{
-    const [inv,pay,pur]=await Promise.all([C("invoices").get(), C("payments").get(), C("purchases").get()]);
+    const [inv,pay,pur,ret]=await Promise.all([C("invoices").get(), C("payments").get(), C("purchases").get(), C("returns").get()]);
     if(my!==osSeq) return;
     const map=new Map(); const key=n=>String(n||"").trim().toLowerCase();
     const get=n=>{ const k=key(n); if(!k) return null; if(!map.has(k)) map.set(k,{name:String(n).trim(), bal:0, party:null}); return map.get(k); };
     S.parties.forEach(p=>{ const o=get(p.name); if(o){ o.party=p; o.name=p.name; o.bal+=+p.opening||0; } });
     inv.docs.forEach(d=>{ const x=d.data(), o=get((x.party||{}).name); if(o) o.bal+=+x.total||0; });
     pur.docs.forEach(d=>{ const x=d.data(), o=get((x.party||{}).name); if(o) o.bal-=+x.total||0; });
+    ret.docs.forEach(d=>{ const x=d.data(), o=get((x.party||{}).name); if(o) o.bal += x.type==="debit" ? (+x.total||0) : -(+x.total||0); });
     pay.docs.forEach(d=>{ const x=d.data(), o=get((x.party||{}).name); if(o) o.bal += x.type==="payment" ? (+x.amount||0) : -(+x.amount||0); });
     osRows=[...map.values()].map(o=>({...o, bal:r2(o.bal)})).sort((a,b)=>b.bal-a.bal || a.name.localeCompare(b.name));
     renderOutstanding();
@@ -1562,11 +1730,12 @@ async function loadDaybook(){
   if(dbTo<dbFrom) dbTo=dbFrom; $("#db-from").value=dbFrom; $("#db-to").value=dbTo;
   $("#db-empty").hidden=false; $("#db-empty").textContent="Loading…"; $("#db-wrap").hidden=true;
   try{
-    const [inv,pur,pay]=await Promise.all([rangeDocs("invoices",dbFrom,dbTo), rangeDocs("purchases",dbFrom,dbTo), rangeDocs("payments",dbFrom,dbTo)]);
+    const [inv,pur,pay,ret]=await Promise.all([rangeDocs("invoices",dbFrom,dbTo), rangeDocs("purchases",dbFrom,dbTo), rangeDocs("payments",dbFrom,dbTo), rangeDocs("returns",dbFrom,dbTo)]);
     if(my!==dbSeq) return;
     dbRows=[...inv.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:"sales", label:"Sales", no:x.no, dr:+x.total||0, cr:0, inv:x})),
       ...pur.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:"purchase", label:"Purchase", no:x.no, dr:0, cr:+x.total||0})),
-      ...pay.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:x.type==="payment"?"payment":"receipt", label:x.type==="payment"?"Payment":"Receipt", no:x.no, dr:x.type==="payment"?+x.amount||0:0, cr:x.type==="payment"?0:+x.amount||0}))]
+      ...pay.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:x.type==="payment"?"payment":"receipt", label:x.type==="payment"?"Payment":"Receipt", no:x.no, dr:x.type==="payment"?+x.amount||0:0, cr:x.type==="payment"?0:+x.amount||0})),
+      ...ret.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:x.type==="debit"?"debit":"credit", label:x.type==="debit"?"Debit Note":"Credit Note", no:x.no, dr:x.type==="debit"?+x.total||0:0, cr:x.type==="debit"?0:+x.total||0}))]
       .sort((a,b)=>(a.date||"").localeCompare(b.date||"") || a.at-b.at);
     renderDaybook();
   }catch(err){ $("#db-empty").textContent="Could not load: "+((err&&err.message)||err); }
@@ -1600,7 +1769,7 @@ async function loadGst(){
   $("#gst-note").textContent="Loading…";
   try{
     const from=gstMonth+"-01", to=lastOfMonth(gstMonth);
-    const [inv,pur]=await Promise.all([rangeDocs("invoices",from,to), rangeDocs("purchases",from,to)]);
+    const [inv,pur,ret]=await Promise.all([rangeDocs("invoices",from,to), rangeDocs("purchases",from,to), rangeDocs("returns",from,to)]);
     if(my!==gstSeq) return;
     inv.sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.seq||0)-(b.seq||0)); pur.sort((a,b)=>(a.date||"").localeCompare(b.date||""));
     const b2b=[], b2c={}, hsn={}, out={taxable:0,igst:0,cgst:0,sgst:0}, itc={taxable:0,igst:0,cgst:0,sgst:0};
@@ -1612,8 +1781,12 @@ async function loadGst(){
         o.qty+=+l.qty||0; o.taxable+=l.amount; if(i.intra){ o.cgst+=t/2; o.sgst+=t/2; } else o.igst+=t; });
     });
     pur.forEach(p=>{ itc.taxable+=+p.taxable||0; itc.igst+=+p.igst||0; itc.cgst+=+p.cgst||0; itc.sgst+=+p.sgst||0; });
+    const cn={taxable:0,igst:0,cgst:0,sgst:0}, dn={taxable:0,igst:0,cgst:0,sgst:0}, notes=[];
+    ret.sort((a,b)=>(a.date||"").localeCompare(b.date||"")).forEach(r=>{ const o=r.type==="debit"?dn:cn; o.taxable+=+r.taxable||0; o.igst+=+r.igst||0; o.cgst+=+r.cgst||0; o.sgst+=+r.sgst||0;
+      notes.push({type:r.type, gstin:(r.party||{}).gstin||"", party:(r.party||{}).name, no:r.no, date:r.date, against:r.against||"", pos:r.pos||"", value:+r.total||0, taxable:+r.taxable||0, igst:+r.igst||0, cgst:+r.cgst||0, sgst:+r.sgst||0}); });
     const rd=o=>{ for(const k in o) if(typeof o[k]==="number") o[k]=r2(o[k]); return o; };
-    gstData={inv, pur, b2b, b2c:Object.values(b2c).map(rd).sort((a,b)=>a.pos.localeCompare(b.pos)||a.rate-b.rate), hsn:Object.values(hsn).map(rd).sort((a,b)=>a.hsn.localeCompare(b.hsn)), out:rd(out), itc:rd(itc)};
+    gstData={inv, pur, b2b, b2c:Object.values(b2c).map(rd).sort((a,b)=>a.pos.localeCompare(b.pos)||a.rate-b.rate), hsn:Object.values(hsn).map(rd).sort((a,b)=>a.hsn.localeCompare(b.hsn)), out:rd(out), itc:rd(itc), cn:rd(cn), dn:rd(dn), notes, ret,
+      netOut:rd({taxable:out.taxable-cn.taxable, igst:out.igst-cn.igst, cgst:out.cgst-cn.cgst, sgst:out.sgst-cn.sgst}), netItc:rd({taxable:itc.taxable-dn.taxable, igst:itc.igst-dn.igst, cgst:itc.cgst-dn.cgst, sgst:itc.sgst-dn.sgst})};
     renderGst();
   }catch(err){ $("#gst-note").textContent="Could not load: "+((err&&err.message)||err); }
 }
@@ -1624,14 +1797,18 @@ function setOff(o,t){
   return {pay:L, cf:Cr};
 }
 function renderGst(){
-  const d=gstData; if(!d) return; const o=d.out, t=d.itc;
+  const d=gstData; if(!d) return; const o=d.netOut, t=d.netItc;
   const outTax=r2(o.igst+o.cgst+o.sgst), itcTax=r2(t.igst+t.cgst+t.sgst);
   const net=setOff(o,t);
   $("#g-out").textContent="₹"+fmt(outTax); $("#g-itc").textContent="₹"+fmt(itcTax);
-  const n=r2(net.pay.igst+net.pay.cgst+net.pay.sgst); $("#g-net").textContent="₹"+fmt(n); $("#g-count").textContent=`${d.inv.length} · ${d.pur.length}`;
+  const n=r2(net.pay.igst+net.pay.cgst+net.pay.sgst); $("#g-net").textContent="₹"+fmt(n); $("#g-count").textContent=`${d.inv.length} · ${d.pur.length}`+(d.ret.length?` · ${d.ret.length} notes`:"");
+  $("#gcdn").innerHTML=d.notes.map((r,i)=>`<tr><td class="r num">${i+1}</td><td><span class="vt ${r.type==="debit"?"debit":"credit"}">${r.type==="debit"?"Debit":"Credit"}</span></td><td class="num">${esc(r.gstin)}</td><td>${esc(r.party)}</td><td class="num">${esc(r.no)}</td><td>${fmtDate(r.date)}</td><td class="num">${esc(r.against)}</td><td class="r num">${fmt(r.value)}</td><td class="r num">${fmt(r.taxable)}</td><td class="r num">${fmt(r.igst)}</td><td class="r num">${fmt(r.cgst)}</td><td class="r num">${fmt(r.sgst)}</td></tr>`).join("");
+  $("#gcdn-wrap").hidden=!d.notes.length; $("#gcdn-empty").hidden=!!d.notes.length;
   $("#gst-note").textContent=`${new Date(gstMonth+"-01T00:00:00").toLocaleDateString("en-IN",{month:"long",year:"numeric"})}: figures are worked out from the bills saved in BillBook. Check them with your CA before filing. Net payable uses the standard set-off order (IGST credit first, then CGST and SGST credit).`;
   const row=(lbl,a,b)=>`<tr><td>${lbl}</td><td class="r num">${a.taxable!==undefined&&a.taxable!==""?fmt(a.taxable):""}</td><td class="r num">${fmt(a.igst)}</td><td class="r num">${fmt(a.cgst)}</td><td class="r num">${fmt(a.sgst)}</td></tr>`;
-  $("#g3b").innerHTML = row("3.1 (a) Outward taxable supplies", o) + row("4 (A)(5) Input tax credit (all other ITC)", t)
+  const neg=x=>({taxable:-x.taxable, igst:-x.igst, cgst:-x.cgst, sgst:-x.sgst});
+  $("#g3b").innerHTML = row("Sales invoices", d.out) + (d.notes.some(n=>n.type!=="debit") ? row("Less: credit notes (sales returns)", neg(d.cn)) : "") + `<tr class="sub"><td>3.1 (a) Outward taxable supplies (net)</td><td class="r num">${fmt(o.taxable)}</td><td class="r num">${fmt(o.igst)}</td><td class="r num">${fmt(o.cgst)}</td><td class="r num">${fmt(o.sgst)}</td></tr>`
+    + row("Purchase bills", d.itc) + (d.notes.some(n=>n.type==="debit") ? row("Less: debit notes (purchase returns)", neg(d.dn)) : "") + `<tr class="sub"><td>4 (A)(5) Input tax credit (net)</td><td class="r num">${fmt(t.taxable)}</td><td class="r num">${fmt(t.igst)}</td><td class="r num">${fmt(t.cgst)}</td><td class="r num">${fmt(t.sgst)}</td></tr>`
     + `<tr class="sub"><td>Tax payable in cash (after set-off)</td><td></td><td class="r num">${fmt(net.pay.igst)}</td><td class="r num">${fmt(net.pay.cgst)}</td><td class="r num">${fmt(net.pay.sgst)}</td></tr>`
     + `<tr><td>Credit carried forward</td><td></td><td class="r num">${fmt(net.cf.igst)}</td><td class="r num">${fmt(net.cf.cgst)}</td><td class="r num">${fmt(net.cf.sgst)}</td></tr>`;
   $("#gb2b").innerHTML=d.b2b.map((r,i)=>`<tr><td class="r num">${i+1}</td><td class="num">${esc(r.gstin)}</td><td>${esc(r.party)}</td><td class="num">${esc(r.no)}</td><td>${fmtDate(r.date)}</td><td>${esc(r.pos?r.pos+"-"+stateName(r.pos):"")}</td><td class="r num">${fmt(r.value)}</td><td class="r num">${fmt(r.taxable)}</td><td class="r num">${fmt(r.igst)}</td><td class="r num">${fmt(r.cgst)}</td><td class="r num">${fmt(r.sgst)}</td></tr>`).join("");
@@ -1645,8 +1822,9 @@ $("#gst-month").addEventListener("change", e => { gstMonth=e.target.value||today
 $("#gst-xlsx").addEventListener("click", () => {
   const d=gstData; if(!window.XLSX) return toast("Excel tool did not load. Please reload the page.", true); if(!d) return toast("Load a period first", true);
   const sh=(rows,w)=>{ const ws=XLSX.utils.json_to_sheet(rows.length?rows:[{"Note":"No entries"}]); ws["!cols"]=w.map(x=>({wch:x})); return ws; };
-  const o=d.out, t=d.itc;
-  const s3b=[{"Section":"3.1(a) Outward taxable supplies","Taxable Value":o.taxable,"IGST":o.igst,"CGST":o.cgst,"SGST":o.sgst},{"Section":"4(A)(5) ITC - all other","Taxable Value":t.taxable,"IGST":t.igst,"CGST":t.cgst,"SGST":t.sgst},(()=>{ const n=setOff(o,t); return {"Section":"Tax payable in cash (after set-off)","Taxable Value":"","IGST":n.pay.igst,"CGST":n.pay.cgst,"SGST":n.pay.sgst}; })(), (()=>{ const n=setOff(o,t); return {"Section":"Credit carried forward","Taxable Value":"","IGST":n.cf.igst,"CGST":n.cf.cgst,"SGST":n.cf.sgst}; })()];
+  const o=d.netOut, t=d.netItc;
+  const cdnr=d.notes.map(r=>({"Note Type":r.type==="debit"?"Debit Note (purchase return)":"Credit Note (sales return)","GSTIN":r.gstin,"Party":r.party,"Note Number":r.no,"Note Date":fmtDate(r.date),"Against Bill":r.against,"Note Value":r.value,"Taxable Value":r.taxable,"IGST":r.igst,"CGST":r.cgst,"SGST":r.sgst}));
+  const s3b=[{"Section":"3.1(a) Outward taxable supplies (net of credit notes)","Taxable Value":o.taxable,"IGST":o.igst,"CGST":o.cgst,"SGST":o.sgst},{"Section":"4(A)(5) ITC - all other (net of debit notes)","Taxable Value":t.taxable,"IGST":t.igst,"CGST":t.cgst,"SGST":t.sgst},(()=>{ const n=setOff(o,t); return {"Section":"Tax payable in cash (after set-off)","Taxable Value":"","IGST":n.pay.igst,"CGST":n.pay.cgst,"SGST":n.pay.sgst}; })(), (()=>{ const n=setOff(o,t); return {"Section":"Credit carried forward","Taxable Value":"","IGST":n.cf.igst,"CGST":n.cf.cgst,"SGST":n.cf.sgst}; })()];
   const b2b=d.b2b.map(r=>({"GSTIN of Recipient":r.gstin,"Receiver Name":r.party,"Invoice Number":r.no,"Invoice Date":fmtDate(r.date),"Invoice Value":r.value,"Place Of Supply":r.pos?r.pos+"-"+stateName(r.pos):"","Reverse Charge":"N","Invoice Type":"Regular B2B","Taxable Value":r.taxable,"IGST":r.igst,"CGST":r.cgst,"SGST":r.sgst}));
   const b2c=d.b2c.map(r=>({"Type":"OE","Place Of Supply":r.pos?r.pos+"-"+stateName(r.pos):"","Rate":r.rate,"Taxable Value":r.taxable,"IGST":r.igst,"CGST":r.cgst,"SGST":r.sgst}));
   const hsn=d.hsn.map(r=>({"HSN":r.hsn,"UQC":r.unit,"Total Quantity":r.qty,"Rate":r.rate,"Taxable Value":r.taxable,"Integrated Tax Amount":r.igst,"Central Tax Amount":r.cgst,"State/UT Tax Amount":r.sgst,"Total Value":r2(r.taxable+r.igst+r.cgst+r.sgst)}));
@@ -1655,13 +1833,230 @@ $("#gst-xlsx").addEventListener("click", () => {
   XLSX.utils.book_append_sheet(wb, sh(s3b,[34,14,12,12,12]), "GSTR-3B Summary");
   XLSX.utils.book_append_sheet(wb, sh(b2b,[17,28,18,12,13,20,8,12,13,11,11,11]), "b2b");
   XLSX.utils.book_append_sheet(wb, sh(b2c,[6,20,6,13,11,11,11]), "b2cs");
+  XLSX.utils.book_append_sheet(wb, sh(cdnr,[26,17,28,14,12,18,13,13,11,11,11]), "cdnr");
   XLSX.utils.book_append_sheet(wb, sh(hsn,[10,7,10,6,13,13,13,13,13]), "hsn");
   XLSX.utils.book_append_sheet(wb, sh(purs,[17,28,16,12,13,11,11,11,13]), "Purchases (ITC)");
   XLSX.writeFile(wb, `GST_${gstMonth}.xlsx`); toast("Excel file downloaded");
 });
 
+// ================= CREDIT / DEBIT NOTES =================
+const NKEY = () => "billbook-note-v1" + (CID==="main" ? "" : "-"+CID);
+const newNote = (type) => ({type:type||"credit", name:"", address:"", gstin:"", stateCode:"", against:"", date:todayISO(), reason:"", lines:[]});
+const loadNote = () => { try{ const d=JSON.parse(localStorage.getItem(NKEY())); if(d && Array.isArray(d.lines)) return Object.assign(newNote(), d); }catch(e){} return newNote(); };
+let nt = loadNote();
+const saveNote = () => { try{ localStorage.setItem(NKEY(), JSON.stringify(nt)); }catch(e){} };
+const NMAP = {"n-name":"name","n-addr":"address","n-gstin":"gstin","n-state":"stateCode","n-against":"against","n-date":"date","n-reason":"reason"};
+const ntIntra = () => isIntra(S.firm.stateCode, nt.stateCode);
+function fillNote(){
+  for(const [id,k] of Object.entries(NMAP)) $("#"+id).value = nt[k]||"";
+  const cr=nt.type!=="debit";
+  $("#n-type-credit").setAttribute("aria-pressed", cr?"true":"false"); $("#n-type-debit").setAttribute("aria-pressed", cr?"false":"true");
+  $("#n-type-hint").textContent = cr ? "Goods came back from a buyer. Stock goes up and the buyer owes you less." : "Goods sent back to a supplier. Stock goes down and you owe the supplier less.";
+  $("#n-party-lbl").textContent = cr ? "Buyer name" : "Supplier name"; $("#n-no-lbl").textContent = cr ? "Credit note no." : "Debit note no.";
+  renderNoteLines(); updateNote();
+}
+$("#n-type-credit").addEventListener("click", () => { nt.type="credit"; saveNote(); fillNote(); });
+$("#n-type-debit").addEventListener("click", () => { nt.type="debit"; saveNote(); fillNote(); });
+for(const [id,k] of Object.entries(NMAP)){
+  $("#"+id).addEventListener("input", e => { let v=e.target.value;
+    if(id==="n-gstin"){ v=v.toUpperCase(); e.target.value=v; const sc=gstinState(v); if(sc){ $("#n-state").value=sc; nt.stateCode=sc; }
+      const p=v.length===15 && S.parties.find(x=>String(x.gstin||"").toUpperCase()===v); if(p){ Object.assign(nt,{name:p.name,address:p.address||"",stateCode:p.stateCode||v.slice(0,2),gstin:v}); saveNote(); fillNote(); toast("Saved party found: "+p.name); return; } }
+    nt[k]=v; saveNote(); if(id==="n-gstin"||id==="n-state") renderNoteLines(); updateNote(); });
+}
+$("#n-name").addEventListener("change", () => { const p=S.parties.find(x=>x.name.toLowerCase()===$("#n-name").value.trim().toLowerCase()); if(!p) return; Object.assign(nt,{name:p.name,address:p.address||"",gstin:p.gstin||"",stateCode:p.stateCode||""}); saveNote(); fillNote(); });
+function noteAddLine(){
+  const name=$("#n-add-item").value.trim(), qty=+$("#n-add-qty").value||1; if(!name){ $("#n-add-item").focus(); return; }
+  const it=S.items.find(i=>i.name.toLowerCase()===name.toLowerCase());
+  if(it) nt.lines.push({itemId:it.id, name:it.name, hsn:it.hsn||"", unit:it.unit||"PCS", qty, rate:nt.type==="debit" ? +(it.prate ?? it.rate ?? 0)||0 : +it.rate||0, disc:0, gst:+(it.gst ?? 18)});
+  else { nt.lines.push({itemId:"", name, hsn:"", unit:"PCS", qty, rate:0, disc:0, gst:18}); toast("This item is not in your item list, so its stock will not change."); }
+  $("#n-add-item").value=""; $("#n-add-qty").value="1"; saveNote(); renderNoteLines(); updateNote(); $("#n-add-item").focus();
+}
+$("#n-add-btn").addEventListener("click", noteAddLine);
+$("#n-add-item").addEventListener("keydown", e => { if(e.key==="Enter"){ e.preventDefault(); $("#n-add-qty").focus(); $("#n-add-qty").select(); } });
+$("#n-add-qty").addEventListener("keydown", e => { if(e.key==="Enter"){ e.preventDefault(); noteAddLine(); } });
+function renderNoteLines(){
+  $("#n-lines-wrap").hidden=!nt.lines.length; $("#n-lines-empty").hidden=!!nt.lines.length;
+  const c=calc(nt.lines, ntIntra());
+  $("#n-lines-body").innerHTML = nt.lines.map((l,i)=>`<tr>
+    <td><input class="w-name" data-i="${i}" data-k="name" value="${esc(l.name)}" aria-label="Item name"></td>
+    <td><input class="w-s" data-i="${i}" data-k="hsn" value="${esc(l.hsn)}" aria-label="HSN"></td>
+    <td><input class="w-xs num" data-i="${i}" data-k="qty" type="number" step="any" min="0" value="${esc(l.qty)}" aria-label="Qty" style="text-align:right"></td>
+    <td><input class="w-xs" data-i="${i}" data-k="unit" value="${esc(l.unit)}" aria-label="Unit"></td>
+    <td><input class="w-s num" data-i="${i}" data-k="rate" type="number" step="any" min="0" value="${esc(l.rate)}" aria-label="Rate" style="text-align:right"></td>
+    <td><select data-i="${i}" data-k="gst" aria-label="GST %">${[0,5,12,18,28].map(g=>`<option ${+l.gst===g?"selected":""}>${g}</option>`).join("")}</select></td>
+    <td class="r num" id="nl-${i}-amt">${fmt(c.lines[i].amount)}</td>
+    <td><button class="x" type="button" data-ndel="${i}" aria-label="Remove ${esc(l.name)}">×</button></td></tr>`).join("");
+}
+$("#n-lines-body").addEventListener("input", e => { const el=e.target; if(!el.dataset.k) return; const i=+el.dataset.i, k=el.dataset.k;
+  nt.lines[i][k] = ["qty","rate","gst"].includes(k) ? (el.value===""?"":+el.value) : el.value; saveNote();
+  const c=calc(nt.lines, ntIntra()); $("#nl-"+i+"-amt").textContent=fmt(c.lines[i].amount); updateNote(); });
+$("#n-lines-body").addEventListener("change", e => { if(e.target.dataset.k==="gst"){ nt.lines[+e.target.dataset.i].gst=+e.target.value; saveNote(); updateNote(); } });
+$("#n-lines-body").addEventListener("click", e => { const b=e.target.closest("[data-ndel]"); if(!b) return; nt.lines.splice(+b.dataset.ndel,1); saveNote(); renderNoteLines(); updateNote(); });
+const noteNo = (type,n) => (type==="debit"?"DN/":"CN/")+String(n).padStart(4,"0");
+function updateNote(){
+  const intra=ntIntra(), c=calc(nt.lines, intra), key=nt.type==="debit"?"nextDN":"nextCN";
+  $("#n-no").textContent = noteNo(nt.type, Math.max(1, Math.floor(+S.firm[key]||1)));
+  $("#n-supply").textContent = !S.firm.stateCode ? "Business state not set in Settings" : !nt.stateCode ? "Party state not selected; treating as intra-state (CGST + SGST)" : intra ? `${stateName(nt.stateCode)}: intra-state, CGST + SGST` : `${stateName(nt.stateCode)}: inter-state, IGST`;
+  $("#n-taxable").textContent=fmt(c.taxable); $("#n-cgst").textContent=fmt(c.cgst); $("#n-sgst").textContent=fmt(c.sgst); $("#n-igst").textContent=fmt(c.igst);
+  $("#n-cgst-row").hidden=!intra; $("#n-sgst-row").hidden=!intra; $("#n-igst-row").hidden=intra;
+  $("#n-round").textContent=(c.roundOff>0?"+":"")+fmt(c.roundOff); $("#n-total").textContent="₹"+c.total.toLocaleString("en-IN")+".00";
+}
+function startReturnFrom(inv){
+  nt = Object.assign(newNote("credit"), {...cleanParty(inv.party||{}), against:inv.no||"", lines:(inv.lines||[]).map(l=>({itemId:l.itemId||"", name:l.name, hsn:l.hsn||"", unit:l.unit||"", qty:+l.qty||0, rate:+l.rate*(1-(+l.disc||0)/100), disc:0, gst:+l.gst||0}))});
+  saveNote(); fillNote(); showTab("notes"); toast(`Sales return against ${inv.no}: change the quantities to what came back, then save.`);
+}
+$("#n-clear").addEventListener("click", e => armDelete(e.currentTarget, () => { nt=newNote(nt.type); saveNote(); fillNote(); toast("Form cleared"); }));
+$("#n-save").addEventListener("click", e => {
+  if(!db) return toast("Not connected to the database", true);
+  const party=cleanParty(nt), type=nt.type==="debit"?"debit":"credit";
+  const lines=nt.lines.filter(l=>String(l.name).trim() && +l.qty>0).map(l=>({itemId:l.itemId||"", name:String(l.name).trim(), hsn:String(l.hsn||"").trim(), unit:String(l.unit||"").trim(), qty:+l.qty||0, rate:r2(+l.rate||0), disc:0, gst:+l.gst||0}));
+  if(!party.name){ $("#n-name").focus(); return toast(type==="debit"?"Enter the supplier name":"Enter the buyer name", true); }
+  if(!lines.length){ $("#n-add-item").focus(); return toast("Add at least one item with a quantity", true); }
+  withBtn(e.currentTarget, "Saving…", async () => {
+    try{
+      const intra=ntIntra(), c=calc(lines,intra), id=(type==="debit"?"dn-":"cn-")+Date.now().toString(36)+Math.random().toString(36).slice(2,6), ref=C("returns").doc(id), firmRef=FIRM(), key=type==="debit"?"nextDN":"nextCN";
+      const doc={type, date:nt.date||todayISO(), party, against:String(nt.against||"").trim(), reason:String(nt.reason||"").trim(), intra, pos:party.stateCode||"", lines, taxable:c.taxable, cgst:c.cgst, sgst:c.sgst, igst:c.igst, roundOff:c.roundOff, total:c.total, createdAt:Date.now(), createdBy:(auth.currentUser&&auth.currentUser.email)||""};
+      await db.runTransaction(async t => { const fs=await t.get(firmRef); const f=fs.exists?fs.data():{}; const n=Math.max(1, Math.floor(+f[key]||1)); doc.no=noteNo(type,n); t.set(ref, doc); t.set(firmRef, {[key]:n+1}, {merge:true}); });
+      const b=db.batch(), q=qtyMap(lines);
+      for(const [iid,qty] of Object.entries(q)) if(S.items.some(x=>x.id===iid)) b.update(D("items", iid), {stock:INC(type==="debit" ? -qty : qty)});
+      if(!S.parties.some(p=>p.name.toLowerCase()===party.name.toLowerCase())) b.set(C("parties").doc(), {...party, phone:"", type:type==="debit"?"supplier":"customer", opening:0});
+      await b.commit();
+      nt=newNote(type); saveNote(); fillNote(); toast(`${type==="debit"?"Debit":"Credit"} note ${doc.no} saved · ₹${fmt(c.total)} · stock updated`);
+      openInvoice(noteDoc({...doc, id}), true);
+    }catch(err){ toast(errMsg(err), true); }
+  });
+});
+function noteDoc(r){ return {...r, __docTitle: r.type==="debit" ? "DEBIT NOTE" : "CREDIT NOTE", firm:firmSnapshot(), ship:r.party, ref:r.against?("Against bill "+r.against):"", pay:r.reason||"", order:"", dispatch:"", dest:""}; }
+let ntMonth=todayISO().slice(0,7), ntList=[], unsubNt=null;
+function watchNotes(){
+  if(unsubNt){ unsubNt(); unsubNt=null; } if(!db || !dbReady) return; $("#nt-month").value=ntMonth;
+  unsubNt = C("returns").where("date",">=",ntMonth+"-01").where("date","<",nextMonth(ntMonth)+"-01").onSnapshot(q=>{ ntList=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0)); renderNotesList(true); }, err=>toast("Could not load notes: "+(err.message||err), true));
+}
+function renderNotesList(fromSnap){
+  if(!fromSnap && !unsubNt){ fillNote(); return watchNotes(); }
+  $("#nt-body").innerHTML=ntList.map((r,n)=>`<tr class="click" data-ntopen="${esc(r.id)}"><td class="r num">${n+1}</td><td>${fmtDate(r.date)}</td><td><span class="vt ${r.type==="debit"?"debit":"credit"}">${r.type==="debit"?"Debit Note":"Credit Note"}</span></td><td class="num">${esc(r.no)}</td><td>${esc((r.party||{}).name)}</td><td class="num">${esc(r.against||"")}</td><td class="r num">${rupee(r.total)}</td><td class="r"><button class="btn sm danger" type="button" data-ntdel="${esc(r.id)}">Delete</button></td></tr>`).join("");
+  $("#nt-wrap").hidden=!ntList.length; $("#nt-empty").hidden=!!ntList.length;
+}
+$("#nt-month").addEventListener("change", e => { ntMonth=e.target.value||todayISO().slice(0,7); watchNotes(); });
+$("#nt-body").addEventListener("click", e => {
+  const d=e.target.closest("[data-ntdel]");
+  if(d){ e.stopPropagation(); armDelete(d, async () => { const r=ntList.find(x=>x.id===d.dataset.ntdel); if(!r) return;
+    try{ const b=db.batch(); b.delete(D("returns", r.id)); for(const [iid,q] of Object.entries(qtyMap(r.lines))) if(S.items.some(x=>x.id===iid)) b.update(D("items", iid), {stock:INC(r.type==="debit" ? q : -q)}); await b.commit(); toast("Note deleted and stock restored"); }catch(err){ toast(errMsg(err), true); } }); return; }
+  const tr=e.target.closest("[data-ntopen]"); if(tr){ const r=ntList.find(x=>x.id===tr.dataset.ntopen); if(r) openInvoice(noteDoc(r), true); }
+});
+
+// ================= STOCK SUMMARY & GROSS PROFIT =================
+const fyStart = () => { const d=new Date(); const y=d.getMonth()>=3?d.getFullYear():d.getFullYear()-1; return y+"-04-01"; };
+let skFrom=fyStart(), skTo=todayISO(), skRows=[], skSeq=0;
+async function loadStock(){
+  if(!db || !dbReady) return; const my=++skSeq; if(skTo<skFrom) skTo=skFrom; $("#sk-from").value=skFrom; $("#sk-to").value=skTo;
+  $("#sk-empty").hidden=false; $("#sk-empty").textContent="Loading…"; $("#sk-wrap").hidden=true;
+  try{
+    const end=todayISO()>skTo?todayISO():skTo;
+    const [inv,pur,ret]=await Promise.all([rangeDocs("invoices",skFrom,end), rangeDocs("purchases",skFrom,end), rangeDocs("returns",skFrom,end)]);
+    if(my!==skSeq) return;
+    const byName={}; S.items.forEach(i=>byName[String(i.name).toLowerCase()]=i.id);
+    const st={}; S.items.forEach(i=>st[i.id]={item:i, after:0, inw:0, out:0, sales:0, soldQty:0});
+    const idOf=l=>l.itemId && st[l.itemId] ? l.itemId : byName[String(l.name||"").toLowerCase()];
+    const move=(docs, sign, kind)=>docs.forEach(d=>{ const inP=(d.date||"")<=skTo; (d.lines||[]).forEach(l=>{ const id=idOf(l); if(!id) return; const o=st[id], q=+l.qty||0;
+      if(inP){ if(sign>0) o.inw+=q; else o.out+=q; if(kind==="sale"){ o.sales+=r2(q*(+l.rate||0)*(1-(+l.disc||0)/100)); o.soldQty+=q; } if(kind==="cn"){ o.sales-=r2(q*(+l.rate||0)); o.soldQty-=q; } }
+      else o.after+=sign*q; }); });
+    move(inv,-1,"sale"); move(pur,1,"pur"); move(ret.filter(r=>r.type!=="debit"),1,"cn"); move(ret.filter(r=>r.type==="debit"),-1,"dn");
+    skRows=Object.values(st).map(o=>{ const cur=+o.item.stock||0, closing=r2(cur-o.after), opening=r2(closing-o.inw+o.out), cost=+(o.item.prate ?? o.item.rate ?? 0)||0;
+      const cos=r2(o.soldQty*cost), sales=r2(o.sales), gp=r2(sales-cos);
+      return {name:o.item.name, unit:o.item.unit||"", opening, inw:r2(o.inw), out:r2(o.out), closing, cost, value:r2(closing*cost), sales, cos, gp, margin: sales ? Math.round(gp/sales*1000)/10 : null}; })
+      .sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+    renderStock();
+  }catch(err){ $("#sk-empty").textContent="Could not load: "+((err&&err.message)||err); }
+}
+function renderStock(){
+  const q=$("#sk-q").value.trim().toLowerCase(), list=skRows.filter(r=>!q||String(r.name).toLowerCase().includes(q));
+  const sum=k=>r2(list.reduce((t,r)=>t+(+r[k]||0),0)), sales=sum("sales"), gp=sum("gp");
+  $("#sk-t-value").textContent="₹"+fmt(sum("value")); $("#sk-t-sales").textContent="₹"+fmt(sales); $("#sk-t-profit").textContent=(gp<0?"−₹":"₹")+fmt(Math.abs(gp)); $("#sk-t-margin").textContent= sales ? (Math.round(gp/sales*1000)/10)+"%" : "—";
+  const q2=(v,u)=>`${fmtQ(v)} <span class="muted">${esc(u)}</span>`;
+  $("#sk-body").innerHTML=list.map((r,n)=>`<tr><td class="r num">${n+1}</td><td><b>${esc(r.name)}</b></td><td class="r num">${q2(r.opening,r.unit)}</td><td class="r num">${r.inw?fmtQ(r.inw):""}</td><td class="r num">${r.out?fmtQ(r.out):""}</td><td class="r num"><b>${q2(r.closing,r.unit)}</b></td><td class="r num">${fmt(r.cost)}</td><td class="r num">${fmt(r.value)}</td><td class="r num">${r.sales?fmt(r.sales):""}</td><td class="r num">${r.cos?fmt(r.cos):""}</td><td class="r num ${r.gp<0?"amt-due":""}">${r.sales||r.cos?fmt(r.gp):""}</td><td class="r num">${r.margin===null?"":r.margin+"%"}</td></tr>`).join("")
+    + (list.length?`<tr class="sub"><td></td><td>Total</td><td></td><td></td><td></td><td></td><td></td><td class="r num">${fmt(sum("value"))}</td><td class="r num">${fmt(sales)}</td><td class="r num">${fmt(sum("cos"))}</td><td class="r num">${fmt(gp)}</td><td class="r num">${sales?(Math.round(gp/sales*1000)/10)+"%":""}</td></tr>`:"");
+  $("#sk-wrap").hidden=!list.length; $("#sk-empty").hidden=!!list.length; $("#sk-empty").textContent = skRows.length ? "No items match your search." : "No items yet.";
+}
+$("#sk-from").addEventListener("change", e => { skFrom=e.target.value||fyStart(); loadStock(); });
+$("#sk-to").addEventListener("change", e => { skTo=e.target.value||todayISO(); loadStock(); });
+$("#sk-month").addEventListener("click", () => { const m=todayISO().slice(0,7); skFrom=m+"-01"; skTo=todayISO(); loadStock(); });
+$("#sk-fy").addEventListener("click", () => { skFrom=fyStart(); skTo=todayISO(); loadStock(); });
+$("#sk-q").addEventListener("input", renderStock);
+$("#sk-xlsx").addEventListener("click", () => {
+  if(!window.XLSX) return toast("Excel tool did not load. Please reload the page.", true); if(!skRows.length) return toast("No items", true);
+  const rows=skRows.map((r,n)=>({"Sr. No.":n+1,"Item":r.name,"Unit":r.unit,"Opening":r.opening,"Inward":r.inw,"Outward":r.out,"Closing":r.closing,"Cost Rate":r.cost,"Closing Value":r.value,"Net Sales":r.sales,"Cost of Sales":r.cos,"Gross Profit":r.gp,"Margin %":r.margin===null?"":r.margin}));
+  const sum=k=>r2(skRows.reduce((t,r)=>t+(+r[k]||0),0)); rows.push({"Item":"TOTAL","Closing Value":sum("value"),"Net Sales":sum("sales"),"Cost of Sales":sum("cos"),"Gross Profit":sum("gp")});
+  const ws=XLSX.utils.json_to_sheet(rows); ws["!cols"]=[7,32,7,10,10,10,10,11,14,13,13,13,9].map(w=>({wch:w})); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Stock Summary");
+  XLSX.writeFile(wb, `StockSummary_${skFrom}_to_${skTo}.xlsx`); toast("Excel file downloaded");
+});
+
+// ================= CASH / BANK BOOK =================
+let cbBook="cash", cbFrom=todayISO().slice(0,7)+"-01", cbTo=todayISO(), cbSeq=0, cbRows=[], cbOpen=0;
+const isCash = p => String(p.mode||"Cash").toLowerCase()==="cash";
+async function loadCash(){
+  if(!db || !dbReady) return; const my=++cbSeq; if(cbTo<cbFrom) cbTo=cbFrom; $("#cb-from").value=cbFrom; $("#cb-to").value=cbTo;
+  const cash=cbBook==="cash"; $("#cb-cash").setAttribute("aria-pressed", cash?"true":"false"); $("#cb-bank").setAttribute("aria-pressed", cash?"false":"true"); $("#cb-title").textContent = cash ? "Cash Book" : "Bank Book (UPI, bank transfer, cheque)";
+  try{
+    const q=await C("payments").where("date","<=",cbTo).get(); if(my!==cbSeq) return;
+    const all=q.docs.map(d=>d.data()).filter(p=>isCash(p)===cash).sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.createdAt||0)-(b.createdAt||0));
+    const sign=p=>p.type==="payment" ? -(+p.amount||0) : (+p.amount||0);
+    cbOpen=r2((+(cash?S.firm.cashOpen:S.firm.bankOpen)||0) + all.filter(p=>(p.date||"")<cbFrom).reduce((t,p)=>t+sign(p),0));
+    let bal=cbOpen; cbRows=all.filter(p=>(p.date||"")>=cbFrom).map(p=>{ bal=r2(bal+sign(p)); return {date:p.date, party:(p.party||{}).name, type:p.type==="payment"?"Payment":"Receipt", no:p.no||"", mode:[p.mode, p.ref].filter(Boolean).join(" · "), inn:p.type==="payment"?0:+p.amount||0, out:p.type==="payment"?+p.amount||0:0, bal}; });
+    renderCash();
+  }catch(err){ toast("Could not load: "+((err&&err.message)||err), true); }
+}
+function renderCash(){
+  const tin=r2(cbRows.reduce((t,r)=>t+r.inn,0)), tout=r2(cbRows.reduce((t,r)=>t+r.out,0)), close=r2(cbOpen+tin-tout);
+  const m=v=>(v<0?"−₹":"₹")+fmt(Math.abs(v));
+  $("#cb-t-open").textContent=m(cbOpen); $("#cb-t-in").textContent="₹"+fmt(tin); $("#cb-t-out").textContent="₹"+fmt(tout); $("#cb-t-close").textContent=m(close);
+  $("#cb-body").innerHTML=`<tr class="sub"><td>${fmtDate(cbFrom)}</td><td>Opening balance</td><td></td><td></td><td></td><td></td><td></td><td class="r num">${fmt(cbOpen)}</td></tr>`
+    + cbRows.map(r=>`<tr><td>${fmtDate(r.date)}</td><td><b>${esc(r.party)}</b></td><td><span class="vt ${r.type==="Payment"?"payment":"receipt"}">${r.type}</span></td><td class="num">${esc(r.no)}</td><td>${esc(r.mode)}</td><td class="r num">${r.inn?fmt(r.inn):""}</td><td class="r num">${r.out?fmt(r.out):""}</td><td class="r num">${fmt(r.bal)}</td></tr>`).join("")
+    + `<tr class="sub"><td>${fmtDate(cbTo)}</td><td>Closing balance</td><td></td><td></td><td></td><td class="r num">${fmt(tin)}</td><td class="r num">${fmt(tout)}</td><td class="r num">${fmt(close)}</td></tr>`;
+}
+$("#cb-cash").addEventListener("click", () => { cbBook="cash"; loadCash(); });
+$("#cb-bank").addEventListener("click", () => { cbBook="bank"; loadCash(); });
+$("#cb-from").addEventListener("change", e => { cbFrom=e.target.value||cbFrom; loadCash(); });
+$("#cb-to").addEventListener("change", e => { cbTo=e.target.value||todayISO(); loadCash(); });
+$("#cb-month").addEventListener("click", () => { cbFrom=todayISO().slice(0,7)+"-01"; cbTo=todayISO(); loadCash(); });
+$("#cb-xlsx").addEventListener("click", () => {
+  if(!window.XLSX) return toast("Excel tool did not load. Please reload the page.", true);
+  const rows=[{"Date":fmtDate(cbFrom),"Particulars":"Opening balance","Balance":cbOpen}, ...cbRows.map(r=>({"Date":fmtDate(r.date),"Particulars":r.party,"Vch Type":r.type,"Vch No.":r.no,"Mode / Ref":r.mode,"Money In":r.inn||"","Money Out":r.out||"","Balance":r.bal}))];
+  const tin=r2(cbRows.reduce((t,r)=>t+r.inn,0)), tout=r2(cbRows.reduce((t,r)=>t+r.out,0)); rows.push({"Date":fmtDate(cbTo),"Particulars":"Closing balance","Money In":tin,"Money Out":tout,"Balance":r2(cbOpen+tin-tout)});
+  const ws=XLSX.utils.json_to_sheet(rows); ws["!cols"]=[11,30,10,12,22,13,13,14].map(w=>({wch:w})); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,cbBook==="cash"?"Cash Book":"Bank Book");
+  XLSX.writeFile(wb, `${cbBook==="cash"?"CashBook":"BankBook"}_${cbFrom}_to_${cbTo}.xlsx`); toast("Excel file downloaded");
+});
+
+// ================= BACKUP / RESTORE =================
+const BK_COLS=["items","parties","invoices","purchases","payments","returns"];
+$("#bk-download").addEventListener("click", e => { if(!db) return toast("Not connected to the database", true);
+  withBtn(e.currentTarget, "Preparing…", async () => {
+    try{
+      const data={}; const fs=await FIRM().get(); data["settings/firm"]=fs.exists?fs.data():{};
+      for(const c of BK_COLS){ const q=await C(c).get(); data[c]={}; q.docs.forEach(d=>data[c][d.id]=d.data()); }
+      const count=BK_COLS.reduce((t,c)=>t+Object.keys(data[c]).length,0);
+      const blob=new Blob([JSON.stringify({app:"BillBook", version:1, company:CID, firmName:S.firm.name||"", createdAt:new Date().toISOString(), data}, null, 1)], {type:"application/json"});
+      const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`BillBook_backup_${String(S.firm.name||"company").replace(/[^\w]+/g,"_")}_${todayISO()}.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+      $("#bk-msg").textContent=`Backup downloaded: ${count} records.`; toast("Backup downloaded");
+    }catch(err){ toast("Could not create backup: "+((err&&err.message)||err), true); }
+  }); });
+$("#bk-file").addEventListener("change", async e => {
+  const f=e.target.files&&e.target.files[0]; e.target.value=""; if(!f) return; if(!db) return toast("Not connected to the database", true);
+  let bk; try{ bk=JSON.parse(await f.text()); }catch(x){ return toast("This file is not a BillBook backup.", true); }
+  if(!bk || bk.app!=="BillBook" || !bk.data) return toast("This file is not a BillBook backup.", true);
+  const count=BK_COLS.reduce((t,c)=>t+Object.keys(bk.data[c]||{}).length,0);
+  const ok=await dialog({title:"Restore backup?", msg:`Backup of "${bk.firmName||"company"}" from ${String(bk.createdAt||"").slice(0,10)} with ${count} records. They will be written into the company you are in now (${S.firm.name||"this company"}). Records with the same ID are replaced; nothing else is deleted.`, yes:"Restore", no:"Cancel"});
+  if(!ok) return;
+  try{
+    const ops=[]; if(bk.data["settings/firm"] && Object.keys(bk.data["settings/firm"]).length) ops.push([FIRM(), bk.data["settings/firm"]]);
+    for(const c of BK_COLS) for(const [id,v] of Object.entries(bk.data[c]||{})) ops.push([D(c,id), v]);
+    for(let i=0;i<ops.length;i+=400){ const b=db.batch(); ops.slice(i,i+400).forEach(([r,v])=>b.set(r,v)); await b.commit(); $("#bk-msg").textContent=`Restoring… ${Math.min(i+400,ops.length)} / ${ops.length}`; }
+    $("#bk-msg").textContent=`Restored ${ops.length} records.`; toast("Backup restored");
+  }catch(err){ toast("Restore failed: "+((err&&err.message)||err), true); }
+});
+
 // ================= SETTINGS =================
-const ST = {name:"st-name",address:"st-addr",phone:"st-phone",email:"st-email",gstin:"st-gstin",stateCode:"st-state",pan:"st-pan",bank:"st-bank",acno:"st-acno",ifsc:"st-ifsc",prefix:"st-prefix",fy:"st-fy",nextNo:"st-next",decl:"st-decl"};
+const ST = {name:"st-name",address:"st-addr",phone:"st-phone",email:"st-email",gstin:"st-gstin",stateCode:"st-state",pan:"st-pan",bank:"st-bank",acno:"st-acno",ifsc:"st-ifsc",prefix:"st-prefix",fy:"st-fy",nextNo:"st-next",decl:"st-decl",cashOpen:"st-cashopen",bankOpen:"st-bankopen"};
 let settingsDirty=false;
 function fillSettings(){
   if(settingsDirty) return; const f=S.firm;
@@ -1684,11 +2079,11 @@ function onFirm(){
   const f=S.firm;
   $("#firm-sub").textContent = f.name ? `${f.name}${f.gstin?" · "+f.gstin:""}` : "Add your business details in Settings";
   $("#firm-notice").hidden = !!f.name || !dbReady;
-  fillSettings(); updateSummary(); updatePur(); if(!$("#tab-home").hidden) renderGateway(); setTopHeight();
+  fillSettings(); updateSummary(); updatePur(); updateNote(); if(!$("#tab-home").hidden) renderGateway(); setTopHeight();
 }
 
 // ================= BOOT =================
-fillBillForm(); fillPur(); renderItems(); renderParties(); renderBills(); fillSettings();
+fillBillForm(); fillPur(); fillNote(); renderItems(); renderParties(); renderBills(); fillSettings();
 showTab("home"); setTimeout(setTopHeight, 50);
 
 const banner = m => { $("#banner").textContent=m; $("#banner").hidden=!m; };
@@ -1701,7 +2096,7 @@ if(!window.firebase || !CFG || !CFG.apiKey || String(CFG.apiKey).includes("PASTE
   auth = firebase.auth(); db = firebase.firestore(); INC = n => firebase.firestore.FieldValue.increment(n);
   db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
   auth.onAuthStateChanged(user => {
-    unsubs.forEach(u=>u()); unsubs=[]; unsubGlobal.forEach(u=>u()); unsubGlobal=[]; closeAccount(); if(unsubPur){ unsubPur(); unsubPur=null; } if(unsubBills){ unsubBills(); unsubBills=null; }
+    unsubs.forEach(u=>u()); unsubs=[]; unsubGlobal.forEach(u=>u()); unsubGlobal=[]; closeAccount(); if(unsubPur){ unsubPur(); unsubPur=null; } if(unsubNt){ unsubNt(); unsubNt=null; } if(unsubBills){ unsubBills(); unsubBills=null; }
     if(!user){ dbReady=false; $("#app").hidden=true; $("#login").hidden=false; return; }
     $("#login").hidden=true; $("#app").hidden=false; $("#user-email").textContent=user.email; dbReady=true; banner("");
     $("#lg-email").value=""; $("#lg-pass").value="";
@@ -1717,7 +2112,7 @@ function subscribeAll(){
   unsubs.push(C("items").onSnapshot(q => { S.items=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.name).localeCompare(String(b.name))); renderItems(); renderBills(); }, fail));
   unsubs.push(C("parties").onSnapshot(q => { S.parties=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.name).localeCompare(String(b.name))); renderParties(); }, fail));
   unsubs.push(C("invoices").where("date","==",todayISO()).onSnapshot(q => { S.todayTotal=q.docs.reduce((t,d)=>t+(+d.data().total||0),0); renderBills(); }, ()=>{}));
-  watchBills(); if(!$("#tab-purchase").hidden) watchPurchases(); if(!$("#tab-outstanding").hidden) loadOutstanding(); if(!$("#tab-daybook").hidden) loadDaybook(); if(!$("#tab-gst").hidden) loadGst();
+  watchBills(); if(!$("#tab-purchase").hidden) watchPurchases(); if(!$("#tab-outstanding").hidden) loadOutstanding(); if(!$("#tab-daybook").hidden) loadDaybook(); if(!$("#tab-gst").hidden) loadGst(); if(!$("#tab-notes").hidden) watchNotes(); if(!$("#tab-stock").hidden) loadStock(); if(!$("#tab-cash").hidden) loadCash();
 }
 
 // ================= COMPANIES =================
@@ -1738,7 +2133,7 @@ function switchCompany(id){
   CID=id; try{ localStorage.setItem("billbook-company", id); }catch(e){}
   Object.assign(S, {firm:{}, items:[], parties:[], invoices:[], todayTotal:0}); settingsDirty=false;
   draft = (()=>{ try{ const d=JSON.parse(localStorage.getItem(DRAFT_KEY())); if(d && Array.isArray(d.lines)) return Object.assign(newDraft(), d); }catch(e){} return newDraft(); })();
-  closeAccount(); if(unsubPur){ unsubPur(); unsubPur=null; } purList=[]; osRows=[]; pur=loadPur(); fillPur(); resetItemForm(); resetPartyForm();
+  closeAccount(); if(unsubPur){ unsubPur(); unsubPur=null; } if(unsubNt){ unsubNt(); unsubNt=null; } purList=[]; ntList=[]; osRows=[]; pur=loadPur(); fillPur(); nt=loadNote(); fillNote(); resetItemForm(); resetPartyForm();
   fillBillForm(); renderItems(); renderParties(); renderBills(); onFirm(); renderCoSel();
   subscribeAll();
 }
