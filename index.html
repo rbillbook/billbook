@@ -273,6 +273,21 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
 .seg{display:inline-flex;border:1px solid #b9c6d4}
 .seg button{background:#f3f6f9;border:0;padding:6px 12px;font-weight:600;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.vt.expense{color:#9a3412} .vt.income{color:var(--good)} .vt.contra{color:#475569} .vt.journal{color:#6b2fa0}
+.tform{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;border:1px solid var(--line)}
+@media (max-width:900px){.tform{grid-template-columns:minmax(0,1fr)}}
+.tform > div{min-width:0}
+.tform > div + div{border-left:1px solid var(--line)}
+@media (max-width:900px){.tform > div + div{border-left:0;border-top:1px solid var(--line)}}
+.tform table{width:100%;border-collapse:collapse;font-size:13.5px}
+.tform th{background:#dbe5ef;color:#1f3b57;text-align:left;padding:7px 10px;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.tform th.r,.tform td.r{text-align:right}
+.tform td{padding:5px 10px;border-top:1px solid #e6ecf2;vertical-align:top}
+.tform td.ind{padding-left:26px;color:var(--muted)}
+.tform tr.grp td{font-weight:700}
+.tform tr.tot td{border-top:2px solid var(--accent);font-weight:700;background:var(--surface-2)}
+.tform tr.hl td{background:var(--hl-2);font-weight:700}
+.tform .num{font-variant-numeric:tabular-nums;white-space:nowrap}
 /* Gateway */
 .gw{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:28px;align-items:start;max-width:1000px;margin:0 auto}
 @media (max-width:900px){.gw{grid-template-columns:minmax(0,1fr);gap:16px} .gw-box{order:-1}}
@@ -341,6 +356,8 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
     <button role="tab" data-tab="notes" aria-selected="false">Credit/Debit Note</button>
     <button role="tab" data-tab="stock" aria-selected="false">Stock Summary</button>
     <button role="tab" data-tab="cash" aria-selected="false">Cash/Bank</button>
+    <button role="tab" data-tab="vouchers" aria-selected="false">Expenses &amp; Journal</button>
+    <button role="tab" data-tab="final" aria-selected="false">P&amp;L / Balance Sheet</button>
     <button role="tab" data-tab="settings" aria-selected="false">Settings</button>
   </nav>
 </header>
@@ -359,6 +376,8 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
   <button type="button" data-go="notes"><u>Alt+N</u>: Cr/Dr Note</button>
   <button type="button" data-go="stock"><u>Alt+I</u>: Stock Summary</button>
   <button type="button" data-go="cash"><u>Alt+C</u>: Cash/Bank</button>
+  <button type="button" data-go="vouchers"><u>Alt+E</u>: Expense/Journal</button>
+  <button type="button" data-go="final"><u>Alt+F</u>: P&amp;L / B/S</button>
   <div class="sep"></div>
   <button type="button" data-go="settings"><u>Alt+S</u>: Settings</button>
   <button type="button" data-act="company"><u>Alt+K</u>: Company</button>
@@ -389,6 +408,7 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
           <button class="gw-item" role="menuitem" data-key="s" data-go="bill"><u>S</u>ales (New Bill)</button>
           <button class="gw-item" role="menuitem" data-key="p" data-go="purchase"><u>P</u>urchase</button>
           <button class="gw-item" role="menuitem" data-key="n" data-go="notes">Credit / Debit <u>N</u>ote</button>
+          <button class="gw-item" role="menuitem" data-key="e" data-go="vouchers"><u>E</u>xpenses, Contra &amp; Journal</button>
         </div>
         <div class="gw-sec"><h4>REPORTS</h4>
           <button class="gw-item" role="menuitem" data-key="b" data-go="bills"><u>B</u>ills Register</button>
@@ -397,6 +417,8 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
           <button class="gw-item" role="menuitem" data-key="g" data-go="gst"><u>G</u>ST Reports</button>
           <button class="gw-item" role="menuitem" data-key="y" data-go="stock">Stock Summar<u>y</u> &amp; Profit</button>
           <button class="gw-item" role="menuitem" data-key="c" data-go="cash"><u>C</u>ash / Bank Book</button>
+          <button class="gw-item" role="menuitem" data-key="f" data-act="pl">Pro<u>f</u>it &amp; Loss A/c</button>
+          <button class="gw-item" role="menuitem" data-key="h" data-act="bs">Balance S<u>h</u>eet</button>
         </div>
         <div class="gw-sec"><h4>UTILITIES</h4>
           <button class="gw-item" role="menuitem" data-key="t" data-go="settings">Se<u>t</u>tings</button>
@@ -806,7 +828,54 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
         <div class="tile"><span>Closing balance</span><b id="cb-t-close">₹0</b></div>
       </div>
       <div class="tablewrap" id="cb-wrap"><table class="grid"><thead><tr><th>Date</th><th>Particulars</th><th>Vch Type</th><th>Vch No.</th><th>Mode / Ref</th><th class="r">Money in (₹)</th><th class="r">Money out (₹)</th><th class="r">Balance (₹)</th></tr></thead><tbody id="cb-body"></tbody></table></div>
-      <p class="hint">Built from payments received and made (Parties → Account). Cash entries go to the Cash Book; UPI, bank transfer and cheque go to the Bank Book. Set the opening balances in Settings.</p>
+      <p class="hint">Built from payments received and made (Parties → Account) and from expense, income, contra and journal vouchers. Cash entries go to the Cash Book; UPI, bank transfer and cheque go to the Bank Book. Set the opening balances in Settings.</p>
+    </div>
+  </section>
+
+  <section id="tab-vouchers" hidden>
+    <div class="two">
+      <form class="panel" id="v-form" autocomplete="off">
+        <h2 id="v-title">Expense voucher</h2>
+        <div class="seg" role="group" aria-label="Voucher type" style="flex-wrap:wrap">
+          <button type="button" data-vk="expense" aria-pressed="true">Expense</button><button type="button" data-vk="income" aria-pressed="false">Income</button><button type="button" data-vk="contra" aria-pressed="false">Contra</button><button type="button" data-vk="journal" aria-pressed="false">Journal</button>
+        </div>
+        <p class="hint" id="v-hint"></p>
+        <div class="fields">
+          <label class="f">Date<input type="date" id="v-date" required></label>
+          <label class="f">Amount (₹)<input type="number" id="v-amt" step="any" min="0.01" required></label>
+          <label class="f wide" id="v-head-wrap"><span id="v-head-lbl">Expense head</span><input id="v-head" list="v-heads" autocomplete="off" placeholder="Pick or type a head"></label>
+          <label class="f" id="v-mode-wrap"><span id="v-mode-lbl">Paid by</span><select id="v-mode"><option>Cash</option><option>UPI</option><option>Bank transfer</option><option>Cheque</option></select></label>
+          <label class="chk" id="v-direct-wrap"><input type="checkbox" id="v-direct"> Direct expense (part of the cost of goods)</label>
+          <label class="f wide" id="v-contra-wrap" hidden>Entry<select id="v-contra"><option value="deposit">Cash deposited into bank</option><option value="withdraw">Cash withdrawn from bank</option></select></label>
+          <label class="f wide" id="v-dr-wrap" hidden>Debit (Dr) ledger<input id="v-dr" list="v-ledgers" autocomplete="off" placeholder="e.g. Drawings, a party, an expense head"></label>
+          <label class="f wide" id="v-cr-wrap" hidden>Credit (Cr) ledger<input id="v-cr" list="v-ledgers" autocomplete="off" placeholder="e.g. Cash, Capital, a party"></label>
+          <label class="f wide">Narration<input id="v-note" autocomplete="off" placeholder="Short note"></label>
+        </div>
+        <div class="row"><button class="btn primary" type="submit" id="v-save">Save voucher</button><span class="hint" id="v-no"></span></div>
+      </form>
+      <div class="panel">
+        <div class="listhead"><h2>Vouchers</h2><div class="row"><label class="f" style="flex-direction:row;align-items:center;gap:6px">Month<input id="v-month" type="month" style="width:auto"></label><button class="btn" type="button" id="v-xlsx">Excel export</button></div></div>
+        <div class="tablewrap" id="v-wrap"><table class="grid"><thead><tr><th class="r">Sr. No.</th><th>Date</th><th>Type</th><th>Vch No.</th><th>Debit (Dr)</th><th>Credit (Cr)</th><th class="r">Amount</th><th></th></tr></thead><tbody id="v-body"></tbody></table></div>
+        <p class="empty" id="v-empty">No vouchers for this month.</p>
+      </div>
+    </div>
+    <datalist id="v-heads"></datalist><datalist id="v-ledgers"></datalist>
+  </section>
+
+  <section id="tab-final" hidden>
+    <div class="panel">
+      <div class="listhead"><h2 id="fa-title">Profit &amp; Loss A/c</h2>
+        <div class="rep-bar">
+          <div class="seg" role="group" aria-label="Report"><button type="button" id="fa-pl" aria-pressed="true">Profit &amp; Loss</button><button type="button" id="fa-bs" aria-pressed="false">Balance Sheet</button></div>
+          <label class="f" id="fa-from-wrap">From<input type="date" id="fa-from"></label>
+          <label class="f"><span id="fa-to-lbl">To</span><input type="date" id="fa-to"></label>
+          <button class="btn sm" type="button" id="fa-fy">This year (FY)</button>
+          <button class="btn" type="button" id="fa-xlsx">Excel export</button>
+        </div>
+      </div>
+      <div class="tiles" id="fa-tiles"></div>
+      <div id="fa-body"><p class="empty">Loading…</p></div>
+      <p class="hint" id="fa-note"></p>
     </div>
   </section>
 
@@ -840,12 +909,13 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
       <div class="fields">
         <label class="f">Cash in hand (opening ₹)<input id="st-cashopen" type="number" step="any" placeholder="0"></label>
         <label class="f">Bank balance (opening ₹)<input id="st-bankopen" type="number" step="any" placeholder="0"></label>
+        <label class="f">Owner's capital (opening ₹)<input id="st-capopen" type="number" step="any" placeholder="0"></label>
       </div>
       <div class="row"><button class="btn primary" type="submit">Save settings</button><span class="hint" id="st-state-msg"></span></div>
     </form>
     <div class="panel" id="backup-panel" style="max-width:820px;margin-top:16px">
       <h2>Backup / Restore</h2>
-      <p class="hint">Download a backup file of this company: business details, items, parties, bills, purchases, payments and credit/debit notes. Keep it on your computer or Google Drive. Restore adds the records from a backup file into the company you are in now; records with the same ID are replaced, nothing else is deleted.</p>
+      <p class="hint">Download a backup file of this company: business details, items, parties, bills, purchases, payments, credit/debit notes and vouchers. Keep it on your computer or Google Drive. Restore adds the records from a backup file into the company you are in now; records with the same ID are replaced, nothing else is deleted.</p>
       <div class="row"><button class="btn primary" type="button" id="bk-download">Download backup</button><label class="btn" for="bk-file" style="cursor:pointer">Restore from backup…</label><input type="file" id="bk-file" accept=".json,application/json" hidden><span class="hint" id="bk-msg"></span></div>
     </div>
   </section>
@@ -967,7 +1037,7 @@ function dialog({title, msg="", yes="Yes", no="Cancel", input=null}){
 }
 
 // ---- Tally-style navigation
-const SCREEN={home:"Gateway of BillBook", bill:"Sales Invoice Creation", bills:"Bills Register", purchase:"Purchase Voucher", items:"Stock Items", parties:"Party Ledgers", outstanding:"Outstanding Summary", settings:"Company Settings", daybook:"Day Book", gst:"GST Reports", notes:"Credit / Debit Note", stock:"Stock Summary", cash:"Cash / Bank Book"};
+const SCREEN={home:"Gateway of BillBook", bill:"Sales Invoice Creation", bills:"Bills Register", purchase:"Purchase Voucher", items:"Stock Items", parties:"Party Ledgers", outstanding:"Outstanding Summary", settings:"Company Settings", daybook:"Day Book", gst:"GST Reports", notes:"Credit / Debit Note", stock:"Stock Summary", cash:"Cash / Bank Book", vouchers:"Expenses, Contra & Journal", final:"Profit & Loss A/c"};
 let gwSel=0;
 const gwItems = () => $$("#gw-menu .gw-item");
 function gwFocus(i){ const it=gwItems(); if(!it.length) return; gwSel=(i+it.length)%it.length; it.forEach((b,k)=>b.classList.toggle("sel", k===gwSel)); if(!$("#tab-home").hidden) it[gwSel].focus({preventScroll:true}); }
@@ -980,8 +1050,10 @@ function renderGateway(){
 function doAct(a){
   if(a==="company"){ const sel=$("#co-sel"); sel.focus(); try{ sel.showPicker && sel.showPicker(); }catch(e){} }
   else if(a==="logout") $("#logout").click();
+  else if(a==="pl") showFinal("pl");
+  else if(a==="bs") showFinal("bs");
   else if(a==="backup"){ showTab("settings"); setTimeout(()=>{ const el=$("#backup-panel"); el.scrollIntoView({behavior:"smooth", block:"start"}); $("#bk-download").focus(); }, 50); }
-  else if(a==="help") dialog({title:"Keyboard shortcuts", msg:"Esc: Gateway · F8: Sales · F9: Purchase · F2: Bills · F4: Items & Stock · F7: Parties · F10: Outstanding · Alt+D: Day Book · Alt+R: GST Reports · Alt+N: Credit/Debit Note · Alt+I: Stock Summary · Alt+C: Cash/Bank · Alt+S: Settings · Alt+K: Company · On the Gateway use ↑ ↓ Enter or the underlined letter.", yes:"OK", no:""});
+  else if(a==="help") dialog({title:"Keyboard shortcuts", msg:"Esc: Gateway · F8: Sales · F9: Purchase · F2: Bills · F4: Items & Stock · F7: Parties · F10: Outstanding · Alt+D: Day Book · Alt+R: GST Reports · Alt+N: Credit/Debit Note · Alt+I: Stock Summary · Alt+C: Cash/Bank · Alt+E: Expenses & Journal · Alt+F: P&L / Balance Sheet · Alt+S: Settings · Alt+K: Company · On the Gateway use ↑ ↓ Enter or the underlined letter.", yes:"OK", no:""});
 }
 document.addEventListener("click", e => { const a=e.target.closest("[data-act]"); if(a){ e.preventDefault(); doAct(a.dataset.act); } });
 $("#gw-menu").addEventListener("mousemove", e => { const b=e.target.closest(".gw-item"); if(b){ const i=gwItems().indexOf(b); if(i!==gwSel){ gwSel=i; gwItems().forEach((x,k)=>x.classList.toggle("sel",k===gwSel)); } } });
@@ -993,7 +1065,7 @@ document.addEventListener("keydown", e => {
   if(!$("#modal").hidden) return;
   if(FKEYS[e.key]){ e.preventDefault(); showTab(FKEYS[e.key]); return; }
   if(e.key==="F1"){ e.preventDefault(); doAct("help"); return; }
-  if(e.altKey && !e.ctrlKey && !e.metaKey){ const k=(e.code||"").replace("Key","").toLowerCase(); if(k==="k"){ e.preventDefault(); doAct("company"); return; } if(k==="g"){ e.preventDefault(); showTab("home"); return; } if(k==="s"){ e.preventDefault(); showTab("settings"); return; } if(k==="b"){ e.preventDefault(); showTab("bills"); return; } if(k==="d"){ e.preventDefault(); showTab("daybook"); return; } if(k==="r"){ e.preventDefault(); showTab("gst"); return; } if(k==="n"){ e.preventDefault(); showTab("notes"); return; } if(k==="i"){ e.preventDefault(); showTab("stock"); return; } if(k==="c"){ e.preventDefault(); showTab("cash"); return; } }
+  if(e.altKey && !e.ctrlKey && !e.metaKey){ const k=(e.code||"").replace("Key","").toLowerCase(); if(k==="k"){ e.preventDefault(); doAct("company"); return; } if(k==="g"){ e.preventDefault(); showTab("home"); return; } if(k==="s"){ e.preventDefault(); showTab("settings"); return; } if(k==="b"){ e.preventDefault(); showTab("bills"); return; } if(k==="d"){ e.preventDefault(); showTab("daybook"); return; } if(k==="r"){ e.preventDefault(); showTab("gst"); return; } if(k==="n"){ e.preventDefault(); showTab("notes"); return; } if(k==="i"){ e.preventDefault(); showTab("stock"); return; } if(k==="c"){ e.preventDefault(); showTab("cash"); return; } if(k==="e"){ e.preventDefault(); showTab("vouchers"); return; } if(k==="f"){ e.preventDefault(); showFinal("pl"); return; } }
   if($("#tab-home").hidden || e.ctrlKey || e.metaKey || e.altKey) return;
   const tag=(document.activeElement&&document.activeElement.tagName)||""; if(/INPUT|SELECT|TEXTAREA/.test(tag)) return;
   if(e.key==="ArrowDown"){ e.preventDefault(); gwFocus(gwSel+1); }
@@ -1007,7 +1079,8 @@ window.addEventListener("resize", setTopHeight);
 // ---- Tabs
 function showTab(name){
   $$("nav button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab===name ? "true":"false"));
-  ["home","bill","bills","purchase","items","parties","outstanding","daybook","gst","notes","stock","cash","settings"].forEach(t => $("#tab-"+t).hidden = t!==name);
+  ["home","bill","bills","purchase","items","parties","outstanding","daybook","gst","notes","stock","cash","vouchers","final","settings"].forEach(t => $("#tab-"+t).hidden = t!==name);
+  if(name==="vouchers") renderVouchers(); if(name==="final") loadFinal();
   if(name==="notes") renderNotesList(); if(name==="stock") loadStock(); if(name==="cash") loadCash();
   if(name==="daybook") loadDaybook(); if(name==="gst") loadGst();
   $("#screen-title").textContent = SCREEN[name] || "BillBook";
@@ -1476,11 +1549,11 @@ $("#party-form").addEventListener("submit", async e => {
 });
 
 // ================= ACCOUNT (party ledger) =================
-let acct=null, acctUnsubs=[], acctInv=[], acctPay=[], acctPur=[], acctRet=[], acctRows=[];
+let acct=null, acctUnsubs=[], acctInv=[], acctPay=[], acctPur=[], acctRet=[], acctVch=[], acctRows=[];
 function closeAccount(){ acctUnsubs.forEach(u=>u()); acctUnsubs=[]; acct=null; acctRows=[]; $("#acct").hidden=true; }
 function openAccount(p){
   if(!db) return toast("Not connected to the database", true);
-  closeAccount(); acct=p; acctInv=[]; acctPay=[]; acctPur=[]; acctRet=[];
+  closeAccount(); acct=p; acctInv=[]; acctPay=[]; acctPur=[]; acctRet=[]; acctVch=[];
   $("#acct").hidden=false; $("#acct-title").textContent="Account · "+p.name;
   $("#acct-sub").textContent=[p.gstin, p.phone].filter(Boolean).join(" · ");
   $("#ac-date").value=todayISO(); $("#ac-amt").value=""; $("#ac-ref").value="";
@@ -1490,12 +1563,14 @@ function openAccount(p){
   acctUnsubs.push(C("payments").where("party.name","==",p.name).onSnapshot(q=>{ acctPay=q.docs.map(d=>({id:d.id,...d.data()})); renderAccount(); }, fail));
   acctUnsubs.push(C("purchases").where("party.name","==",p.name).onSnapshot(q=>{ acctPur=q.docs.map(d=>({id:d.id,...d.data()})); renderAccount(); }, fail));
   acctUnsubs.push(C("returns").where("party.name","==",p.name).onSnapshot(q=>{ acctRet=q.docs.map(d=>({id:d.id,...d.data()})); renderAccount(); }, fail));
+  acctUnsubs.push(C("vouchers").where("names","array-contains",p.name).onSnapshot(q=>{ acctVch=q.docs.map(d=>({id:d.id,...d.data()})); renderAccount(); }, fail));
   setTimeout(()=>$("#acct").scrollIntoView({behavior:"smooth", block:"start"}), 50);
 }
 function ledgerRows(){
   const p=acct; const rows=[];
   acctInv.forEach(i=>rows.push({date:i.date||"", at:i.createdAt||0, text:"Sales invoice", no:i.no, dr:+i.total||0, cr:0, inv:i}));
   acctPur.forEach(x=>rows.push({date:x.date||"", at:x.createdAt||0, text:"Purchase bill", no:x.no||"", dr:0, cr:+x.total||0}));
+  acctVch.forEach(v=>{ const dr=String(v.dr).toLowerCase()===String(p.name).toLowerCase(); rows.push({date:v.date||"", at:v.createdAt||0, text:`Journal · ${dr?"Cr "+v.cr:"Dr "+v.dr}${v.note?" · "+v.note:""}`, no:v.no||"", dr:dr?+v.amount||0:0, cr:dr?0:+v.amount||0}); });
   acctRet.forEach(x=>rows.push({date:x.date||"", at:x.createdAt||0, text:x.type==="debit"?"Debit note (purchase return)":"Credit note (sales return)", no:x.no||"", dr:x.type==="debit"?+x.total||0:0, cr:x.type==="debit"?0:+x.total||0}));
   acctPay.forEach(x=>rows.push({date:x.date||"", at:x.createdAt||0, text:x.type==="payment" ? "Payment made"+(x.mode?" · "+x.mode:"") : "Payment received"+(x.mode?" · "+x.mode:"")+(x.ref?" · "+x.ref:""), no:x.no||"", dr:x.type==="payment"?+x.amount||0:0, cr:x.type==="payment"?0:+x.amount||0, pay:x}));
   rows.sort((a,b)=>a.date.localeCompare(b.date) || a.at-b.at);
@@ -1683,7 +1758,7 @@ let osRows=[], osSeq=0;
 async function loadOutstanding(){
   if(!db || !dbReady) return; const my=++osSeq; $("#os-empty").hidden=false; $("#os-empty").textContent="Loading…"; $("#os-wrap").hidden=true;
   try{
-    const [inv,pay,pur,ret]=await Promise.all([C("invoices").get(), C("payments").get(), C("purchases").get(), C("returns").get()]);
+    const [inv,pay,pur,ret,vch]=await Promise.all([C("invoices").get(), C("payments").get(), C("purchases").get(), C("returns").get(), C("vouchers").get()]);
     if(my!==osSeq) return;
     const map=new Map(); const key=n=>String(n||"").trim().toLowerCase();
     const get=n=>{ const k=key(n); if(!k) return null; if(!map.has(k)) map.set(k,{name:String(n).trim(), bal:0, party:null}); return map.get(k); };
@@ -1691,6 +1766,7 @@ async function loadOutstanding(){
     inv.docs.forEach(d=>{ const x=d.data(), o=get((x.party||{}).name); if(o) o.bal+=+x.total||0; });
     pur.docs.forEach(d=>{ const x=d.data(), o=get((x.party||{}).name); if(o) o.bal-=+x.total||0; });
     ret.docs.forEach(d=>{ const x=d.data(), o=get((x.party||{}).name); if(o) o.bal += x.type==="debit" ? (+x.total||0) : -(+x.total||0); });
+    vch.docs.forEach(d=>{ const v=d.data(); if(ledgerKind(v.dr)==="party"){ const o=get(v.dr); if(o) o.bal+=+v.amount||0; } if(ledgerKind(v.cr)==="party"){ const o=get(v.cr); if(o) o.bal-=+v.amount||0; } });
     pay.docs.forEach(d=>{ const x=d.data(), o=get((x.party||{}).name); if(o) o.bal += x.type==="payment" ? (+x.amount||0) : -(+x.amount||0); });
     osRows=[...map.values()].map(o=>({...o, bal:r2(o.bal)})).sort((a,b)=>b.bal-a.bal || a.name.localeCompare(b.name));
     renderOutstanding();
@@ -1730,12 +1806,13 @@ async function loadDaybook(){
   if(dbTo<dbFrom) dbTo=dbFrom; $("#db-from").value=dbFrom; $("#db-to").value=dbTo;
   $("#db-empty").hidden=false; $("#db-empty").textContent="Loading…"; $("#db-wrap").hidden=true;
   try{
-    const [inv,pur,pay,ret]=await Promise.all([rangeDocs("invoices",dbFrom,dbTo), rangeDocs("purchases",dbFrom,dbTo), rangeDocs("payments",dbFrom,dbTo), rangeDocs("returns",dbFrom,dbTo)]);
+    const [inv,pur,pay,ret,vch]=await Promise.all([rangeDocs("invoices",dbFrom,dbTo), rangeDocs("purchases",dbFrom,dbTo), rangeDocs("payments",dbFrom,dbTo), rangeDocs("returns",dbFrom,dbTo), rangeDocs("vouchers",dbFrom,dbTo)]);
     if(my!==dbSeq) return;
     dbRows=[...inv.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:"sales", label:"Sales", no:x.no, dr:+x.total||0, cr:0, inv:x})),
       ...pur.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:"purchase", label:"Purchase", no:x.no, dr:0, cr:+x.total||0})),
       ...pay.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:x.type==="payment"?"payment":"receipt", label:x.type==="payment"?"Payment":"Receipt", no:x.no, dr:x.type==="payment"?+x.amount||0:0, cr:x.type==="payment"?0:+x.amount||0})),
-      ...ret.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:x.type==="debit"?"debit":"credit", label:x.type==="debit"?"Debit Note":"Credit Note", no:x.no, dr:x.type==="debit"?+x.total||0:0, cr:x.type==="debit"?0:+x.total||0}))]
+      ...ret.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:x.type==="debit"?"debit":"credit", label:x.type==="debit"?"Debit Note":"Credit Note", no:x.no, dr:x.type==="debit"?+x.total||0:0, cr:x.type==="debit"?0:+x.total||0})),
+      ...vch.map(v=>({date:v.date, at:v.createdAt||0, party:`${v.dr} / ${v.cr}`, type:v.kind, label:{expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"}[v.kind]||v.kind, no:v.no, dr:+v.amount||0, cr:+v.amount||0}))]
       .sort((a,b)=>(a.date||"").localeCompare(b.date||"") || a.at-b.at);
     renderDaybook();
   }catch(err){ $("#db-empty").textContent="Could not load: "+((err&&err.message)||err); }
@@ -1999,7 +2076,10 @@ async function loadCash(){
   const cash=cbBook==="cash"; $("#cb-cash").setAttribute("aria-pressed", cash?"true":"false"); $("#cb-bank").setAttribute("aria-pressed", cash?"false":"true"); $("#cb-title").textContent = cash ? "Cash Book" : "Bank Book (UPI, bank transfer, cheque)";
   try{
     const q=await C("payments").where("date","<=",cbTo).get(); if(my!==cbSeq) return;
-    const all=q.docs.map(d=>d.data()).filter(p=>isCash(p)===cash).sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.createdAt||0)-(b.createdAt||0));
+    const vq=await C("vouchers").where("date","<=",cbTo).get(); if(my!==cbSeq) return;
+    const me=cash?"cash":"bank", lbl={expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"};
+    const fromV=vq.docs.map(d=>d.data()).filter(v=>ledgerKind(v.dr)===me||ledgerKind(v.cr)===me).map(v=>{ const inn=ledgerKind(v.dr)===me; return {date:v.date, createdAt:v.createdAt, type:inn?"receipt":"payment", amount:v.amount, no:v.no, mode:lbl[v.kind]||v.kind, ref:v.note||"", party:{name:inn?v.cr:v.dr}}; });
+    const all=[...q.docs.map(d=>d.data()).filter(p=>isCash(p)===cash), ...fromV].sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.createdAt||0)-(b.createdAt||0));
     const sign=p=>p.type==="payment" ? -(+p.amount||0) : (+p.amount||0);
     cbOpen=r2((+(cash?S.firm.cashOpen:S.firm.bankOpen)||0) + all.filter(p=>(p.date||"")<cbFrom).reduce((t,p)=>t+sign(p),0));
     let bal=cbOpen; cbRows=all.filter(p=>(p.date||"")>=cbFrom).map(p=>{ bal=r2(bal+sign(p)); return {date:p.date, party:(p.party||{}).name, type:p.type==="payment"?"Payment":"Receipt", no:p.no||"", mode:[p.mode, p.ref].filter(Boolean).join(" · "), inn:p.type==="payment"?0:+p.amount||0, out:p.type==="payment"?+p.amount||0:0, bal}; });
@@ -2028,7 +2108,7 @@ $("#cb-xlsx").addEventListener("click", () => {
 });
 
 // ================= BACKUP / RESTORE =================
-const BK_COLS=["items","parties","invoices","purchases","payments","returns"];
+const BK_COLS=["items","parties","invoices","purchases","payments","returns","vouchers"];
 $("#bk-download").addEventListener("click", e => { if(!db) return toast("Not connected to the database", true);
   withBtn(e.currentTarget, "Preparing…", async () => {
     try{
@@ -2055,8 +2135,227 @@ $("#bk-file").addEventListener("change", async e => {
   }catch(err){ toast("Restore failed: "+((err&&err.message)||err), true); }
 });
 
+// ================= EXPENSES, INCOME, CONTRA, JOURNAL =================
+const DIRECT_HEADS=["Freight / Transport inward","Loading & unloading","Labour (direct)"];
+const INDIRECT_HEADS=["Shop rent","Electricity","Salary & wages","Telephone & internet","Shop expenses","Travelling & conveyance","Repairs & maintenance","Printing & stationery","Bank charges","Discount allowed","Bad debts","Miscellaneous expenses"];
+const INCOME_HEADS=["Discount received","Commission received","Interest received","Other income"];
+const GST_HEAD="GST paid to government";
+const VK={expense:{t:"Expense voucher", p:"EXP/", key:"nextEXP", hint:"Money spent on running the shop: rent, electricity, salary, transport and so on."},
+  income:{t:"Income voucher", p:"INC/", key:"nextINC", hint:"Money received that is not a sale: discount, commission, interest."},
+  contra:{t:"Contra voucher", p:"CON/", key:"nextCON", hint:"Money moved between cash and bank. It does not change profit."},
+  journal:{t:"Journal voucher", p:"JV/", key:"nextJV", hint:"Adjustment entry: owner's money in (Cr Capital) or out (Dr Drawings), discount or bad debt written off, opening balances."}};
+let vk="expense";
+const cashOrBank = mode => String(mode||"Cash").toLowerCase()==="cash" ? "Cash" : "Bank";
+function ledgerKind(name){
+  const n=String(name||"").trim(), l=n.toLowerCase();
+  if(!n) return "";
+  if(l==="cash") return "cash"; if(l==="bank") return "bank";
+  if(l==="capital") return "capital"; if(l==="drawings") return "drawings";
+  if(l===GST_HEAD.toLowerCase()) return "gst";
+  if(DIRECT_HEADS.some(h=>h.toLowerCase()===l)) return "direct";
+  if(INDIRECT_HEADS.some(h=>h.toLowerCase()===l)) return "indirect";
+  if(INCOME_HEADS.some(h=>h.toLowerCase()===l)) return "income";
+  if(S.parties.some(p=>String(p.name).toLowerCase()===l)) return "party";
+  return "other";
+}
+function setVk(k){
+  vk=k; $$("[data-vk]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.vk===k?"true":"false"));
+  $("#v-title").textContent=VK[k].t; $("#v-hint").textContent=VK[k].hint;
+  const ei=k==="expense"||k==="income";
+  $("#v-head-wrap").hidden=!ei; $("#v-mode-wrap").hidden=!ei; $("#v-direct-wrap").hidden=k!=="expense"; $("#v-contra-wrap").hidden=k!=="contra"; $("#v-dr-wrap").hidden=k!=="journal"; $("#v-cr-wrap").hidden=k!=="journal";
+  $("#v-head-lbl").textContent = k==="income" ? "Income head" : "Expense head"; $("#v-mode-lbl").textContent = k==="income" ? "Received in" : "Paid by";
+  $("#v-heads").innerHTML=(k==="income"?INCOME_HEADS:[...INDIRECT_HEADS, ...DIRECT_HEADS, GST_HEAD]).map(h=>`<option value="${esc(h)}">`).join("");
+  $("#v-ledgers").innerHTML=["Cash","Bank","Capital","Drawings", ...S.parties.map(p=>p.name), ...INDIRECT_HEADS, ...DIRECT_HEADS, ...INCOME_HEADS, GST_HEAD].map(h=>`<option value="${esc(h)}">`).join("");
+  $("#v-no").textContent = "Next number: "+VK[k].p+String(Math.max(1, Math.floor(+S.firm[VK[k].key]||1))).padStart(4,"0");
+}
+$$("[data-vk]").forEach(b=>b.addEventListener("click", ()=>setVk(b.dataset.vk)));
+$("#v-head").addEventListener("change", () => { const l=$("#v-head").value.trim().toLowerCase(); if(DIRECT_HEADS.some(h=>h.toLowerCase()===l)) $("#v-direct").checked=true; else if(INDIRECT_HEADS.some(h=>h.toLowerCase()===l)) $("#v-direct").checked=false; });
+$("#v-form").addEventListener("submit", async e => {
+  e.preventDefault(); if(!db) return toast("Not connected to the database", true);
+  const amount=r2(+$("#v-amt").value||0); if(amount<=0){ $("#v-amt").focus(); return toast("Enter the amount", true); }
+  let dr="", cr="", head="", mode="", direct=false;
+  if(vk==="expense"||vk==="income"){ head=$("#v-head").value.trim(); if(!head){ $("#v-head").focus(); return toast(vk==="income"?"Pick an income head":"Pick an expense head", true); } mode=$("#v-mode").value;
+    if(vk==="expense"){ dr=head; cr=cashOrBank(mode); direct=$("#v-direct").checked || DIRECT_HEADS.some(h=>h.toLowerCase()===head.toLowerCase()); } else { dr=cashOrBank(mode); cr=head; } }
+  else if(vk==="contra"){ if($("#v-contra").value==="deposit"){ dr="Bank"; cr="Cash"; } else { dr="Cash"; cr="Bank"; } mode="Contra"; }
+  else { dr=$("#v-dr").value.trim(); cr=$("#v-cr").value.trim(); if(!dr){ $("#v-dr").focus(); return toast("Enter the debit ledger", true); } if(!cr){ $("#v-cr").focus(); return toast("Enter the credit ledger", true); } if(dr.toLowerCase()===cr.toLowerCase()) return toast("Debit and credit ledgers must be different", true); }
+  await withBtn($("#v-save"), "Saving…", async () => {
+    try{
+      const kind=vk, id=kind+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6), ref=C("vouchers").doc(id), firmRef=FIRM();
+      const doc={kind, date:$("#v-date").value||todayISO(), amount, dr, cr, names:[dr,cr], head, mode, direct, note:$("#v-note").value.trim(), createdAt:Date.now(), createdBy:(auth.currentUser&&auth.currentUser.email)||""};
+      await db.runTransaction(async t => { const fs=await t.get(firmRef); const f=fs.exists?fs.data():{}; const n=Math.max(1, Math.floor(+f[VK[kind].key]||1)); doc.no=VK[kind].p+String(n).padStart(4,"0"); t.set(ref, doc); t.set(firmRef, {[VK[kind].key]:n+1}, {merge:true}); });
+      $("#v-amt").value=""; $("#v-note").value=""; if(kind==="journal"){ $("#v-dr").value=""; $("#v-cr").value=""; }
+      toast(`${VK[kind].t.replace(" voucher","")} saved: ${doc.no} · ₹${fmt(amount)}`); setVk(kind);
+    }catch(err){ toast(errMsg(err), true); }
+  });
+});
+let vMonth=todayISO().slice(0,7), vList=[], unsubV=null;
+function watchVouchers(){
+  if(unsubV){ unsubV(); unsubV=null; } if(!db || !dbReady) return; $("#v-month").value=vMonth;
+  unsubV=C("vouchers").where("date",">=",vMonth+"-01").where("date","<",nextMonth(vMonth)+"-01").onSnapshot(q=>{ vList=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0)); renderVouchers(true); }, err=>toast("Could not load vouchers: "+(err.message||err), true));
+}
+function renderVouchers(fromSnap){
+  if(!fromSnap && !unsubV){ $("#v-date").value=$("#v-date").value||todayISO(); setVk(vk); return watchVouchers(); }
+  if(!fromSnap) setVk(vk);
+  const lbl={expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"};
+  $("#v-body").innerHTML=vList.map((v,n)=>`<tr><td class="r num">${n+1}</td><td>${fmtDate(v.date)}</td><td><span class="vt ${v.kind}">${lbl[v.kind]||v.kind}</span></td><td class="num">${esc(v.no)}</td><td>${esc(v.dr)}${v.note?`<div class="muted" style="font-size:12px">${esc(v.note)}</div>`:""}</td><td>${esc(v.cr)}</td><td class="r num">${fmt(v.amount)}</td><td class="r"><button class="btn sm danger" type="button" data-vdel="${esc(v.id)}">Delete</button></td></tr>`).join("")
+    + (vList.length?`<tr class="sub"><td></td><td></td><td></td><td></td><td>Total expenses this month</td><td></td><td class="r num">${fmt(vList.filter(v=>v.kind==="expense").reduce((t,v)=>t+(+v.amount||0),0))}</td><td></td></tr>`:"");
+  $("#v-wrap").hidden=!vList.length; $("#v-empty").hidden=!!vList.length;
+}
+$("#v-month").addEventListener("change", e => { vMonth=e.target.value||todayISO().slice(0,7); watchVouchers(); });
+$("#v-body").addEventListener("click", e => { const d=e.target.closest("[data-vdel]"); if(!d) return; armDelete(d, async () => { try{ await D("vouchers", d.dataset.vdel).delete(); toast("Voucher deleted"); }catch(err){ toast(errMsg(err), true); } }); });
+$("#v-xlsx").addEventListener("click", () => {
+  if(!window.XLSX) return toast("Excel tool did not load. Please reload the page.", true); if(!vList.length) return toast("No vouchers for this month", true);
+  const rows=[...vList].reverse().map((v,n)=>({"Sr. No.":n+1,"Date":fmtDate(v.date),"Type":v.kind,"Vch No.":v.no,"Debit (Dr)":v.dr,"Credit (Cr)":v.cr,"Amount":v.amount,"Mode":v.mode||"","Narration":v.note||""}));
+  const ws=XLSX.utils.json_to_sheet(rows); ws["!cols"]=[7,11,9,12,28,28,13,14,30].map(w=>({wch:w})); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Vouchers");
+  XLSX.writeFile(wb, `Vouchers_${vMonth}.xlsx`); toast("Excel file downloaded");
+});
+
+// ================= PROFIT & LOSS / BALANCE SHEET =================
+let faView="pl", faFrom=fyStart(), faTo=todayISO(), faSeq=0, faData=null;
+function showFinal(v){ faView=v; showTab("final"); }
+async function upTo(col, to){ const q=await C(col).where("date","<=",to).get(); return q.docs.map(d=>({id:d.id,...d.data()})); }
+function stockAt(all, at){
+  // closing stock value at the end of date `at`, using each item's latest purchase rate
+  const byName={}; S.items.forEach(i=>byName[String(i.name).toLowerCase()]=i.id);
+  const after={}; const idOf=l=>l.itemId && S.items.some(x=>x.id===l.itemId) ? l.itemId : byName[String(l.name||"").toLowerCase()];
+  const mv=(docs,sign)=>docs.forEach(d=>{ if((d.date||"")<=at) return; (d.lines||[]).forEach(l=>{ const id=idOf(l); if(id) after[id]=(after[id]||0)+sign*(+l.qty||0); }); });
+  mv(all.inv,-1); mv(all.pur,1); mv(all.ret.filter(r=>r.type!=="debit"),1); mv(all.ret.filter(r=>r.type==="debit"),-1);
+  return r2(S.items.reduce((t,i)=>{ const q=(+i.stock||0)-(after[i.id]||0); return t + Math.max(0,q)*(+(i.prate ?? i.rate ?? 0)||0); },0));
+}
+function plCalc(all, from, to){
+  const inR=d=>(d.date||"")>=from && (d.date||"")<=to;
+  const sales=r2(all.inv.filter(inR).reduce((t,x)=>t+(+x.taxable||0),0)), salesRet=r2(all.ret.filter(r=>r.type!=="debit"&&inR(r)).reduce((t,x)=>t+(+x.taxable||0),0));
+  const purch=r2(all.pur.filter(inR).reduce((t,x)=>t+(+x.taxable||0),0)), purRet=r2(all.ret.filter(r=>r.type==="debit"&&inR(r)).reduce((t,x)=>t+(+x.taxable||0),0));
+  const round=r2(all.inv.filter(inR).reduce((t,x)=>t+(+x.roundOff||0),0) - all.pur.filter(inR).reduce((t,x)=>t+(+x.roundOff||0),0) - all.ret.filter(inR).reduce((t,x)=>t+(x.type==="debit"?-1:1)*(+x.roundOff||0),0));
+  const direct={}, indirect={}, income={};
+  all.vch.filter(inR).forEach(v=>{ [[v.dr,1],[v.cr,-1]].forEach(([nm,sg])=>{ const k=ledgerKind(nm), a=sg*(+v.amount||0);
+    if(["party","cash","bank","capital","drawings","gst",""].includes(k)) return;
+    if(k==="direct" || (v.kind==="expense" && v.direct && sg>0)) direct[nm]=r2((direct[nm]||0)+a);
+    else if(k==="indirect" || (k==="other" && sg>0)) indirect[nm]=r2((indirect[nm]||0)+a);
+    else income[nm]=r2((income[nm]||0)-a); }); });
+  const dayBefore=shiftDay(from,-1), open=stockAt(all, dayBefore), close=stockAt(all, to);
+  const sum=o=>r2(Object.values(o).reduce((t,v)=>t+v,0));
+  const netSales=r2(sales-salesRet), netPur=r2(purch-purRet), dTot=sum(direct);
+  const gp=r2(netSales+close-open-netPur-dTot);
+  const iTot=r2(sum(indirect)), inTot=r2(sum(income)+(round>0?round:0)), roundExp=round<0?-round:0;
+  const np=r2(gp+inTot-iTot-roundExp);
+  return {sales, salesRet, netSales, purch, purRet, netPur, direct, indirect, income, round, open, close, gp, np, dTot, iTot, inTot, roundExp};
+}
+function bsCalc(all, to){
+  const upd=d=>(d.date||"")<=to;
+  const pl=plCalc(all, "0000-01-01", to);
+  // parties
+  const bal=new Map(), key=n=>String(n||"").trim().toLowerCase(), get=n=>{ const k=key(n); if(!k) return null; if(!bal.has(k)) bal.set(k,{name:String(n).trim(), bal:0}); return bal.get(k); };
+  S.parties.forEach(p=>{ const o=get(p.name); o.name=p.name; o.bal+=+p.opening||0; });
+  all.inv.filter(upd).forEach(x=>{ const o=get((x.party||{}).name); if(o) o.bal+=+x.total||0; });
+  all.pur.filter(upd).forEach(x=>{ const o=get((x.party||{}).name); if(o) o.bal-=+x.total||0; });
+  all.ret.filter(upd).forEach(x=>{ const o=get((x.party||{}).name); if(o) o.bal+= x.type==="debit" ? (+x.total||0) : -(+x.total||0); });
+  all.pay.filter(upd).forEach(x=>{ const o=get((x.party||{}).name); if(o) o.bal+= x.type==="payment" ? (+x.amount||0) : -(+x.amount||0); });
+  all.vch.filter(upd).forEach(v=>{ if(ledgerKind(v.dr)==="party"){ const o=get(v.dr); if(o) o.bal+=+v.amount||0; } if(ledgerKind(v.cr)==="party"){ const o=get(v.cr); if(o) o.bal-=+v.amount||0; } });
+  const parties=[...bal.values()].map(o=>({...o, bal:r2(o.bal)}));
+  const debtors=r2(parties.filter(p=>p.bal>0).reduce((t,p)=>t+p.bal,0)), creditors=r2(parties.filter(p=>p.bal<0).reduce((t,p)=>t-p.bal,0));
+  // cash & bank
+  let cash=+S.firm.cashOpen||0, bank=+S.firm.bankOpen||0;
+  all.pay.filter(upd).forEach(p=>{ const a=(p.type==="payment"?-1:1)*(+p.amount||0); if(isCash(p)) cash+=a; else bank+=a; });
+  let capIn=0, drawings=0, gstPaid=0;
+  all.vch.filter(upd).forEach(v=>{ const a=+v.amount||0;
+    if(ledgerKind(v.dr)==="cash") cash+=a; if(ledgerKind(v.cr)==="cash") cash-=a; if(ledgerKind(v.dr)==="bank") bank+=a; if(ledgerKind(v.cr)==="bank") bank-=a;
+    if(ledgerKind(v.cr)==="capital") capIn+=a; if(ledgerKind(v.dr)==="capital") capIn-=a; if(ledgerKind(v.dr)==="drawings") drawings+=a; if(ledgerKind(v.cr)==="drawings") drawings-=a;
+    if(ledgerKind(v.dr)==="gst") gstPaid+=a; if(ledgerKind(v.cr)==="gst") gstPaid-=a; });
+  cash=r2(cash); bank=r2(bank);
+  // GST
+  const tx=x=>(+x.cgst||0)+(+x.sgst||0)+(+x.igst||0);
+  const outT=all.inv.filter(upd).reduce((t,x)=>t+tx(x),0)-all.ret.filter(r=>r.type!=="debit"&&upd(r)).reduce((t,x)=>t+tx(x),0);
+  const inT=all.pur.filter(upd).reduce((t,x)=>t+tx(x),0)-all.ret.filter(r=>r.type==="debit"&&upd(r)).reduce((t,x)=>t+tx(x),0);
+  const gstNet=r2(outT-inT-gstPaid);
+  const capOpen=r2(+S.firm.capOpen||0), capital=r2(capOpen+capIn-drawings+pl.np);
+  const stock=pl.close;
+  const L=[], A=[];
+  L.push({grp:"Capital Account", amt:capital, rows:[["Opening capital",capOpen],...(capIn?[["Capital introduced",capIn]]:[]),...(drawings?[["Less: drawings",-drawings]]:[]),["Add: net profit",pl.np]]});
+  if(creditors) L.push({grp:"Sundry Creditors (to pay)", amt:creditors, rows:parties.filter(p=>p.bal<0).map(p=>[p.name,-p.bal])});
+  if(gstNet>0) L.push({grp:"Duties & Taxes (GST payable)", amt:gstNet, rows:[]});
+  A.push({grp:"Closing Stock", amt:stock, rows:[]});
+  if(debtors) A.push({grp:"Sundry Debtors (to receive)", amt:debtors, rows:parties.filter(p=>p.bal>0).map(p=>[p.name,p.bal])});
+  A.push({grp:"Cash-in-Hand", amt:cash, rows:[]});
+  A.push({grp:"Bank Accounts", amt:bank, rows:[]});
+  if(gstNet<0) A.push({grp:"GST input credit", amt:-gstNet, rows:[]});
+  const lt=r2(L.reduce((t,g)=>t+g.amt,0)), at=r2(A.reduce((t,g)=>t+g.amt,0)), diff=r2(at-lt);
+  if(diff>0) L.push({grp:"Difference in opening balances", amt:diff, rows:[], diff:true}); else if(diff<0) A.push({grp:"Difference in opening balances", amt:-diff, rows:[], diff:true});
+  return {L, A, total:r2(Math.max(lt,at)), diff, pl, capital, cash, bank, stock, debtors, creditors, gstNet};
+}
+async function loadFinal(){
+  if(!db || !dbReady) return; const my=++faSeq;
+  const pl=faView==="pl"; $("#fa-pl").setAttribute("aria-pressed", pl?"true":"false"); $("#fa-bs").setAttribute("aria-pressed", pl?"false":"true");
+  $("#fa-title").textContent = pl ? "Profit & Loss A/c" : "Balance Sheet"; $("#screen-title").textContent = pl ? "Profit & Loss A/c" : "Balance Sheet";
+  $("#fa-from-wrap").hidden=!pl; $("#fa-to-lbl").textContent = pl ? "To" : "As on"; $("#fa-from").value=faFrom; $("#fa-to").value=faTo;
+  $("#fa-body").innerHTML='<p class="empty">Loading…</p>';
+  try{
+    const end=todayISO()>faTo?todayISO():faTo;
+    const [inv,pur,ret,pay,vch]=await Promise.all([upTo("invoices",end), upTo("purchases",end), upTo("returns",end), upTo("payments",end), upTo("vouchers",end)]);
+    if(my!==faSeq) return;
+    const all={inv,pur,ret,pay,vch}; faData = pl ? {pl:plCalc(all, faFrom, faTo)} : {bs:bsCalc(all, faTo)};
+    renderFinal();
+  }catch(err){ $("#fa-body").innerHTML=`<p class="empty">Could not load: ${esc((err&&err.message)||String(err))}</p>`; }
+}
+function renderFinal(){
+  const m=v=>(v<0?"−":"")+fmt(Math.abs(v));
+  const tile=(l,v,cls)=>`<div class="tile"><span>${l}</span><b class="${cls||""}">${v}</b></div>`;
+  if(faView==="pl"){
+    const p=faData.pl; const L=[], R=[];
+    const line=(arr,lbl,amt,cls)=>arr.push(`<tr class="${cls||""}"><td class="${cls==="ind"?"ind":""}">${esc(lbl)}</td><td class="r num">${amt===""?"":m(amt)}</td></tr>`);
+    line(L,"Opening Stock",p.open,"grp"); line(L,"Purchase Accounts",p.netPur,"grp"); if(p.purRet){ line(L,"Purchases",p.purch,"ind"); line(L,"Less: purchase returns",-p.purRet,"ind"); }
+    if(Object.keys(p.direct).length){ line(L,"Direct Expenses",p.dTot,"grp"); Object.entries(p.direct).forEach(([k,v])=>line(L,k,v,"ind")); }
+    line(R,"Sales Accounts",p.netSales,"grp"); if(p.salesRet){ line(R,"Sales",p.sales,"ind"); line(R,"Less: sales returns",-p.salesRet,"ind"); }
+    line(R,"Closing Stock",p.close,"grp");
+    if(p.gp>=0) line(L,"Gross Profit c/o",p.gp,"hl"); else line(R,"Gross Loss c/o",-p.gp,"hl");
+    const tradT=r2(Math.max(p.open+p.netPur+p.dTot+(p.gp>0?p.gp:0), p.netSales+p.close+(p.gp<0?-p.gp:0)));
+    while(L.length<R.length) L.push('<tr><td>&nbsp;</td><td></td></tr>'); while(R.length<L.length) R.push('<tr><td>&nbsp;</td><td></td></tr>');
+    L.push(`<tr class="tot"><td>Total</td><td class="r num">${m(tradT)}</td></tr>`); R.push(`<tr class="tot"><td>Total</td><td class="r num">${m(tradT)}</td></tr>`);
+    const L2=[], R2=[];
+    if(p.gp>=0) line(R2,"Gross Profit b/f",p.gp,"hl"); else line(L2,"Gross Loss b/f",-p.gp,"hl");
+    line(L2,"Indirect Expenses",p.iTot+p.roundExp,"grp"); Object.entries(p.indirect).forEach(([k,v])=>line(L2,k,v,"ind")); if(p.roundExp) line(L2,"Round off",p.roundExp,"ind");
+    line(R2,"Indirect Incomes",p.inTot,"grp"); Object.entries(p.income).forEach(([k,v])=>line(R2,k,v,"ind")); if(p.round>0) line(R2,"Round off",p.round,"ind");
+    if(p.np>=0) line(L2,"Net Profit",p.np,"hl"); else line(R2,"Net Loss",-p.np,"hl");
+    const t2=r2(Math.max((p.gp<0?-p.gp:0)+p.iTot+p.roundExp+(p.np>0?p.np:0), (p.gp>0?p.gp:0)+p.inTot+(p.np<0?-p.np:0)));
+    while(L2.length<R2.length) L2.push('<tr><td>&nbsp;</td><td></td></tr>'); while(R2.length<L2.length) R2.push('<tr><td>&nbsp;</td><td></td></tr>');
+    L2.push(`<tr class="tot"><td>Total</td><td class="r num">${m(t2)}</td></tr>`); R2.push(`<tr class="tot"><td>Total</td><td class="r num">${m(t2)}</td></tr>`);
+    const T=(a,b)=>`<div class="tform"><div><table><thead><tr><th>Particulars</th><th class="r">${esc(S.firm.name||"")}</th></tr></thead><tbody>${a.join("")}</tbody></table></div><div><table><thead><tr><th>Particulars</th><th class="r">${esc(S.firm.name||"")}</th></tr></thead><tbody>${b.join("")}</tbody></table></div></div>`;
+    $("#fa-tiles").innerHTML=tile("Net sales",`₹${fmt(p.netSales)}`)+tile("Gross profit",`${p.gp<0?"−":""}₹${fmt(Math.abs(p.gp))}`, p.gp<0?"amt-due":"")+tile("Expenses",`₹${fmt(p.dTot+p.iTot)}`)+tile(p.np<0?"Net loss":"Net profit",`${p.np<0?"−":""}₹${fmt(Math.abs(p.np))}`, p.np<0?"amt-due":"amt-pay");
+    $("#fa-body").innerHTML=`<p class="hint" style="margin:4px 0 8px">${fmtDate(faFrom)} to ${fmtDate(faTo)} · Trading account</p>`+T(L,R)+`<p class="hint" style="margin:14px 0 8px">Profit &amp; loss account</p>`+T(L2,R2);
+    $("#fa-note").textContent="Amounts are before GST. Stock is valued at each item's latest purchase rate. Add rent, salary, electricity and other costs under Expenses & Journal (Alt+E) so the net profit is complete. Check final figures with your CA.";
+  } else {
+    const b=faData.bs;
+    const side=gs=>gs.map(g=>`<tr class="grp${g.diff?" hl":""}"><td>${esc(g.grp)}</td><td class="r num">${m(g.amt)}</td></tr>`+g.rows.map(([k,v])=>`<tr><td class="ind">${esc(k)}</td><td class="r num">${m(v)}</td></tr>`).join("")).join("");
+    let Lh=side(b.L), Ah=side(b.A); const cnt=h=>(h.match(/<tr/g)||[]).length; let pad=cnt(Lh)-cnt(Ah); const blank='<tr><td>&nbsp;</td><td></td></tr>';
+    if(pad>0) Ah+=blank.repeat(pad); else Lh+=blank.repeat(-pad);
+    const tot=`<tr class="tot"><td>Total</td><td class="r num">${m(b.total)}</td></tr>`;
+    $("#fa-tiles").innerHTML=tile("Capital",`₹${fmt(b.capital)}`)+tile("To receive",`₹${fmt(b.debtors)}`)+tile("To pay",`₹${fmt(b.creditors)}`)+tile("Cash + Bank",`₹${fmt(b.cash+b.bank)}`);
+    $("#fa-body").innerHTML=`<p class="hint" style="margin:4px 0 8px">As on ${fmtDate(faTo)}</p><div class="tform"><div><table><thead><tr><th>Liabilities</th><th class="r">${esc(S.firm.name||"")}</th></tr></thead><tbody>${Lh}${tot}</tbody></table></div><div><table><thead><tr><th>Assets</th><th class="r">${esc(S.firm.name||"")}</th></tr></thead><tbody>${Ah}${tot}</tbody></table></div></div>`;
+    $("#fa-note").textContent = b.diff ? `"Difference in opening balances" is ₹${fmt(Math.abs(b.diff))}. It usually means the owner's opening capital, opening cash/bank or opening stock has not been entered. Set them in Settings (opening capital, cash and bank) or post a Journal (Dr Cash / Cr Capital) and it will go to zero.` : "Balance sheet tallies.";
+  }
+}
+$("#fa-pl").addEventListener("click", () => { faView="pl"; loadFinal(); });
+$("#fa-bs").addEventListener("click", () => { faView="bs"; loadFinal(); });
+$("#fa-from").addEventListener("change", e => { faFrom=e.target.value||fyStart(); loadFinal(); });
+$("#fa-to").addEventListener("change", e => { faTo=e.target.value||todayISO(); loadFinal(); });
+$("#fa-fy").addEventListener("click", () => { faFrom=fyStart(); faTo=todayISO(); loadFinal(); });
+$("#fa-xlsx").addEventListener("click", () => {
+  if(!window.XLSX) return toast("Excel tool did not load. Please reload the page.", true); if(!faData) return;
+  const rows=[];
+  if(faView==="pl"){ const p=faData.pl; const add=(a,b)=>rows.push({"Particulars":a,"Amount":b});
+    add("Sales (net of returns)",p.netSales); add("Closing stock",p.close); add("Less: opening stock",-p.open); add("Less: purchases (net of returns)",-p.netPur);
+    Object.entries(p.direct).forEach(([k,v])=>add("Less: "+k,-v)); add("GROSS PROFIT",p.gp);
+    Object.entries(p.income).forEach(([k,v])=>add("Add: "+k,v)); if(p.round) add("Round off",p.round);
+    Object.entries(p.indirect).forEach(([k,v])=>add("Less: "+k,-v)); add("NET PROFIT",p.np);
+  } else { const b=faData.bs; const add=(side,g,k,v)=>rows.push({"Side":side,"Group":g,"Ledger":k,"Amount":v});
+    b.L.forEach(g=>{ add("Liabilities",g.grp,"",g.amt); g.rows.forEach(([k,v])=>add("Liabilities",g.grp,k,v)); });
+    b.A.forEach(g=>{ add("Assets",g.grp,"",g.amt); g.rows.forEach(([k,v])=>add("Assets",g.grp,k,v)); }); rows.push({"Side":"TOTAL","Amount":b.total}); }
+  const ws=XLSX.utils.json_to_sheet(rows); ws["!cols"]=[14,32,28,16].map(w=>({wch:w})); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,faView==="pl"?"Profit & Loss":"Balance Sheet");
+  XLSX.writeFile(wb, faView==="pl" ? `ProfitLoss_${faFrom}_to_${faTo}.xlsx` : `BalanceSheet_${faTo}.xlsx`); toast("Excel file downloaded");
+});
+
 // ================= SETTINGS =================
-const ST = {name:"st-name",address:"st-addr",phone:"st-phone",email:"st-email",gstin:"st-gstin",stateCode:"st-state",pan:"st-pan",bank:"st-bank",acno:"st-acno",ifsc:"st-ifsc",prefix:"st-prefix",fy:"st-fy",nextNo:"st-next",decl:"st-decl",cashOpen:"st-cashopen",bankOpen:"st-bankopen"};
+const ST = {name:"st-name",address:"st-addr",phone:"st-phone",email:"st-email",gstin:"st-gstin",stateCode:"st-state",pan:"st-pan",bank:"st-bank",acno:"st-acno",ifsc:"st-ifsc",prefix:"st-prefix",fy:"st-fy",nextNo:"st-next",decl:"st-decl",cashOpen:"st-cashopen",bankOpen:"st-bankopen",capOpen:"st-capopen"};
 let settingsDirty=false;
 function fillSettings(){
   if(settingsDirty) return; const f=S.firm;
@@ -2096,7 +2395,7 @@ if(!window.firebase || !CFG || !CFG.apiKey || String(CFG.apiKey).includes("PASTE
   auth = firebase.auth(); db = firebase.firestore(); INC = n => firebase.firestore.FieldValue.increment(n);
   db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
   auth.onAuthStateChanged(user => {
-    unsubs.forEach(u=>u()); unsubs=[]; unsubGlobal.forEach(u=>u()); unsubGlobal=[]; closeAccount(); if(unsubPur){ unsubPur(); unsubPur=null; } if(unsubNt){ unsubNt(); unsubNt=null; } if(unsubBills){ unsubBills(); unsubBills=null; }
+    unsubs.forEach(u=>u()); unsubs=[]; unsubGlobal.forEach(u=>u()); unsubGlobal=[]; closeAccount(); if(unsubPur){ unsubPur(); unsubPur=null; } if(unsubNt){ unsubNt(); unsubNt=null; } if(unsubV){ unsubV(); unsubV=null; } if(unsubBills){ unsubBills(); unsubBills=null; }
     if(!user){ dbReady=false; $("#app").hidden=true; $("#login").hidden=false; return; }
     $("#login").hidden=true; $("#app").hidden=false; $("#user-email").textContent=user.email; dbReady=true; banner("");
     $("#lg-email").value=""; $("#lg-pass").value="";
@@ -2112,7 +2411,7 @@ function subscribeAll(){
   unsubs.push(C("items").onSnapshot(q => { S.items=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.name).localeCompare(String(b.name))); renderItems(); renderBills(); }, fail));
   unsubs.push(C("parties").onSnapshot(q => { S.parties=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.name).localeCompare(String(b.name))); renderParties(); }, fail));
   unsubs.push(C("invoices").where("date","==",todayISO()).onSnapshot(q => { S.todayTotal=q.docs.reduce((t,d)=>t+(+d.data().total||0),0); renderBills(); }, ()=>{}));
-  watchBills(); if(!$("#tab-purchase").hidden) watchPurchases(); if(!$("#tab-outstanding").hidden) loadOutstanding(); if(!$("#tab-daybook").hidden) loadDaybook(); if(!$("#tab-gst").hidden) loadGst(); if(!$("#tab-notes").hidden) watchNotes(); if(!$("#tab-stock").hidden) loadStock(); if(!$("#tab-cash").hidden) loadCash();
+  watchBills(); if(!$("#tab-purchase").hidden) watchPurchases(); if(!$("#tab-outstanding").hidden) loadOutstanding(); if(!$("#tab-daybook").hidden) loadDaybook(); if(!$("#tab-gst").hidden) loadGst(); if(!$("#tab-notes").hidden) watchNotes(); if(!$("#tab-stock").hidden) loadStock(); if(!$("#tab-cash").hidden) loadCash(); if(!$("#tab-vouchers").hidden) watchVouchers(); if(!$("#tab-final").hidden) loadFinal();
 }
 
 // ================= COMPANIES =================
@@ -2133,7 +2432,7 @@ function switchCompany(id){
   CID=id; try{ localStorage.setItem("billbook-company", id); }catch(e){}
   Object.assign(S, {firm:{}, items:[], parties:[], invoices:[], todayTotal:0}); settingsDirty=false;
   draft = (()=>{ try{ const d=JSON.parse(localStorage.getItem(DRAFT_KEY())); if(d && Array.isArray(d.lines)) return Object.assign(newDraft(), d); }catch(e){} return newDraft(); })();
-  closeAccount(); if(unsubPur){ unsubPur(); unsubPur=null; } if(unsubNt){ unsubNt(); unsubNt=null; } purList=[]; ntList=[]; osRows=[]; pur=loadPur(); fillPur(); nt=loadNote(); fillNote(); resetItemForm(); resetPartyForm();
+  closeAccount(); if(unsubPur){ unsubPur(); unsubPur=null; } if(unsubNt){ unsubNt(); unsubNt=null; } if(unsubV){ unsubV(); unsubV=null; } vList=[]; purList=[]; ntList=[]; osRows=[]; pur=loadPur(); fillPur(); nt=loadNote(); fillNote(); resetItemForm(); resetPartyForm();
   fillBillForm(); renderItems(); renderParties(); renderBills(); onFirm(); renderCoSel();
   subscribeAll();
 }
