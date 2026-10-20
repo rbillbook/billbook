@@ -345,6 +345,21 @@ tr.cur td:first-child{box-shadow:inset 3px 0 0 #c79a16}
 .gw-item{display:block;width:100%;text-align:center;background:none;border:0;padding:5px 10px;font-size:14px;color:var(--fg);cursor:pointer}
 .gw-item u{text-decoration:none;font-weight:700;color:var(--accent)}
 .gw-item.sel,.gw-item:hover{background:var(--hl)}
+.gw-item{position:relative}
+.gw-fk{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted)}
+.gw-pd{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+table.gw-cos{width:100%;border-collapse:collapse;font-size:13.5px}
+table.gw-cos th{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:700;text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+table.gw-cos th.r,table.gw-cos td.r{text-align:right}
+table.gw-cos td{padding:6px;border-bottom:1px dotted #d3dce6}
+table.gw-cos tr.click{cursor:pointer}
+table.gw-cos tr.click:hover td{background:var(--hl)}
+table.gw-cos tr.on td{font-weight:700;color:var(--accent)}
+.pm-wrap{position:fixed;inset:0;background:rgba(15,30,50,.25);display:flex;align-items:flex-start;justify-content:center;padding-top:12vh;z-index:90}
+.pm{width:min(400px,calc(100vw - 32px));max-height:72vh;display:flex;flex-direction:column}
+.pm-list{overflow:auto;padding:4px 0}
+.pm .gw-item{text-align:left;padding-left:18px}
+.pm-q{margin:8px;padding:6px 8px;border:1px solid var(--line);font:inherit}
 .gw-hint{text-align:center;font-size:12px;color:var(--muted);padding:8px;border-top:1px solid var(--line)}
 @media print{
   @page{size:A4;margin:0}
@@ -377,10 +392,13 @@ tr.cur td:first-child{box-shadow:inset 3px 0 0 #c79a16}
     <span class="tbrand"><img class="tlogo" src="data:image/webp;base64,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" alt="Billora" width="141" height="35"></span>
     <div class="tmenu" role="menubar" aria-label="Main menu">
       <button type="button" data-act="company" title="Alt+K"><u>K</u>: Company</button>
-      <button type="button" data-go="home" title="Alt+G"><u>G</u>: Gateway</button>
-      <button type="button" data-go="bill" title="F8"><u>F8</u>: Sales</button>
-      <button type="button" data-go="purchase" title="F9"><u>F9</u>: Purchase</button>
-      <button type="button" data-go="bills" title="Alt+B"><u>B</u>: Bills</button>
+      <button type="button" data-act="ydata" title="Alt+Y"><u>Y</u>: Data</button>
+      <button type="button" data-act="zex" title="Alt+Z"><u>Z</u>: Exchange</button>
+      <button type="button" data-act="goto" title="Alt+G"><u>G</u>: Go To</button>
+      <button type="button" data-act="import" title="Alt+O"><u>O</u>: Import</button>
+      <button type="button" data-act="export" title="Alt+E"><u>E</u>: Export</button>
+      <button type="button" data-act="share" title="Alt+M"><u>M</u>: Share</button>
+      <button type="button" data-act="print" title="Alt+P"><u>P</u>: Print</button>
       <button type="button" data-act="help" title="F1"><u>F1</u>: Help</button>
     </div>
     <div class="userchip"><label class="cosel" title="Switch company"><span class="sr">Company</span><select id="co-sel" aria-label="Company"></select></label><button class="btn sm" id="install-btn" type="button" hidden>Install app</button><span id="user-email"></span><button class="btn sm" id="logout">Sign out</button></div>
@@ -399,7 +417,7 @@ tr.cur td:first-child{box-shadow:inset 3px 0 0 #c79a16}
     <button role="tab" data-tab="notes" aria-selected="false">Credit/Debit Note</button>
     <button role="tab" data-tab="stock" aria-selected="false">Stock Summary</button>
     <button role="tab" data-tab="cash" aria-selected="false">Cash/Bank</button>
-    <button role="tab" data-tab="vouchers" aria-selected="false">Expenses &amp; Journal</button>
+    <button role="tab" data-tab="vouchers" aria-selected="false">Vouchers</button>
     <button role="tab" data-tab="final" aria-selected="false">P&amp;L / Balance Sheet</button>
     <button role="tab" data-tab="ledger" aria-selected="false">Trial Balance / Ledger</button>
     <button role="tab" data-tab="orders" aria-selected="false">Challan &amp; Orders</button>
@@ -408,28 +426,24 @@ tr.cur td:first-child{box-shadow:inset 3px 0 0 #c79a16}
   </nav>
 </header>
 <aside class="fbar" aria-label="Shortcuts">
-  <button type="button" data-go="home"><u>Esc</u>: Gateway</button>
+  <button type="button" data-act="back"><u>Esc</u>: Back</button>
   <div class="sep"></div>
+  <button type="button" data-act="date"><u>F2</u>: Date</button>
+  <button type="button" data-act="company"><u>F3</u>: Company</button>
+  <div class="sep"></div>
+  <button type="button" data-act="vk-contra"><u>F4</u>: Contra</button>
+  <button type="button" data-act="vk-expense"><u>F5</u>: Payment</button>
+  <button type="button" data-act="vk-income"><u>F6</u>: Receipt</button>
+  <button type="button" data-act="vk-journal"><u>F7</u>: Journal</button>
   <button type="button" data-go="bill"><u>F8</u>: Sales</button>
   <button type="button" data-go="purchase"><u>F9</u>: Purchase</button>
+  <button type="button" data-act="othervch"><u>F10</u>: Other Vouchers</button>
+  <div class="sep"></div>
+  <button type="button" data-act="note-credit"><u>Ctrl+F8</u>: Credit Note</button>
+  <button type="button" data-act="note-debit"><u>Ctrl+F9</u>: Debit Note</button>
+  <div class="sep"></div>
   <button type="button" data-go="bills"><u>Alt+B</u>: Bills</button>
-  <div class="sep"></div>
-  <button type="button" data-go="items"><u>F4</u>: Items &amp; Stock</button>
-  <button type="button" data-go="parties"><u>F7</u>: Parties</button>
-  <button type="button" data-go="outstanding"><u>F10</u>: Outstanding</button>
-  <button type="button" data-go="daybook"><u>Alt+D</u>: Day Book</button>
-  <button type="button" data-go="gst"><u>Alt+R</u>: GST Reports</button>
-  <button type="button" data-go="notes"><u>Alt+N</u>: Cr/Dr Note</button>
-  <button type="button" data-go="stock"><u>Alt+I</u>: Stock Summary</button>
-  <button type="button" data-go="cash"><u>Alt+C</u>: Cash/Bank</button>
-  <button type="button" data-go="vouchers"><u>Alt+E</u>: Expense/Journal</button>
-  <button type="button" data-go="final"><u>Alt+F</u>: P&amp;L / B/S</button>
-  <button type="button" data-act="tb"><u>Alt+T</u>: Trial Balance</button>
-  <button type="button" data-act="ledger"><u>Alt+L</u>: Ledger</button>
-  <button type="button" data-go="orders"><u>Alt+O</u>: Challan/Orders</button>
-  <div class="sep"></div>
   <button type="button" data-go="settings"><u>Alt+S</u>: Settings</button>
-  <button type="button" data-act="company"><u>Alt+K</u>: Company</button>
   <button type="button" data-act="help"><u>F1</u>: Help</button>
 </aside>
 <div class="banner-wrap"><div class="banner" id="banner" hidden></div></div>
@@ -439,49 +453,14 @@ tr.cur td:first-child{box-shadow:inset 3px 0 0 #c79a16}
   <section id="tab-home">
     <div class="gw">
       <div class="gw-info">
-        <div><div class="k">Current period</div><div class="v" id="gw-period">—</div></div>
-        <div><div class="k">Current date</div><div class="v" id="gw-date">—</div></div>
-        <div><div class="k">Name of company</div><div class="big" id="gw-co">—</div><div class="hint" id="gw-gstin"></div></div>
-        <div class="tiles" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-          <div class="tile"><span>Today's sales</span><b id="gw-today">₹0</b></div>
-          <div class="tile"><span>Low stock items</span><b id="gw-low">0</b></div>
-        </div>
+        <div class="gw-pd"><div><div class="k">Current period</div><div class="v" id="gw-period">—</div></div><div><div class="k">Current date</div><div class="v" id="gw-date">—</div></div></div>
+        <table class="gw-cos"><thead><tr><th>Name of Company</th><th class="r">Date of Last Entry</th></tr></thead><tbody id="gw-cos"></tbody></table>
+        <div class="hint" id="gw-gstin"></div>
       </div>
       <div class="gw-box" role="menu" aria-label="Gateway of Billora" id="gw-menu">
-        <div class="gw-title">Gateway of Billora</div>
-        <div class="gw-sec"><h4>MASTERS</h4>
-          <button class="gw-item" role="menuitem" data-key="i" data-go="items"><u>I</u>tems &amp; Stock</button>
-          <button class="gw-item" role="menuitem" data-key="l" data-go="parties">Party <u>L</u>edgers</button>
-        </div>
-        <div class="gw-sec"><h4>TRANSACTIONS</h4>
-          <button class="gw-item" role="menuitem" data-key="s" data-go="bill"><u>S</u>ales (New Bill)</button>
-          <button class="gw-item" role="menuitem" data-key="p" data-go="purchase"><u>P</u>urchase</button>
-          <button class="gw-item" role="menuitem" data-key="n" data-go="notes">Credit / Debit <u>N</u>ote</button>
-          <button class="gw-item" role="menuitem" data-key="e" data-go="vouchers"><u>E</u>xpenses, Contra &amp; Journal</button>
-          <button class="gw-item" role="menuitem" data-key="v" data-go="orders">Deli<u>v</u>ery Challan &amp; Orders</button>
-        </div>
-        <div class="gw-sec"><h4>REPORTS</h4>
-          <button class="gw-item" role="menuitem" data-key="b" data-go="bills"><u>B</u>ills Register</button>
-          <button class="gw-item" role="menuitem" data-key="o" data-go="outstanding"><u>O</u>utstanding</button>
-          <button class="gw-item" role="menuitem" data-key="d" data-go="daybook"><u>D</u>ay Book</button>
-          <button class="gw-item" role="menuitem" data-key="g" data-go="gst"><u>G</u>ST Reports</button>
-          <button class="gw-item" role="menuitem" data-key="y" data-go="stock">Stock Summar<u>y</u> &amp; Profit</button>
-          <button class="gw-item" role="menuitem" data-key="c" data-go="cash"><u>C</u>ash / Bank Book</button>
-          <button class="gw-item" role="menuitem" data-key="f" data-act="pl">Pro<u>f</u>it &amp; Loss A/c</button>
-          <button class="gw-item" role="menuitem" data-key="h" data-act="bs">Balance S<u>h</u>eet</button>
-          <button class="gw-item" role="menuitem" data-key="a" data-act="tb">Tri<u>a</u>l Balance</button>
-          <button class="gw-item" role="menuitem" data-key="r" data-act="ledger">Ledge<u>r</u> (Account Books)</button>
-          <button class="gw-item" role="menuitem" data-key="x" data-go="brs">Bank Reconciliation (<u>X</u>)</button>
-        </div>
-        <div class="gw-sec"><h4>UTILITIES</h4>
-          <button class="gw-item" role="menuitem" data-key="t" data-go="settings">Se<u>t</u>tings</button>
-          <button class="gw-item" role="menuitem" data-key="k" data-act="company">Change Company (<u>K</u>)</button>
-          <button class="gw-item" role="menuitem" data-key="u" data-act="backup">Back<u>u</u>p / Restore</button>
-        </div>
-        <div class="gw-sec"><h4>QUIT</h4>
-          <button class="gw-item" role="menuitem" data-key="q" data-act="logout"><u>Q</u>uit (Sign out)</button>
-        </div>
-        <div class="gw-hint">↑ ↓ to move · Enter to open · or press the underlined letter</div>
+        <div class="gw-title" id="gw-title">Gateway of Billora</div>
+        <div id="gw-list"></div>
+        <div class="gw-hint">↑ ↓ and Enter, or press the underlined letter · Esc: back</div>
       </div>
     </div>
   </section>
@@ -908,7 +887,7 @@ tr.cur td:first-child{box-shadow:inset 3px 0 0 #c79a16}
       <form class="panel" id="v-form" autocomplete="off">
         <h2 id="v-title">Expense voucher</h2>
         <div class="seg" role="group" aria-label="Voucher type" style="flex-wrap:wrap">
-          <button type="button" data-vk="expense" aria-pressed="true">Expense</button><button type="button" data-vk="income" aria-pressed="false">Income</button><button type="button" data-vk="contra" aria-pressed="false">Contra</button><button type="button" data-vk="journal" aria-pressed="false">Journal</button>
+          <button type="button" data-vk="expense" aria-pressed="true">Payment (F5)</button><button type="button" data-vk="income" aria-pressed="false">Receipt (F6)</button><button type="button" data-vk="contra" aria-pressed="false">Contra (F4)</button><button type="button" data-vk="journal" aria-pressed="false">Journal (F7)</button>
         </div>
         <p class="hint" id="v-hint"></p>
         <div class="fields">
@@ -1217,17 +1196,13 @@ function dialog({title, msg="", yes="Yes", no="Cancel", input=null}){
 }
 
 // ---- Tally-style navigation
-const SCREEN={home:"Gateway of Billora", bill:"Sales Invoice Creation", bills:"Bills Register", purchase:"Purchase Voucher", items:"Stock Items", parties:"Party Ledgers", outstanding:"Outstanding Summary", settings:"Company Settings", daybook:"Day Book", gst:"GST Reports", notes:"Credit / Debit Note", stock:"Stock Summary", cash:"Cash / Bank Book", vouchers:"Expenses, Contra & Journal", final:"Profit & Loss A/c", ledger:"Trial Balance", orders:"Delivery Challan & Orders", brs:"Bank Reconciliation"};
+const SCREEN={home:"Gateway of Billora", bill:"Sales Invoice Creation", bills:"Bills Register", purchase:"Purchase Voucher", items:"Stock Items", parties:"Party Ledgers", outstanding:"Outstanding Summary", settings:"Company Settings", daybook:"Day Book", gst:"GST Reports", notes:"Credit / Debit Note", stock:"Stock Summary", cash:"Cash / Bank Book", vouchers:"Accounting Vouchers", final:"Profit & Loss A/c", ledger:"Trial Balance", orders:"Delivery Challan & Orders", brs:"Bank Reconciliation"};
 let gwSel=0;
 const gwItems = () => $$("#gw-menu .gw-item");
 function gwFocus(i){ const it=gwItems(); if(!it.length) return; gwSel=(i+it.length)%it.length; it.forEach((b,k)=>b.classList.toggle("sel", k===gwSel)); if(!$("#tab-home").hidden) it[gwSel].focus({preventScroll:true}); }
 function fyRange(){ const d=new Date(); const y=d.getMonth()>=3?d.getFullYear():d.getFullYear()-1; return `1-Apr-${String(y).slice(2)} to 31-Mar-${String(y+1).slice(2)}`; }
-function renderGateway(){
-  $("#gw-period").textContent=fyRange(); $("#gw-date").textContent=new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"short",year:"numeric"});
-  $("#gw-co").textContent=S.firm.name||"—"; $("#gw-gstin").textContent=[S.firm.gstin, stateName(S.firm.stateCode)].filter(Boolean).join(" · ");
-  $("#gw-today").textContent="₹"+(+S.todayTotal||0).toLocaleString("en-IN"); $("#gw-low").textContent=S.items.filter(isLow).length;
-}
 function doAct(a){
+  if(doAct2(a)) return;
   if(a==="company"){ const sel=$("#co-sel"); sel.focus(); try{ sel.showPicker && sel.showPicker(); }catch(e){} }
   else if(a==="logout") $("#logout").click();
   else if(a==="pl") showFinal("pl");
@@ -1235,11 +1210,11 @@ function doAct(a){
   else if(a==="tb") showLedger("tb");
   else if(a==="ledger") showLedger("led");
   else if(a==="backup"){ showTab("settings"); setTimeout(()=>{ const el=$("#backup-panel"); el.scrollIntoView({behavior:"smooth", block:"start"}); $("#bk-download").focus(); }, 50); }
-  else if(a==="help") dialog({title:"Keyboard shortcuts", msg:"Entering a voucher: Enter = next field, Shift+Enter = previous field, an empty item line + Enter = go to Save, Ctrl+A = save (accept), F2 = date. Reports: ↑ ↓ = select a line, Enter = open it, Esc = go back one step. Esc: back / Gateway · F8: Sales · F9: Purchase · Alt+B: Bills · F4: Items & Stock · F7: Parties · F10: Outstanding · Alt+D: Day Book · Alt+R: GST Reports · Alt+N: Credit/Debit Note · Alt+I: Stock Summary · Alt+C: Cash/Bank · Alt+E: Expenses & Journal · Alt+F: P&L / Balance Sheet · Alt+T: Trial Balance · Alt+L: Ledger · Alt+O: Challan & Orders · Alt+S: Settings · Alt+K: Company · On the Gateway use ↑ ↓ Enter or the underlined letter.", yes:"OK", no:""});
+  else if(a==="help") dialog({title:"Keyboard shortcuts", msg:"Gateway: ↑ ↓ Enter or the underlined letter, Esc = back. Vouchers: F4 Contra · F5 Payment · F6 Receipt · F7 Journal · F8 Sales · F9 Purchase · F10 Other vouchers · Ctrl+F8 Credit Note · Ctrl+F9 Debit Note. F2 = date · F3 = company. Top bar: Alt+K Company · Alt+Y Data (backup) · Alt+Z Exchange (GSTR-1 JSON) · Alt+G Go To (any screen) · Alt+O Import · Alt+E Export to Excel · Alt+M Share · Alt+P Print. Entering a voucher: Enter = next field, Shift+Enter = previous field, an empty item line + Enter = go to Save, Ctrl+A = save. Reports: ↑ ↓ = select a line, Enter = open it. Other: Alt+B Bills · Alt+D Day Book · Alt+R GST · Alt+I Stock Summary · Alt+C Cash/Bank · Alt+F P&L · Alt+T Trial Balance · Alt+L Ledger · Alt+S Settings · F1 Help.", yes:"OK", no:""});
 }
 document.addEventListener("click", e => { const a=e.target.closest("[data-act]"); if(a){ e.preventDefault(); doAct(a.dataset.act); } });
 $("#gw-menu").addEventListener("mousemove", e => { const b=e.target.closest(".gw-item"); if(b){ const i=gwItems().indexOf(b); if(i!==gwSel){ gwSel=i; gwItems().forEach((x,k)=>x.classList.toggle("sel",k===gwSel)); } } });
-const FKEYS={F8:"bill", F9:"purchase", F4:"items", F7:"parties", F10:"outstanding"};
+const FKEYS={F8:"bill", F9:"purchase"};
 document.addEventListener("keydown", e => {
   if(!$("#app") || $("#app").hidden) return;
   if(!$("#dlg").hidden) return;
@@ -1269,7 +1244,7 @@ function showTab(name){
   if(name==="daybook") loadDaybook(); if(name==="gst") loadGst();
   $("#screen-title").textContent = SCREEN[name] || "Billora";
   $$(".fbar [data-go]").forEach(b => b.setAttribute("aria-current", b.dataset.go===name ? "true":"false"));
-  if(name==="home"){ renderGateway(); setTimeout(()=>gwFocus(gwSel), 0); }
+  if(name==="home"){ if(!drilling){ gwCur="main"; gwSel=Math.min(gwSel, 15); } renderGateway(); setTimeout(()=>gwFocus(gwSel), 0); }
   if(name==="purchase") renderPurchases(); if(name==="outstanding") loadOutstanding();
   try{ localStorage.setItem("billbook-tab", name); }catch(e){}
   const kh=$("#kbd-hint"); if(kh) kh.textContent=KHINT(name);
@@ -1774,7 +1749,7 @@ function billsFor(name, D, exclude){
 const ageDays = iso => iso ? Math.max(0, Math.round((new Date(todayISO()+"T00:00:00")-new Date(iso+"T00:00:00"))/86400000)) : "";
 const acData = () => ({inv:acctInv, pur:acctPur, ret:acctRet, pay:acctPay, vch:acctVch});
 function ledgerRows(){
-  const p=acct; const rows=[], me=String(p.name).trim().toLowerCase(), VL={expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"};
+  const p=acct; const rows=[], me=String(p.name).trim().toLowerCase(), VL={expense:"Payment",income:"Receipt",contra:"Contra",journal:"Journal"};
   acctInv.forEach(i=>rows.push({date:i.date||"", at:i.createdAt||0, text:"Sales invoice", no:i.no, dr:+i.total||0, cr:0, inv:i}));
   acctPur.forEach(x=>rows.push({date:x.date||"", at:x.createdAt||0, text:"Purchase bill", no:x.no||"", dr:0, cr:+x.total||0}));
   acctVch.forEach(v=>vEntries(v).filter(e=>String(e.ledger).trim().toLowerCase()===me).forEach(e=>rows.push({date:v.date||"", at:v.createdAt||0, text:`${VL[v.kind]||"Journal"} · ${e.dr?"Cr":"Dr"} ${vOther(v, e.ledger)}${v.note?" · "+v.note:""}`, no:v.no||"", dr:e.dr, cr:e.cr})));
@@ -2106,7 +2081,7 @@ async function loadDaybook(){
       ...pur.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:"purchase", label:"Purchase", no:x.no, dr:0, cr:+x.total||0})),
       ...pay.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:x.type==="payment"?"payment":"receipt", label:x.type==="payment"?"Payment":"Receipt", no:x.no, dr:x.type==="payment"?+x.amount||0:0, cr:x.type==="payment"?0:+x.amount||0})),
       ...ret.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:x.type==="debit"?"debit":"credit", label:x.type==="debit"?"Debit Note":"Credit Note", no:x.no, dr:x.type==="debit"?+x.total||0:0, cr:x.type==="debit"?0:+x.total||0})),
-      ...vch.map(v=>({date:v.date, at:v.createdAt||0, party:vTitle(v), type:v.kind, label:{expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"}[v.kind]||v.kind, no:v.no, dr:+v.amount||0, cr:+v.amount||0}))]
+      ...vch.map(v=>({date:v.date, at:v.createdAt||0, party:vTitle(v), type:v.kind, label:{expense:"Payment",income:"Receipt",contra:"Contra",journal:"Journal"}[v.kind]||v.kind, no:v.no, dr:+v.amount||0, cr:+v.amount||0}))]
       .sort((a,b)=>(a.date||"").localeCompare(b.date||"") || a.at-b.at);
     renderDaybook();
   }catch(err){ $("#db-empty").textContent="Could not load: "+((err&&err.message)||err); }
@@ -2375,7 +2350,7 @@ async function loadCash(){
   try{
     const q=await C("payments").where("date","<=",cbTo).get(); if(my!==cbSeq) return;
     const vq=await C("vouchers").where("date","<=",cbTo).get(); if(my!==cbSeq) return;
-    const me=cash?"Cash":bn, lbl={expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"}, fromV=[];
+    const me=cash?"Cash":bn, lbl={expense:"Payment",income:"Receipt",contra:"Contra",journal:"Journal"}, fromV=[];
     vq.docs.map(d=>d.data()).forEach(v=>vEntries(v).forEach(e=>{ if(!lgEq(e.ledger, me)) return; const inn=e.dr>0;
       fromV.push({date:v.date, createdAt:v.createdAt, type:inn?"receipt":"payment", amount:inn?e.dr:e.cr, no:v.no, mode:lbl[v.kind]||v.kind, ref:v.note||"", party:{name:vOther(v, e.ledger)}}); }));
     const all=[...q.docs.map(d=>d.data()).filter(p=>cash ? isCash(p) : bankOf(p)===bn), ...fromV].sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.createdAt||0)-(b.createdAt||0));
@@ -2441,8 +2416,8 @@ const DIRECT_HEADS=["Freight / Transport inward","Loading & unloading","Labour (
 const INDIRECT_HEADS=["Shop rent","Electricity","Salary & wages","Telephone & internet","Shop expenses","Travelling & conveyance","Repairs & maintenance","Printing & stationery","Bank charges","Discount allowed","Bad debts","Miscellaneous expenses"];
 const INCOME_HEADS=["Discount received","Commission received","Interest received","Other income"];
 const GST_HEAD="GST paid to government";
-const VK={expense:{t:"Expense voucher", p:"EXP/", key:"nextEXP", hint:"Money spent on running the shop: rent, electricity, salary, transport and so on."},
-  income:{t:"Income voucher", p:"INC/", key:"nextINC", hint:"Money received that is not a sale: discount, commission, interest."},
+const VK={expense:{t:"Payment voucher", p:"EXP/", key:"nextEXP", hint:"Money paid out: an expense (rent, electricity, salary, transport) or a payment to a party. Pick a party to adjust the payment against its bills."},
+  income:{t:"Receipt voucher", p:"INC/", key:"nextINC", hint:"Money received: from a party (customer payment) or other income such as commission or interest."},
   contra:{t:"Contra voucher", p:"CON/", key:"nextCON", hint:"Money moved between cash and bank. It does not change profit."},
   journal:{t:"Journal voucher", p:"JV/", key:"nextJV", hint:"Adjustment entry: owner's money in (Cr Capital) or out (Dr Drawings), discount or bad debt written off, opening balances."}};
 // ---- bank accounts
@@ -2505,8 +2480,8 @@ function setVk(k){
   $("#v-title").textContent=(vEdit?"Alter ":"")+VK[k].t; $("#v-hint").textContent=VK[k].hint;
   const ei=k==="expense"||k==="income";
   $("#v-head-wrap").hidden=!ei; $("#v-mode-wrap").hidden=!ei; $("#v-direct-wrap").hidden=k!=="expense"; $("#v-contra-wrap").hidden=k!=="contra"; $("#v-jl-wrap").hidden=k!=="journal"; $("#v-amt-wrap").hidden=k==="journal"; $("#v-amt").required=k!=="journal";
-  $("#v-head-lbl").textContent = k==="income" ? "Income head" : "Expense head"; $("#v-mode-lbl").textContent = k==="income" ? "Received in" : "Paid by";
-  $("#v-heads").innerHTML=(k==="income"?INCOME_HEADS:[...INDIRECT_HEADS, ...DIRECT_HEADS, GST_HEAD]).map(h=>`<option value="${esc(h)}">`).join("");
+  $("#v-head-lbl").textContent = k==="income" ? "Received from (income head or party)" : "Paid for (expense head or party)"; $("#v-mode-lbl").textContent = k==="income" ? "Received in" : "Paid by";
+  $("#v-heads").innerHTML=[...new Set([...(k==="income"?INCOME_HEADS:[...INDIRECT_HEADS, ...DIRECT_HEADS, GST_HEAD]), ...S.parties.map(p=>p.name)])].map(h=>`<option value="${esc(h)}">`).join("");
   $("#v-ledgers").innerHTML=[...new Set(["Cash", ...bankNames(), "Capital","Drawings", ...S.parties.map(p=>p.name), ...INDIRECT_HEADS, ...DIRECT_HEADS, ...INCOME_HEADS, GST_HEAD])].map(h=>`<option value="${esc(h)}">`).join("");
   $("#v-no").textContent = vEdit ? "Altering "+vEdit.no : "Next number: "+VK[k].p+String(Math.max(1, Math.floor(+S.firm[VK[k].key]||1))).padStart(4,"0");
   $("#v-save").textContent = vEdit ? "Save alteration" : "Save voucher"; $("#v-cancel").hidden=!vEdit;
@@ -2542,7 +2517,8 @@ $("#v-form").addEventListener("submit", async e => {
     else lines=L.map(l=>({ledger:lgName(l.ledger), dr:l.side==="dr"?l.amt:0, cr:l.side==="cr"?l.amt:0}));
   } else {
     amount=r2(+$("#v-amt").value||0); if(amount<=0){ $("#v-amt").focus(); return toast("Enter the amount", true); }
-    if(vk==="expense"||vk==="income"){ head=$("#v-head").value.trim(); if(!head){ $("#v-head").focus(); return toast(vk==="income"?"Pick an income head":"Pick an expense head", true); }
+    if(vk==="expense"||vk==="income"){ head=$("#v-head").value.trim(); if(!head){ $("#v-head").focus(); return toast(vk==="income"?"Pick an income head or a party":"Pick an expense head or a party", true); }
+      if(!vEdit && partyPayFromVoucher(head)) return;
       mode=$("#v-mode").value; bank = mode==="Cash" ? "" : (bankCanon($("#v-bank").value)||bankNames()[0]); const cb = mode==="Cash" ? "Cash" : bank;
       if(vk==="expense"){ dr=head; cr=cb; direct=$("#v-direct").checked || DIRECT_HEADS.some(h=>h.toLowerCase()===head.toLowerCase()); } else { dr=cb; cr=head; } }
     else { const c=$("#v-contra").value, b1=bankCanon($("#v-bank").value)||bankNames()[0]; bank=b1; mode="Contra";
@@ -2588,7 +2564,7 @@ function watchVouchers(){
 function renderVouchers(fromSnap){
   if(!fromSnap && !unsubV){ $("#v-date").value=$("#v-date").value||todayISO(); setVk(vk); return watchVouchers(); }
   if(!fromSnap) setVk(vk);
-  const lbl={expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"};
+  const lbl={expense:"Payment",income:"Receipt",contra:"Contra",journal:"Journal"};
   $("#v-body").innerHTML=vList.map((v,n)=>{ const sd=vSides(v); return `<tr><td class="r num">${n+1}</td><td>${fmtDate(v.date)}</td><td><span class="vt ${v.kind}">${lbl[v.kind]||v.kind}</span></td><td class="num">${esc(v.no)}</td><td>${esc(sd.dr.join(", "))}${v.note?`<div class="muted" style="font-size:12px">${esc(v.note)}</div>`:""}</td><td>${esc(sd.cr.join(", "))}</td><td class="r num">${fmt(v.amount)}</td><td class="r" style="white-space:nowrap"><button class="btn sm" type="button" data-valt="${esc(v.id)}">Alter</button> <button class="btn sm danger" type="button" data-vdel="${esc(v.id)}">Delete</button></td></tr>`; }).join("")
     + (vList.length?`<tr class="sub"><td></td><td></td><td></td><td></td><td>Total expenses this month</td><td></td><td class="r num">${fmt(vList.filter(v=>v.kind==="expense").reduce((t,v)=>t+(+v.amount||0),0))}</td><td></td></tr>`:"");
   $("#v-wrap").hidden=!vList.length; $("#v-empty").hidden=!!vList.length;
@@ -2777,7 +2753,7 @@ function lgBuild(all, to){
     party(pn);
     if(rc){ post(cb, x.amount, 0, {...b, other:pn}); post(pn, 0, x.amount, {...b, other:cb}); }
     else { post(pn, x.amount, 0, {...b, other:cb}); post(cb, 0, x.amount, {...b, other:pn}); } });
-  const VL={expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"};
+  const VL={expense:"Payment",income:"Receipt",contra:"Contra",journal:"Journal"};
   all.vch.filter(inR).forEach(v=>{ const b={date:v.date, at:v.createdAt||0, type:VL[v.kind]||v.kind, no:v.no, note:v.note||""}; vEntries(v).forEach(e=>post(e.ledger, e.dr, e.cr, {...b, other:vOther(v, e.ledger)})); });
   const list=[...L.values()].map(o=>{ o.rows.sort((a,b)=>(a.date||"").localeCompare(b.date||"")||a.at-b.at); o.dr=r2(o.rows.reduce((t,r)=>t+r.dr,0)); o.cr=r2(o.rows.reduce((t,r)=>t+r.cr,0)); o.bal=r2(o.open+o.dr-o.cr); o.isParty=parties.has(key(o.name)); return o; });
   const diff=r2(list.reduce((t,o)=>t+o.bal,0));
@@ -3087,7 +3063,7 @@ async function loadBrs(){
   $("#br-empty").hidden=false; $("#br-empty").textContent="Loading…";
   try{
     const [pq,vq]=await Promise.all([C("payments").where("date","<=",brTo).get(), C("vouchers").where("date","<=",brTo).get()]); if(my!==brSeq) return;
-    const rows=[], VL={expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"};
+    const rows=[], VL={expense:"Payment",income:"Receipt",contra:"Contra",journal:"Journal"};
     pq.docs.forEach(d=>{ const p=d.data(); if(isCash(p) || bankOf(p)!==bn) return; const inn=p.type!=="payment";
       rows.push({col:"payments", id:d.id, date:p.date||"", at:p.createdAt||0, party:(p.party||{}).name||"", type:inn?"Receipt":"Payment", no:p.no||"", mode:[p.mode,p.ref].filter(Boolean).join(" · "), dep:inn?+p.amount||0:0, wd:inn?0:+p.amount||0, bankDate:p.bankDate||""}); });
     vq.docs.forEach(d=>{ const v=d.data(); let dep=0, wd=0; vEntries(v).forEach(e=>{ if(lgEq(e.ledger, bn)){ dep+=e.dr; wd+=e.cr; } }); const net=r2(dep-wd); if(!net) return;
@@ -3217,6 +3193,186 @@ document.addEventListener("keydown", e => {
   }
 });
 document.addEventListener("click", e => { const tr=e.target.closest("tbody tr.click"); if(tr && !e.target.closest("button,input,select")) setCur(tr); });
+
+// ================= TALLY GATEWAY: menus, company table, F-keys, top bar =================
+const GW={
+  main:{t:"Gateway of Billora", secs:[
+    ["MASTERS",[["c","Create","sub:create"],["a","Alter","sub:alter"],["h","Chart of Accounts","act:tb"]]],
+    ["TRANSACTIONS",[["v","Vouchers","sub:vch"],["k","Day Book","go:daybook"]]],
+    ["UTILITIES",[["n","Banking","sub:bank"],["t","Settings","go:settings"],["u","Backup / Restore","act:backup"]]],
+    ["REPORTS",[["b","Balance Sheet","act:bs"],["p","Profit & Loss A/c","act:pl"],["s","Stock Summary","go:stock"],["d","Display More Reports","sub:more"]]],
+    ["",[["q","Quit","act:logout"]]]]},
+  create:{t:"Masters Creation", secs:[
+    ["INVENTORY MASTERS",[["i","Stock Item","new:item"]]],
+    ["ACCOUNTING MASTERS",[["l","Party Ledger","new:party"],["b","Bank Account","act:banks"],["c","Company","act:newco"]]]]},
+  alter:{t:"Masters Alteration", secs:[
+    ["INVENTORY MASTERS",[["i","Stock Items","go:items"]]],
+    ["ACCOUNTING MASTERS",[["l","Party Ledgers","go:parties"],["b","Bank Accounts","act:banks"],["c","Company Details","go:settings"]]]]},
+  vch:{t:"Voucher Types", secs:[
+    ["ACCOUNTING VOUCHERS",[["c","Contra","vk:contra","F4"],["p","Payment","vk:expense","F5"],["r","Receipt","vk:income","F6"],["j","Journal","vk:journal","F7"],["s","Sales","go:bill","F8"],["u","Purchase","go:purchase","F9"],["n","Credit Note","note:credit","Ctrl+F8"],["d","Debit Note","note:debit","Ctrl+F9"]]],
+    ["INVENTORY VOUCHERS",[["l","Delivery Challan / Orders","go:orders","F10"]]]]},
+  bank:{t:"Banking", secs:[
+    ["",[["r","Bank Reconciliation","go:brs"],["c","Cash / Bank Book","go:cash"],["a","Bank Accounts","act:banks"]]]]},
+  more:{t:"Display More Reports", secs:[
+    ["ACCOUNTING",[["t","Trial Balance","act:tb"],["k","Day Book","go:daybook"],["l","Ledger (Account Books)","act:ledger"],["o","Outstanding","go:outstanding"],["c","Cash / Bank Book","go:cash"]]],
+    ["REGISTERS",[["b","Sales Register (Bills)","go:bills"],["p","Purchase Register","go:purchase"],["v","Vouchers Register","go:vouchers"],["n","Credit / Debit Notes","go:notes"],["h","Challan & Orders","go:orders"]]],
+    ["INVENTORY & GST",[["s","Stock Summary & Profit","go:stock"],["g","GST Reports (GSTR-1 / 3B)","go:gst"]]]]}
+};
+let gwCur="main";
+function gwLabel(key, label){ const i=label.toLowerCase().indexOf(key); return i<0 ? esc(label) : esc(label.slice(0,i))+"<u>"+esc(label.slice(i,i+1))+"</u>"+esc(label.slice(i+1)); }
+function renderGwMenu(){
+  const m=GW[gwCur]||GW.main;
+  $("#gw-title").textContent=m.t;
+  $("#gw-list").innerHTML=m.secs.map(([h,items])=>`<div class="gw-sec">${h?`<h4>${esc(h)}</h4>`:""}${items.map(([k,l,a,fk])=>`<button class="gw-item" role="menuitem" type="button" data-key="${k}" data-g="${a}">${gwLabel(k,l)}${fk?`<span class="gw-fk">${esc(fk)}</span>`:""}</button>`).join("")}</div>`).join("");
+  $("#gw-menu").setAttribute("aria-label", m.t);
+}
+function gwOpen(name, sel){ gwCur=name; renderGwMenu(); gwSel=sel||0; gwFocus(gwSel); }
+function gwRun(a){
+  const [t,v]=a.split(":"), from=gwCur, sel=gwSel;
+  if(t==="sub"){ pushBack(()=>gwOpen(from, sel)); gwOpen(v, 0); return; }
+  const go=()=>{
+    if(t==="go") showTab(v);
+    else if(t==="act") doAct(v);
+    else if(t==="vk") openVoucher(v);
+    else if(t==="note") openNote(v);
+    else if(t==="new") newMaster(v);
+  };
+  if(from==="main" || (t==="act" && v==="logout")){ go(); return; }
+  drilling=true; try{ go(); } finally{ drilling=false; }
+  if(curTab()!=="home") pushBack(()=>{ goTab("home"); gwOpen(from, sel); });
+}
+$("#gw-menu").addEventListener("click", e => { const b=e.target.closest("[data-g]"); if(!b) return; e.preventDefault(); gwSel=gwItems().indexOf(b); gwRun(b.dataset.g); });
+
+function openVoucher(k){
+  showTab("vouchers");
+  if(vEdit && vk!==k){ toast("Save or cancel the alteration first", true); return; }
+  setVk(k);
+  setTimeout(()=>{ const el = k==="journal" ? $("#v-jl input[data-jk=ledger]") : k==="contra" ? $("#v-contra") : $("#v-head"); if(el && el.offsetParent!==null) el.focus(); }, 30);
+}
+function openNote(kind){ showTab("notes"); const b=$(kind==="debit" ? "#n-type-debit" : "#n-type-credit"); if(b && b.getAttribute("aria-pressed")!=="true") b.click(); }
+function newMaster(w){
+  if(w==="item"){ showTab("items"); if(typeof resetItemForm==="function") resetItemForm(); setTimeout(()=>{ $("#it-name").focus(); window.scrollTo({top:0}); }, 30); }
+  else if(w==="party"){ showTab("parties"); if(acct) closeAccount(); const c=$("#pt-cancel"); if(c && !c.hidden) c.click(); setTimeout(()=>{ $("#pt-name").focus(); window.scrollTo({top:0}); }, 30); }
+}
+
+// ---- left panel: period, date, company list with date of last entry
+const fmtTally = iso => { if(!iso) return "—"; const d=new Date(iso+"T00:00:00"); if(isNaN(d)) return "—"; return `${d.getDate()}-${d.toLocaleString("en-IN",{month:"short"})}-${String(d.getFullYear()).slice(2)}`; };
+let lastEntry={}, lastEntryAt=0;
+async function loadLastEntries(force){
+  if(!db || (!force && Date.now()-lastEntryAt<60000)) return;
+  let cos; try{ cos=companies; }catch(e){ return; } // the companies block loads later during start-up
+  lastEntryAt=Date.now();
+  const ids=["main", ...cos.map(c=>c.id)];
+  await Promise.all(ids.map(async id => {
+    const base = id==="main" ? "" : `co/${id}/`;
+    let best="";
+    await Promise.all(["invoices","purchases","payments","vouchers","returns","orders"].map(async n => {
+      try{ const q=await db.collection(base+n).orderBy("date","desc").limit(1).get(); q.docs.forEach(d=>{ const v=String(d.data().date||""); if(v>best) best=v; }); }catch(e){}
+    }));
+    lastEntry[id]=best;
+  }));
+  renderCoTable();
+}
+function renderCoTable(){
+  const el=$("#gw-cos"); if(!el) return;
+  let cos, mn; try{ cos=companies; mn=mainName; }catch(e){ cos=[]; mn="Main company"; }
+  const rows=[["main", CID==="main" ? (S.firm.name||mn) : mn], ...cos.map(c=>[c.id, (c.id===CID && S.firm.name) || c.name || "Company"])];
+  el.innerHTML=rows.map(([id,n])=>`<tr class="click${id===CID?" on":""}" data-co="${esc(id)}" title="${id===CID?"Current company":"Click to switch to this company"}"><td>${esc(n)}</td><td class="r">${lastEntry[id]===undefined?"…":fmtTally(lastEntry[id])}</td></tr>`).join("");
+}
+$("#gw-cos").addEventListener("click", e => { const tr=e.target.closest("[data-co]"); if(!tr || tr.dataset.co===CID) return; const n=tr.cells[0].textContent; switchCompany(tr.dataset.co); lastEntryAt=0; renderGateway(); toast("Switched to "+n); });
+function renderGateway(){
+  const d=new Date();
+  $("#gw-period").textContent=fyRange();
+  $("#gw-date").textContent=`${d.toLocaleDateString("en-IN",{weekday:"long"})}, ${d.getDate()}-${d.toLocaleString("en-IN",{month:"short"})}-${d.getFullYear()}`;
+  $("#gw-gstin").textContent=[S.firm.gstin ? "GSTIN "+S.firm.gstin : "", stateName(S.firm.stateCode)].filter(Boolean).join(" · ");
+  renderGwMenu(); renderCoTable(); loadLastEntries();
+}
+
+// ---- small pop-up menu (Go To, Data, Exchange, Other vouchers)
+let pm=null;
+function popMenu(title, items, opts={}){
+  closePop();
+  const w=document.createElement("div"); w.className="pm-wrap"; w.id="pm";
+  w.innerHTML=`<div class="pm gw-box" role="menu" aria-label="${esc(title)}"><div class="gw-title">${esc(title)}</div>${opts.search?`<input class="pm-q" placeholder="Type to search" aria-label="Search">`:""}<div class="pm-list"></div><div class="gw-hint">↑ ↓ Enter · Esc: close</div></div>`;
+  document.body.appendChild(w);
+  pm={items, list:items, sel:0, el:w, opts};
+  const draw=()=>{ pm.el.querySelector(".pm-list").innerHTML = pm.list.length ? pm.list.map((it,i)=>`<button type="button" class="gw-item${i===pm.sel?" sel":""}" data-pi="${i}">${it.k?gwLabel(it.k,it.l):esc(it.l)}${it.fk?`<span class="gw-fk">${esc(it.fk)}</span>`:""}</button>`).join("") : `<div class="gw-hint" style="border:0">No match</div>`; const s=pm.el.querySelector(".gw-item.sel"); if(s) s.scrollIntoView({block:"nearest"}); };
+  pm.draw=draw; draw();
+  const q=w.querySelector(".pm-q");
+  if(q){ q.addEventListener("input", () => { const t=q.value.trim().toLowerCase(); pm.list=pm.items.filter(it=>it.l.toLowerCase().includes(t)); pm.sel=0; draw(); }); setTimeout(()=>q.focus(), 0); }
+  else setTimeout(()=>{ const b=w.querySelector(".gw-item"); if(b) b.focus(); }, 0);
+  w.addEventListener("click", e => { const b=e.target.closest("[data-pi]"); if(b){ pickPop(+b.dataset.pi); return; } if(e.target===w) closePop(); });
+}
+function closePop(){ if(pm){ pm.el.remove(); pm=null; } }
+function pickPop(i){ const it=pm && pm.list[i]; closePop(); if(it) it.fn(); }
+window.addEventListener("keydown", e => {
+  if(!pm) return;
+  const k=e.key;
+  if(k==="Escape"){ e.preventDefault(); e.stopImmediatePropagation(); closePop(); return; }
+  if(k==="ArrowDown"||k==="ArrowUp"){ e.preventDefault(); e.stopImmediatePropagation(); if(!pm.list.length) return; pm.sel=(pm.sel+(k==="ArrowDown"?1:-1)+pm.list.length)%pm.list.length; pm.draw(); return; }
+  if(k==="Enter"){ e.preventDefault(); e.stopImmediatePropagation(); pickPop(pm.sel); return; }
+  if(!pm.opts.search && k.length===1 && !e.ctrlKey && !e.altKey && !e.metaKey){ const i=pm.list.findIndex(it=>it.k===k.toLowerCase()); e.preventDefault(); e.stopImmediatePropagation(); if(i>=0) pickPop(i); return; }
+  if(e.ctrlKey||e.altKey||/^F\d/.test(k)){ e.preventDefault(); e.stopImmediatePropagation(); }
+}, true);
+
+const GOTO=[
+  ["Gateway of Billora",()=>showTab("home")],["Sales Voucher (new bill)",()=>showTab("bill")],["Purchase Voucher",()=>showTab("purchase")],
+  ["Payment Voucher",()=>openVoucher("expense")],["Receipt Voucher",()=>openVoucher("income")],["Contra Voucher",()=>openVoucher("contra")],["Journal Voucher",()=>openVoucher("journal")],
+  ["Credit Note (sales return)",()=>openNote("credit")],["Debit Note (purchase return)",()=>openNote("debit")],["Delivery Challan & Orders",()=>showTab("orders")],
+  ["Sales Register (Bills)",()=>showTab("bills")],["Day Book",()=>showTab("daybook")],["Trial Balance",()=>showLedger("tb")],["Ledger (Account Books)",()=>showLedger("led")],
+  ["Balance Sheet",()=>showFinal("bs")],["Profit & Loss A/c",()=>showFinal("pl")],["Outstanding",()=>showTab("outstanding")],["Cash / Bank Book",()=>showTab("cash")],
+  ["Bank Reconciliation",()=>showTab("brs")],["Stock Summary",()=>showTab("stock")],["Stock Items",()=>showTab("items")],["Party Ledgers",()=>showTab("parties")],
+  ["GST Reports (GSTR-1 / 3B)",()=>showTab("gst")],["Vouchers Register",()=>showTab("vouchers")],["Company Settings",()=>showTab("settings")],["Backup / Restore",()=>doAct("backup")]
+].map(([l,fn])=>({l,fn}));
+const visBtn = sel => { const t=curTab(); const s=t && $("#tab-"+t); if(!s) return null; return [...s.querySelectorAll(sel)].find(b=>b.offsetParent!==null && !b.disabled) || null; };
+function doAct2(a){
+  if(a==="goto"){ popMenu("Go To", GOTO, {search:true}); return true; }
+  if(a==="ydata"){ popMenu("Data", [{k:"b",l:"Backup (download all data)",fn:()=>{ doAct("backup"); setTimeout(()=>$("#bk-download").click(),80); }},{k:"r",l:"Restore from a backup file",fn:()=>doAct("import")}]); return true; }
+  if(a==="zex"){ popMenu("Exchange", [{k:"j",l:"GSTR-1 JSON (for the GST portal)",fn:()=>{ showTab("gst"); setTimeout(()=>$("#gst-json").click(),300); }},{k:"x",l:"GST Reports to Excel",fn:()=>{ showTab("gst"); setTimeout(()=>$("#gst-xlsx").click(),300); }}]); return true; }
+  if(a==="othervch"){ popMenu("Other Vouchers", [{k:"l",l:"Delivery Challan / Orders",fn:()=>showTab("orders")},{k:"n",l:"Credit Note",fk:"Ctrl+F8",fn:()=>openNote("credit")},{k:"d",l:"Debit Note",fk:"Ctrl+F9",fn:()=>openNote("debit")},{k:"j",l:"Journal",fk:"F7",fn:()=>openVoucher("journal")},{k:"c",l:"Contra",fk:"F4",fn:()=>openVoucher("contra")}]); return true; }
+  if(a==="import"){ $("#bk-file").click(); return true; }
+  if(a==="export"){ const b=visBtn('[id$="-xlsx"]'); if(b) b.click(); else toast("Nothing to export on this screen. Open a report or register first.", true); return true; }
+  if(a==="print"){ if(!$("#modal").hidden){ $("#m-print").click(); return true; } const b=visBtn('[id$="-print"]'); if(b){ b.click(); return true; } if(curTab()==="bill"){ const s=$("#save-bill"); toast("Save the bill, then print it from the preview"); if(s) s.focus(); return true; } toast("Nothing to print on this screen. Open a bill from the Bills Register to print it.", true); return true; }
+  if(a==="share"){ if(!$("#modal").hidden){ $("#m-share").click(); return true; } toast("Open a bill (Bills Register → click a bill) to share it on WhatsApp.", true); return true; }
+  if(a==="back"){ const back=navBack.pop(); if(back) back(); else showTab("home"); return true; }
+  if(a==="date"){ const sel=DATE_T[curTab()], el=sel && $(sel); if(el && el.offsetParent!==null) el.focus(); else toast("F2 changes the date on a voucher or report screen"); return true; }
+  if(a==="banks"){ showTab("settings"); setTimeout(()=>{ const el=$("#st-banks"); if(el){ el.scrollIntoView({behavior:"smooth", block:"center"}); const i=el.querySelector("input"); if(i) i.focus({preventScroll:true}); } }, 60); return true; }
+  if(a==="newco"){ const s=$("#co-sel"); s.value="__add"; s.dispatchEvent(new Event("change")); return true; }
+  if(/^vk-/.test(a)){ openVoucher(a.slice(3)); return true; }
+  if(/^note-/.test(a)){ openNote(a.slice(5)); return true; }
+  return false;
+}
+// F-keys and Alt keys, Tally style (runs before the older handlers)
+const TFK={F3:"company", F4:"vk-contra", F5:"vk-expense", F6:"vk-income", F7:"vk-journal", F10:"othervch"};
+const TALT={y:"ydata", z:"zex", g:"goto", o:"import", e:"export", m:"share", p:"print"};
+window.addEventListener("keydown", e => {
+  if(pm || !$("#app") || $("#app").hidden || !$("#dlg").hidden) return;
+  const k=e.key, alt=e.altKey && !e.ctrlKey && !e.metaKey;
+  if(alt){ const c=(e.code||"").replace("Key","").toLowerCase(); if(TALT[c]){ if(!$("#modal").hidden && !["p","m"].includes(c)) return; e.preventDefault(); e.stopImmediatePropagation(); doAct(TALT[c]); return; } }
+  if(!$("#modal").hidden) return;
+  if((e.ctrlKey||e.metaKey) && !e.altKey && (k==="F8"||k==="F9")){ e.preventDefault(); e.stopImmediatePropagation(); openNote(k==="F8"?"credit":"debit"); return; }
+  if(e.ctrlKey||e.metaKey||e.altKey||e.shiftKey) return;
+  if(TFK[k]){ e.preventDefault(); e.stopImmediatePropagation(); doAct(TFK[k]); return; }
+  if(k==="F2" && curTab()==="home"){ e.preventDefault(); e.stopImmediatePropagation(); toast("F2 changes the date on a voucher or report screen"); return; }
+}, true);
+
+// Payment (F5) / Receipt (F6) against a party: open the party account so the bills can be adjusted
+function partyPayFromVoucher(head){
+  const p=S.parties.find(x=>String(x.name).trim().toLowerCase()===head.toLowerCase()); if(!p) return false;
+  const amt=$("#v-amt").value, date=$("#v-date").value, mode=$("#v-mode").value, bank=$("#v-bank") ? $("#v-bank").value : "", type = vk==="income" ? "receipt" : "payment";
+  goTab("parties"); openAccount(p);
+  pushBack(()=>{ closeAccount(); goTab("vouchers"); });
+  setTimeout(()=>{
+    $("#ac-type").value=type; $("#ac-type").dispatchEvent(new Event("change"));
+    if(date) $("#ac-date").value=date; $("#ac-mode").value=mode; $("#ac-mode").dispatchEvent(new Event("change"));
+    if(bank && $("#ac-bank")) $("#ac-bank").value=bank;
+    $("#ac-amt").value=amt; $("#ac-amt").dispatchEvent(new Event("input"));
+    $("#v-head").value=""; $("#v-amt").value="";
+    $("#ac-amt").focus();
+    toast(`${type==="receipt"?"Receipt from":"Payment to"} ${p.name}: adjust it against bills below, then Ctrl+A to save`);
+  }, 60);
+  return true;
+}
 
 // ================= BOOT =================
 fillBillForm(); fillPur(); fillNote(); fillOrd(); renderItems(); renderParties(); renderBills(); fillSettings();
