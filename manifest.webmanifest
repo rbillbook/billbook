@@ -1,12 +1,12 @@
 {
-  "name": "BillBook",
-  "short_name": "BillBook",
-  "description": "GST billing, stock and accounts",
+  "name": "Billora",
+  "short_name": "Billora",
+  "description": "Billora: Smart Business. Simple Billing. GST billing, stock and accounts.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f2f3f8",
-  "theme_color": "#2c3a8f",
+  "background_color": "#ffffff",
+  "theme_color": "#16385c",
   "icons": [
     {
       "src": "icon-192.png",
