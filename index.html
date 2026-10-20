@@ -291,6 +291,14 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
 .vt.order{color:#0f6b6b} .vt.billed{color:var(--good)} .vt.open{color:#9a3412}
 input.brd{width:auto;min-width:140px;padding:4px 6px}
 td.ind2{padding-left:26px !important}
+.bankrow{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto;gap:8px;margin-bottom:8px;align-items:center}
+.alloc{border:1px solid var(--line);background:var(--surface-2);padding:10px 12px;margin:-4px 0 12px}
+.alloc .row{margin-bottom:6px}
+.sub-h{font-size:12px;margin:14px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+@media (min-width:901px){#tab-vouchers .two{grid-template-columns:420px minmax(0,1fr)}}
+.jl-row,.jl-head{display:grid;grid-template-columns:62px minmax(0,1fr) 104px 26px;gap:6px;margin-bottom:6px;align-items:center}
+.jl-head{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:6px 0 4px}
+.jl-row select,.jl-row input{width:100%;min-width:0}
 /* Gateway */
 .gw{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:28px;align-items:start;max-width:1000px;margin:0 auto}
 @media (max-width:900px){.gw{grid-template-columns:minmax(0,1fr);gap:16px} .gw-box{order:-1}}
@@ -606,9 +614,13 @@ td.ind2{padding-left:26px !important}
         <label class="f">Date<input type="date" id="ac-date" required></label>
         <label class="f">Amount (₹)<input type="number" id="ac-amt" step="any" min="0.01" required></label>
         <label class="f">Mode<select id="ac-mode"><option>Cash</option><option>UPI</option><option>Bank transfer</option><option>Cheque</option></select></label>
+        <label class="f" id="ac-bank-wrap" hidden>Bank account<select id="ac-bank"></select></label>
         <label class="f">Reference / note<input id="ac-ref" placeholder="UTR / cheque no."></label>
         <button class="btn primary" type="submit" id="ac-save">Save payment</button>
+        <button class="btn" type="button" id="ac-cancel" hidden>Cancel alteration</button>
       </form>
+      <div class="alloc" id="ac-alloc" hidden></div>
+      <div id="acct-bills"></div>
       <div class="row" style="margin-bottom:10px;flex-wrap:wrap"><button class="btn sm" id="acct-print" type="button">Print statement</button><button class="btn sm" id="acct-xlsx" type="button">Excel</button><button class="btn sm" id="acct-close" type="button">Close</button></div>
       <div class="tablewrap"><table class="grid"><thead><tr><th>Date</th><th>Particulars</th><th>Voucher No.</th><th class="r">Debit (₹)</th><th class="r">Credit (₹)</th><th class="r">Balance (₹)</th><th></th></tr></thead><tbody id="acct-body"></tbody></table></div>
     </div>
@@ -673,8 +685,9 @@ td.ind2{padding-left:26px !important}
       <div class="tile"><span>Net</span><b id="os-net">₹0</b></div>
     </div>
     <div class="panel">
-      <div class="listhead"><h2>Outstanding</h2><div class="row"><label class="chk"><input type="checkbox" id="os-all"> Show settled parties</label><input class="search" id="os-q" type="search" placeholder="Search party" aria-label="Search party"><button class="btn" id="os-refresh" type="button">Refresh</button><button class="btn" id="os-xlsx" type="button">Excel export</button></div></div>
+      <div class="listhead"><h2>Outstanding</h2><div class="row"><div class="seg" role="group" aria-label="View"><button type="button" id="os-pw" aria-pressed="true">Party-wise</button><button type="button" id="os-bw" aria-pressed="false">Bill-wise</button></div><label class="chk"><input type="checkbox" id="os-all"> Show settled parties</label><input class="search" id="os-q" type="search" placeholder="Search party" aria-label="Search party"><button class="btn" id="os-refresh" type="button">Refresh</button><button class="btn" id="os-xlsx" type="button">Excel export</button></div></div>
       <div class="tablewrap" id="os-wrap"><table class="grid"><thead><tr><th class="r">Sr. No.</th><th>Party</th><th>Phone</th><th class="r">To receive (₹)</th><th class="r">To pay (₹)</th><th></th></tr></thead><tbody id="os-body"></tbody></table></div>
+      <div class="tablewrap" id="os-bw-wrap" hidden><table class="grid"><thead><tr><th class="r">Sr. No.</th><th>Date</th><th>Ref. No.</th><th>Party</th><th>Type</th><th class="r">Bill amount</th><th class="r">Pending (₹)</th><th class="r">Age (days)</th></tr></thead><tbody id="os-bw-body"></tbody></table></div>
       <p class="empty" id="os-empty">Loading…</p>
       <p class="hint" style="margin-top:8px">To receive = sales bills + opening − payments received − credit notes. To pay = purchases − payments made − debit notes. Click a party to open its account.</p>
     </div>
@@ -839,6 +852,7 @@ td.ind2{padding-left:26px !important}
       <div class="listhead"><h2 id="cb-title">Cash Book</h2>
         <div class="rep-bar">
           <div class="seg" role="group" aria-label="Book"><button type="button" id="cb-cash" aria-pressed="true">Cash</button><button type="button" id="cb-bank" aria-pressed="false">Bank / UPI</button></div>
+          <select id="cb-bankname" hidden aria-label="Bank account" style="width:auto"></select>
           <label class="f">From<input type="date" id="cb-from"></label>
           <label class="f">To<input type="date" id="cb-to"></label>
           <button class="btn sm" type="button" id="cb-month">This month</button>
@@ -867,16 +881,20 @@ td.ind2{padding-left:26px !important}
         <p class="hint" id="v-hint"></p>
         <div class="fields">
           <label class="f">Date<input type="date" id="v-date" required></label>
-          <label class="f">Amount (₹)<input type="number" id="v-amt" step="any" min="0.01" required></label>
+          <label class="f" id="v-amt-wrap">Amount (₹)<input type="number" id="v-amt" step="any" min="0.01" required></label>
           <label class="f wide" id="v-head-wrap"><span id="v-head-lbl">Expense head</span><input id="v-head" list="v-heads" autocomplete="off" placeholder="Pick or type a head"></label>
           <label class="f" id="v-mode-wrap"><span id="v-mode-lbl">Paid by</span><select id="v-mode"><option>Cash</option><option>UPI</option><option>Bank transfer</option><option>Cheque</option></select></label>
+          <label class="f" id="v-bank-wrap" hidden><span id="v-bank-lbl">Bank account</span><select id="v-bank"></select></label>
           <label class="chk" id="v-direct-wrap"><input type="checkbox" id="v-direct"> Direct expense (part of the cost of goods)</label>
-          <label class="f wide" id="v-contra-wrap" hidden>Entry<select id="v-contra"><option value="deposit">Cash deposited into bank</option><option value="withdraw">Cash withdrawn from bank</option></select></label>
-          <label class="f wide" id="v-dr-wrap" hidden>Debit (Dr) ledger<input id="v-dr" list="v-ledgers" autocomplete="off" placeholder="e.g. Drawings, a party, an expense head"></label>
-          <label class="f wide" id="v-cr-wrap" hidden>Credit (Cr) ledger<input id="v-cr" list="v-ledgers" autocomplete="off" placeholder="e.g. Cash, Capital, a party"></label>
+          <label class="f wide" id="v-contra-wrap" hidden>Entry<select id="v-contra"><option value="deposit">Cash deposited into bank</option><option value="withdraw">Cash withdrawn from bank</option><option value="transfer">Transfer between bank accounts</option></select></label>
+          <label class="f" id="v-bank2-wrap" hidden>To bank<select id="v-bank2"></select></label>
+          <div class="f wide" id="v-jl-wrap" hidden><span>Journal entries (Dr / Cr)</span>
+            <div class="jl-head"><span>Dr / Cr</span><span>Ledger</span><span style="text-align:right">Amount (₹)</span><span></span></div><div id="v-jl"></div>
+            <div class="row" style="flex-wrap:wrap;margin-top:6px"><button class="btn sm" type="button" id="v-jl-add">+ Add line</button><span class="hint">Dr ₹<b class="num" id="v-jl-dr">0.00</b> · Cr ₹<b class="num" id="v-jl-cr">0.00</b> <span id="v-jl-msg"></span></span></div>
+          </div>
           <label class="f wide">Narration<input id="v-note" autocomplete="off" placeholder="Short note"></label>
         </div>
-        <div class="row"><button class="btn primary" type="submit" id="v-save">Save voucher</button><span class="hint" id="v-no"></span></div>
+        <div class="row"><button class="btn primary" type="submit" id="v-save">Save voucher</button><button class="btn" type="button" id="v-cancel" hidden>Cancel alteration</button><span class="hint" id="v-no"></span></div>
       </form>
       <div class="panel">
         <div class="listhead"><h2>Vouchers</h2><div class="row"><label class="f" style="flex-direction:row;align-items:center;gap:6px">Month<input id="v-month" type="month" style="width:auto"></label><button class="btn" type="button" id="v-xlsx">Excel export</button></div></div>
@@ -988,6 +1006,7 @@ td.ind2{padding-left:26px !important}
     <div class="panel">
       <div class="listhead"><h2>Bank Reconciliation</h2>
         <div class="rep-bar">
+          <label class="f" id="br-bank-wrap" hidden>Bank account<select id="br-bank"></select></label>
           <label class="f">As on<input type="date" id="br-to"></label>
           <label class="chk"><input type="checkbox" id="br-all"> Show matched entries too</label>
           <button class="btn" type="button" id="br-xlsx">Excel export</button>
@@ -1034,9 +1053,12 @@ td.ind2{padding-left:26px !important}
       <h2>Cash &amp; bank opening balance</h2>
       <div class="fields">
         <label class="f">Cash in hand (opening ₹)<input id="st-cashopen" type="number" step="any" placeholder="0"></label>
-        <label class="f">Bank balance (opening ₹)<input id="st-bankopen" type="number" step="any" placeholder="0"></label>
         <label class="f">Owner's capital (opening ₹)<input id="st-capopen" type="number" step="any" placeholder="0"></label>
       </div>
+      <h2>Bank accounts</h2>
+      <p class="hint">Add each bank account with its opening balance (e.g. SBI Current A/c, HDFC Savings). UPI, bank transfer and cheque entries ask which account. The first account is used for old entries.</p>
+      <div id="st-banks"></div>
+      <div class="row" style="margin-bottom:12px"><button class="btn sm" type="button" id="st-addbank">+ Add bank account</button></div>
       <div class="row"><button class="btn primary" type="submit">Save settings</button><span class="hint" id="st-state-msg"></span></div>
     </form>
     <div class="panel" id="backup-panel" style="max-width:820px;margin-top:16px">
@@ -1683,10 +1705,10 @@ let acct=null, acctUnsubs=[], acctInv=[], acctPay=[], acctPur=[], acctRet=[], ac
 function closeAccount(){ acctUnsubs.forEach(u=>u()); acctUnsubs=[]; acct=null; acctRows=[]; $("#acct").hidden=true; }
 function openAccount(p){
   if(!db) return toast("Not connected to the database", true);
-  closeAccount(); acct=p; acctInv=[]; acctPay=[]; acctPur=[]; acctRet=[]; acctVch=[];
+  closeAccount(); acct=p; acctInv=[]; acctPay=[]; acctPur=[]; acctRet=[]; acctVch=[]; acEdit=null; acAlloc={}; acAllocEdited=false;
   $("#acct").hidden=false; $("#acct-title").textContent="Account · "+p.name;
   $("#acct-sub").textContent=[p.gstin, p.phone].filter(Boolean).join(" · ");
-  $("#ac-date").value=todayISO(); $("#ac-amt").value=""; $("#ac-ref").value="";
+  acResetForm();
   renderAccount();
   const fail=e=>toast("Could not load the account: "+((e&&e.message)||e), true);
   acctUnsubs.push(C("invoices").where("party.name","==",p.name).onSnapshot(q=>{ acctInv=q.docs.map(d=>({id:d.id,...d.data()})); renderAccount(); }, fail));
@@ -1696,13 +1718,35 @@ function openAccount(p){
   acctUnsubs.push(C("vouchers").where("names","array-contains",p.name).onSnapshot(q=>{ acctVch=q.docs.map(d=>({id:d.id,...d.data()})); renderAccount(); }, fail));
   setTimeout(()=>$("#acct").scrollIntoView({behavior:"smooth", block:"start"}), 50);
 }
+// ---- bill-wise: which bills of a party are still pending
+function billsFor(name, D, exclude){
+  const k=String(name||"").trim().toLowerCase(), mine=x=>String((x.party||{}).name||"").trim().toLowerCase()===k;
+  const bills=[], p=S.parties.find(x=>String(x.name).trim().toLowerCase()===k), op=r2(+(p&&p.opening)||0);
+  if(op>0) bills.push({type:"recv", no:"Opening balance", date:"", amount:op});
+  if(op<0) bills.push({type:"pay", no:"Opening balance", date:"", amount:-op});
+  (D.inv||[]).filter(mine).forEach(i=>bills.push({type:"recv", no:String(i.no), date:i.date||"", amount:+i.total||0, inv:i}));
+  (D.pur||[]).filter(mine).forEach(x=>bills.push({type:"pay", no:String(x.no), date:x.date||"", amount:+x.total||0}));
+  bills.forEach(b=>{ b.pending=b.amount; b.adj=[]; });
+  const find=(t,no)=>bills.find(b=>b.type===t && b.no===String(no));
+  let onAcc=0;
+  (D.ret||[]).filter(mine).forEach(r=>{ const t=r.type==="debit"?"pay":"recv", a=+r.total||0, b=r.against?find(t,r.against):null; if(b){ b.pending-=a; b.adj.push(r.no); } else onAcc += t==="recv" ? -a : a; });
+  (D.pay||[]).filter(mine).filter(x=>!exclude || x.id!==exclude).forEach(x=>{ const t=x.type==="payment"?"pay":"recv"; let rest=+x.amount||0;
+    (x.against||[]).forEach(g=>{ const b=find(t,g.no), a=Math.min(+g.amt||0, rest); if(b && a>0){ b.pending-=a; b.adj.push(x.no); rest-=a; } });
+    if(rest>0.004) onAcc += t==="recv" ? -rest : rest; });
+  (D.vch||[]).forEach(v=>vEntries(v).forEach(e=>{ if(String(e.ledger).trim().toLowerCase()===k) onAcc += e.dr-e.cr; }));
+  bills.forEach(b=>b.pending=r2(b.pending));
+  return {bills, onAcc:r2(onAcc)};
+}
+const ageDays = iso => iso ? Math.max(0, Math.round((new Date(todayISO()+"T00:00:00")-new Date(iso+"T00:00:00"))/86400000)) : "";
+const acData = () => ({inv:acctInv, pur:acctPur, ret:acctRet, pay:acctPay, vch:acctVch});
 function ledgerRows(){
-  const p=acct; const rows=[];
+  const p=acct; const rows=[], me=String(p.name).trim().toLowerCase(), VL={expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"};
   acctInv.forEach(i=>rows.push({date:i.date||"", at:i.createdAt||0, text:"Sales invoice", no:i.no, dr:+i.total||0, cr:0, inv:i}));
   acctPur.forEach(x=>rows.push({date:x.date||"", at:x.createdAt||0, text:"Purchase bill", no:x.no||"", dr:0, cr:+x.total||0}));
-  acctVch.forEach(v=>{ const dr=String(v.dr).toLowerCase()===String(p.name).toLowerCase(); rows.push({date:v.date||"", at:v.createdAt||0, text:`Journal · ${dr?"Cr "+v.cr:"Dr "+v.dr}${v.note?" · "+v.note:""}`, no:v.no||"", dr:dr?+v.amount||0:0, cr:dr?0:+v.amount||0}); });
-  acctRet.forEach(x=>rows.push({date:x.date||"", at:x.createdAt||0, text:x.type==="debit"?"Debit note (purchase return)":"Credit note (sales return)", no:x.no||"", dr:x.type==="debit"?+x.total||0:0, cr:x.type==="debit"?0:+x.total||0}));
-  acctPay.forEach(x=>rows.push({date:x.date||"", at:x.createdAt||0, text:x.type==="payment" ? "Payment made"+(x.mode?" · "+x.mode:"") : "Payment received"+(x.mode?" · "+x.mode:"")+(x.ref?" · "+x.ref:""), no:x.no||"", dr:x.type==="payment"?+x.amount||0:0, cr:x.type==="payment"?0:+x.amount||0, pay:x}));
+  acctVch.forEach(v=>vEntries(v).filter(e=>String(e.ledger).trim().toLowerCase()===me).forEach(e=>rows.push({date:v.date||"", at:v.createdAt||0, text:`${VL[v.kind]||"Journal"} · ${e.dr?"Cr":"Dr"} ${vOther(v, e.ledger)}${v.note?" · "+v.note:""}`, no:v.no||"", dr:e.dr, cr:e.cr})));
+  acctRet.forEach(x=>rows.push({date:x.date||"", at:x.createdAt||0, text:(x.type==="debit"?"Debit note (purchase return)":"Credit note (sales return)")+(x.against?" · Agst "+x.against:""), no:x.no||"", dr:x.type==="debit"?+x.total||0:0, cr:x.type==="debit"?0:+x.total||0}));
+  acctPay.forEach(x=>{ const bank=isCash(x)||bankNames().length<2?"":" · "+bankOf(x), ag=(x.against||[]).filter(g=>+g.amt>0).map(g=>g.no).join(", ");
+    rows.push({date:x.date||"", at:x.createdAt||0, text:(x.type==="payment"?"Payment made":"Payment received")+(x.mode?" · "+x.mode:"")+bank+(x.ref?" · "+x.ref:"")+(ag?" · Agst "+ag:""), no:x.no||"", dr:x.type==="payment"?+x.amount||0:0, cr:x.type==="payment"?0:+x.amount||0, pay:x}); });
   rows.sort((a,b)=>a.date.localeCompare(b.date) || a.at-b.at);
   let bal=+(p.opening||0); rows.forEach(r=>{ bal=r2(bal+r.dr-r.cr); r.bal=bal; });
   return {rows, opening:+(p.opening||0), closing:bal, dr:r2(rows.reduce((t,r)=>t+r.dr,0)), cr:r2(rows.reduce((t,r)=>t+r.cr,0))};
@@ -1715,29 +1759,85 @@ function renderAccount(){
   $("#acct-bal-lbl").textContent = L.closing>0 ? "Amount to receive" : L.closing<0 ? "Amount to pay" : "Settled";
   $("#acct-body").innerHTML =
     `<tr class="sub"><td></td><td>Opening balance</td><td></td><td class="r num">${L.opening>0?fmt(L.opening):""}</td><td class="r num">${L.opening<0?fmt(-L.opening):""}</td><td class="r num">${balTxt(L.opening)}</td><td></td></tr>` +
-    L.rows.map((r,k)=>`<tr${r.inv?` class="click" data-ainv="${k}"`:""}><td>${fmtDate(r.date)}</td><td>${esc(r.text)}</td><td class="num">${esc(r.no)}</td><td class="r num">${r.dr?fmt(r.dr):""}</td><td class="r num">${r.cr?fmt(r.cr):""}</td><td class="r num">${balTxt(r.bal)}</td><td class="r">${r.pay?`<button class="btn sm danger" data-apay="${esc(r.pay.id)}">Delete</button>`:""}</td></tr>`).join("") +
+    L.rows.map((r,k)=>`<tr${r.inv?` class="click" data-ainv="${k}"`:""}><td>${fmtDate(r.date)}</td><td>${esc(r.text)}</td><td class="num">${esc(r.no)}</td><td class="r num">${r.dr?fmt(r.dr):""}</td><td class="r num">${r.cr?fmt(r.cr):""}</td><td class="r num">${balTxt(r.bal)}</td><td class="r" style="white-space:nowrap">${r.pay?`<button class="btn sm" type="button" data-aalt="${esc(r.pay.id)}">Alter</button> <button class="btn sm danger" type="button" data-apay="${esc(r.pay.id)}">Delete</button>`:""}</td></tr>`).join("") +
     `<tr class="sub"><td></td><td>Total</td><td></td><td class="r num">${fmt(L.dr+(L.opening>0?L.opening:0))}</td><td class="r num">${fmt(L.cr+(L.opening<0?-L.opening:0))}</td><td class="r num">${balTxt(L.closing)}</td><td></td></tr>`;
+  // pending bills (bill-wise)
+  const B=billsFor(acct.name, acData()), pend=B.bills.filter(x=>Math.abs(x.pending)>0.004).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  $("#acct-bills").innerHTML = (pend.length || B.onAcc) ? `<div class="sub-h">Pending bills (bill-wise)</div><div class="tablewrap"><table class="grid"><thead><tr><th>Date</th><th>Bill No.</th><th>Type</th><th class="r">Bill amount</th><th class="r">Pending (₹)</th><th class="r">Age (days)</th></tr></thead><tbody>`
+    + pend.map(x=>`<tr${x.inv?` class="click" data-abill="${esc(x.no)}"`:""}><td>${fmtDate(x.date)}</td><td class="num">${esc(x.no)}</td><td>${x.type==="recv"?"To receive":"To pay"}</td><td class="r num">${fmt(x.amount)}</td><td class="r num ${x.type==="recv"?"amt-due":"amt-pay"}">${fmt(x.pending)}</td><td class="r num">${ageDays(x.date)}</td></tr>`).join("")
+    + (B.onAcc ? `<tr><td></td><td>On account</td><td>${B.onAcc>0?"To receive":"Advance (to adjust)"}</td><td></td><td class="r num">${fmt(Math.abs(B.onAcc))}</td><td></td></tr>` : "")
+    + `</tbody></table></div><p class="hint">"On account" = payments or entries not adjusted against any bill. Alter a payment to adjust it against a bill.</p>` : "";
+  if(!$("#ac-alloc").contains(document.activeElement)) (acAllocEdited ? renderAlloc() : acAutoAlloc());
 }
+// ---- payment entry: bank, bill-wise adjustment, alteration
+let acEdit=null, acAlloc={}, acAllocEdited=false;
+function acBankUI(){ $("#ac-bank-wrap").hidden = $("#ac-mode").value==="Cash" || bankNames().length<2; }
+function acPendingFor(type){ if(!acct) return []; const B=billsFor(acct.name, acData(), acEdit&&acEdit.id), t=type==="payment"?"pay":"recv"; return B.bills.filter(b=>b.type===t && b.pending>0.004).sort((a,b)=>(a.date||"").localeCompare(b.date||"")); }
+function acAutoAlloc(){ const amt=r2(+$("#ac-amt").value||0); let rest=amt; acAlloc={}; acPendingFor($("#ac-type").value).forEach(b=>{ const a=r2(Math.min(rest,b.pending)); if(a>0){ acAlloc[b.no]=a; rest=r2(rest-a); } }); acAllocEdited=false; renderAlloc(); }
+function renderAlloc(){
+  const list=acPendingFor($("#ac-type").value), box=$("#ac-alloc");
+  if(!list.length){ box.hidden=true; box.innerHTML=""; return; }
+  box.hidden=false;
+  box.innerHTML=`<div class="row" style="justify-content:space-between;flex-wrap:wrap"><b>Bill-wise adjustment</b><button class="btn sm" type="button" id="ac-auto">Adjust oldest bills first</button></div>
+    <div class="tablewrap"><table class="grid"><thead><tr><th>Bill No.</th><th>Date</th><th class="r">Pending</th><th class="r">Adjust now (₹)</th></tr></thead><tbody>${list.map(b=>`<tr><td class="num">${esc(b.no)}</td><td>${fmtDate(b.date)}</td><td class="r num">${fmt(b.pending)}</td><td class="r"><input class="alloc-in" type="number" step="any" min="0" data-alno="${esc(b.no)}" value="${acAlloc[b.no]||""}" style="max-width:140px;text-align:right" aria-label="Adjust against ${esc(b.no)}"></td></tr>`).join("")}</tbody></table></div>
+    <p class="hint" id="ac-alloc-msg" style="margin:6px 0 0"></p>`;
+  allocMsg();
+}
+function allocUsed(){ return r2(Object.values(acAlloc).reduce((t,v)=>t+(+v||0),0)); }
+function allocMsg(){ const el=$("#ac-alloc-msg"); if(!el) return; const amt=r2(+$("#ac-amt").value||0), used=allocUsed(), left=r2(amt-used);
+  el.textContent = used>amt+0.004 ? `Adjusted ₹${fmt(used)} is more than the amount ₹${fmt(amt)}.` : left>0.004 ? `₹${fmt(left)} will stay "On account" (not against any bill).` : amt ? "Fully adjusted against bills." : "Enter the amount; it is adjusted against the oldest bills. You can change it."; el.style.color = used>amt+0.004 ? "var(--bad)" : ""; }
+$("#ac-alloc").addEventListener("input", e => { const el=e.target.closest("[data-alno]"); if(!el) return; acAlloc[el.dataset.alno]=r2(+el.value||0); acAllocEdited=true; allocMsg(); });
+$("#ac-alloc").addEventListener("click", e => { if(e.target.closest("#ac-auto")) acAutoAlloc(); });
+$("#ac-amt").addEventListener("input", () => { if(!acAllocEdited) acAutoAlloc(); else allocMsg(); });
+$("#ac-type").addEventListener("change", acAutoAlloc);
+$("#ac-mode").addEventListener("change", acBankUI);
+function acResetForm(){
+  acEdit=null; acAlloc={}; acAllocEdited=false;
+  $("#ac-date").value=todayISO(); $("#ac-amt").value=""; $("#ac-ref").value=""; $("#ac-type").disabled=false;
+  $("#ac-save").textContent="Save payment"; $("#ac-cancel").hidden=true; acBankUI(); renderAlloc();
+}
+function startPayAlter(p){
+  acEdit={id:p.id, no:p.no||"", type:p.type, createdAt:p.createdAt||Date.now(), createdBy:p.createdBy||"", bankDate:p.bankDate||""};
+  $("#ac-type").value=p.type==="payment"?"payment":"receipt"; $("#ac-type").disabled=true;
+  $("#ac-date").value=p.date||todayISO(); $("#ac-amt").value=p.amount; $("#ac-mode").value=p.mode||"Cash"; $("#ac-ref").value=p.ref||"";
+  if(!isCash(p)) $("#ac-bank").value=bankOf(p);
+  acAlloc={}; (p.against||[]).forEach(g=>{ acAlloc[g.no]=r2(+g.amt||0); }); acAllocEdited=true;
+  $("#ac-save").textContent="Save alteration"; $("#ac-cancel").hidden=false; acBankUI(); renderAlloc();
+  $("#acct-form").scrollIntoView({behavior:"smooth", block:"center"}); toast("Altering "+(p.no||"payment"));
+}
+$("#ac-cancel").addEventListener("click", () => { acResetForm(); toast("Alteration cancelled"); });
 $("#acct-body").addEventListener("click", e => {
+  const a=e.target.closest("[data-aalt]"); if(a){ const p=acctPay.find(x=>x.id===a.dataset.aalt); if(p) startPayAlter(p); return; }
   const d=e.target.closest("[data-apay]");
-  if(d){ armDelete(d, async()=>{ try{ await D("payments", d.dataset.apay).delete(); toast("Payment entry deleted"); }catch(err){ toast(errMsg(err), true); } }); return; }
+  if(d){ armDelete(d, async()=>{ try{ await D("payments", d.dataset.apay).delete(); if(acEdit && acEdit.id===d.dataset.apay) acResetForm(); toast("Payment entry deleted"); }catch(err){ toast(errMsg(err), true); } }); return; }
   const tr=e.target.closest("[data-ainv]"); if(tr){ const r=acctRows[+tr.dataset.ainv]; if(r && r.inv) openInvoice(r.inv, true); }
 });
+$("#acct-bills").addEventListener("click", e => { const tr=e.target.closest("[data-abill]"); if(!tr) return; const i=acctInv.find(x=>String(x.no)===tr.dataset.abill); if(i) openInvoice(i, true); });
 $("#acct-close").addEventListener("click", closeAccount);
 $("#acct-form").addEventListener("submit", async e => {
   e.preventDefault(); if(!acct||!db) return;
   const amt=r2(+$("#ac-amt").value||0); if(amt<=0){ $("#ac-amt").focus(); return toast("Enter the amount", true); }
   const ptype=$("#ac-type").value==="payment" ? "payment" : "receipt";
-  const p=acct, btn=$("#ac-save");
+  const against=acPendingFor(ptype).map(b=>({no:b.no, amt:r2(+acAlloc[b.no]||0)})).filter(g=>g.amt>0);
+  if(r2(against.reduce((t,g)=>t+g.amt,0))>amt+0.004) return toast("Bill-wise adjustment is more than the amount", true);
+  const p=acct, btn=$("#ac-save"), mode=$("#ac-mode").value, me=(auth.currentUser&&auth.currentUser.email)||"";
   await withBtn(btn, "Saving…", async () => {
     try{
-      const id=(ptype==="payment"?"pay-":"rcpt-")+Date.now().toString(36)+Math.random().toString(36).slice(2,6), ref=C("payments").doc(id), firmRef=FIRM();
-      const doc={type:ptype, date:$("#ac-date").value||todayISO(), amount:amt, mode:$("#ac-mode").value, ref:$("#ac-ref").value.trim(), narration:"",
-        party:{name:p.name, address:p.address||"", gstin:p.gstin||"", stateCode:p.stateCode||""}, createdAt:Date.now(), createdBy:(auth.currentUser&&auth.currentUser.email)||""};
-      await db.runTransaction(async t => { const fs=await t.get(firmRef); const f=fs.exists?fs.data():{}; const key=ptype==="payment"?"nextPay":"nextRcpt"; const n=Math.max(1, Math.floor(+f[key]||1)); doc.no=(ptype==="payment"?"PAY/":"RCPT/")+String(n).padStart(4,"0"); t.set(ref, doc); t.set(firmRef, {[key]:n+1}, {merge:true}); });
-      $("#ac-amt").value=""; $("#ac-ref").value=""; toast(`${ptype==="payment"?"Payment made":"Payment received"}: ₹${fmt(amt)} saved (${doc.no})`); if(!$("#tab-outstanding").hidden) loadOutstanding();
+      const doc={type:ptype, date:$("#ac-date").value||todayISO(), amount:amt, mode, bank:mode==="Cash"?"":(bankCanon($("#ac-bank").value)||bankNames()[0]), ref:$("#ac-ref").value.trim(), narration:"", against,
+        party:{name:p.name, address:p.address||"", gstin:p.gstin||"", stateCode:p.stateCode||""}, createdAt:Date.now(), createdBy:me};
+      if(acEdit){
+        Object.assign(doc, {no:acEdit.no, createdAt:acEdit.createdAt, createdBy:acEdit.createdBy, alteredAt:Date.now(), alteredBy:me}); if(acEdit.bankDate) doc.bankDate=acEdit.bankDate;
+        await D("payments", acEdit.id).set(doc); acResetForm(); toast(`Payment altered: ${doc.no} · ₹${fmt(amt)}`);
+      } else {
+        const id=(ptype==="payment"?"pay-":"rcpt-")+Date.now().toString(36)+Math.random().toString(36).slice(2,6), ref=C("payments").doc(id), firmRef=FIRM();
+        await db.runTransaction(async t => { const fs=await t.get(firmRef); const f=fs.exists?fs.data():{}; const key=ptype==="payment"?"nextPay":"nextRcpt"; const n=Math.max(1, Math.floor(+f[key]||1)); doc.no=(ptype==="payment"?"PAY/":"RCPT/")+String(n).padStart(4,"0"); t.set(ref, doc); t.set(firmRef, {[key]:n+1}, {merge:true}); });
+        $("#ac-amt").value=""; $("#ac-ref").value=""; acAlloc={}; acAllocEdited=false; renderAlloc();
+        toast(`${ptype==="payment"?"Payment made":"Payment received"}: ₹${fmt(amt)} saved (${doc.no})${against.length?" · adjusted against "+against.map(g=>g.no).join(", "):""}`);
+      }
+      if(!$("#tab-outstanding").hidden) loadOutstanding();
     }catch(err){ toast(errMsg(err), true); }
   });
+  btn.textContent = acEdit ? "Save alteration" : "Save payment";
 });
 function statementHTML(){
   const L=ledgerRows(), f=S.firm||{}, p=acct;
@@ -1886,40 +1986,69 @@ $("#pur-xlsx").addEventListener("click", () => {
 
 // ================= OUTSTANDING =================
 let osRows=[], osSeq=0;
+let osView="pw", osData=null, osBw=[];
 async function loadOutstanding(){
-  if(!db || !dbReady) return; const my=++osSeq; $("#os-empty").hidden=false; $("#os-empty").textContent="Loading…"; $("#os-wrap").hidden=true;
+  if(!db || !dbReady) return; const my=++osSeq; $("#os-empty").hidden=false; $("#os-empty").textContent="Loading…"; $("#os-wrap").hidden=true; $("#os-bw-wrap").hidden=true;
   try{
     const [inv,pay,pur,ret,vch]=await Promise.all([C("invoices").get(), C("payments").get(), C("purchases").get(), C("returns").get(), C("vouchers").get()]);
     if(my!==osSeq) return;
+    const arr=q=>q.docs.map(d=>({id:d.id,...d.data()}));
+    osData={inv:arr(inv), pay:arr(pay), pur:arr(pur), ret:arr(ret), vch:arr(vch)};
     const map=new Map(); const key=n=>String(n||"").trim().toLowerCase();
     const get=n=>{ const k=key(n); if(!k) return null; if(!map.has(k)) map.set(k,{name:String(n).trim(), bal:0, party:null}); return map.get(k); };
     S.parties.forEach(p=>{ const o=get(p.name); if(o){ o.party=p; o.name=p.name; o.bal+=+p.opening||0; } });
-    inv.docs.forEach(d=>{ const x=d.data(), o=get((x.party||{}).name); if(o) o.bal+=+x.total||0; });
-    pur.docs.forEach(d=>{ const x=d.data(), o=get((x.party||{}).name); if(o) o.bal-=+x.total||0; });
-    ret.docs.forEach(d=>{ const x=d.data(), o=get((x.party||{}).name); if(o) o.bal += x.type==="debit" ? (+x.total||0) : -(+x.total||0); });
-    vch.docs.forEach(d=>{ const v=d.data(); if(ledgerKind(v.dr)==="party"){ const o=get(v.dr); if(o) o.bal+=+v.amount||0; } if(ledgerKind(v.cr)==="party"){ const o=get(v.cr); if(o) o.bal-=+v.amount||0; } });
-    pay.docs.forEach(d=>{ const x=d.data(), o=get((x.party||{}).name); if(o) o.bal += x.type==="payment" ? (+x.amount||0) : -(+x.amount||0); });
+    osData.inv.forEach(x=>{ const o=get((x.party||{}).name); if(o) o.bal+=+x.total||0; });
+    osData.pur.forEach(x=>{ const o=get((x.party||{}).name); if(o) o.bal-=+x.total||0; });
+    osData.ret.forEach(x=>{ const o=get((x.party||{}).name); if(o) o.bal += x.type==="debit" ? (+x.total||0) : -(+x.total||0); });
+    osData.vch.forEach(v=>vEntries(v).forEach(e=>{ if(ledgerKind(e.ledger)==="party"){ const o=get(e.ledger); if(o) o.bal+=e.dr-e.cr; } }));
+    osData.pay.forEach(x=>{ const o=get((x.party||{}).name); if(o) o.bal += x.type==="payment" ? (+x.amount||0) : -(+x.amount||0); });
     osRows=[...map.values()].map(o=>({...o, bal:r2(o.bal)})).sort((a,b)=>b.bal-a.bal || a.name.localeCompare(b.name));
     renderOutstanding();
   }catch(err){ $("#os-empty").textContent="Could not load: "+((err&&err.message)||err); }
 }
+function osBillRows(){
+  if(!osData) return [];
+  const rows=[];
+  osRows.forEach(o=>{ const B=billsFor(o.name, osData);
+    B.bills.filter(b=>Math.abs(b.pending)>0.004).forEach(b=>rows.push({date:b.date, no:b.no, party:o.name, type:b.type, amount:b.amount, pending:b.pending, inv:b.inv||null}));
+    if(Math.abs(B.onAcc)>0.004) rows.push({date:"", no:"On account", party:o.name, type:B.onAcc>0?"recv":"pay", amount:"", pending:Math.abs(B.onAcc), onAcc:true}); });
+  return rows.sort((a,b)=>(a.onAcc?1:0)-(b.onAcc?1:0) || (a.date||"").localeCompare(b.date||"") || a.party.localeCompare(b.party));
+}
 function renderOutstanding(){
-  const q=$("#os-q").value.trim().toLowerCase(), all=$("#os-all").checked;
-  const list=osRows.filter(o=>(all || o.bal!==0) && (!q || o.name.toLowerCase().includes(q)));
+  const q=$("#os-q").value.trim().toLowerCase(), all=$("#os-all").checked, bw=osView==="bw";
+  $("#os-pw").setAttribute("aria-pressed", bw?"false":"true"); $("#os-bw").setAttribute("aria-pressed", bw?"true":"false"); $("#os-all").parentElement.hidden=bw;
   const recv=r2(osRows.filter(o=>o.bal>0).reduce((t,o)=>t+o.bal,0)), pay=r2(osRows.filter(o=>o.bal<0).reduce((t,o)=>t-o.bal,0));
   $("#os-recv").textContent="₹"+fmt(recv); $("#os-pay").textContent="₹"+fmt(pay);
   const net=r2(recv-pay); $("#os-net").textContent=(net<0?"−":"")+"₹"+fmt(Math.abs(net)); $("#os-net").className = net>0?"amt-due":net<0?"amt-pay":"";
+  if(bw){
+    osBw=osBillRows().filter(r=>!q || r.party.toLowerCase().includes(q) || String(r.no).toLowerCase().includes(q));
+    $("#os-bw-body").innerHTML=osBw.map((r,n)=>`<tr class="click" data-osb="${n}"><td class="r num">${n+1}</td><td>${fmtDate(r.date)}</td><td class="num">${esc(r.no)}</td><td><b>${esc(r.party)}</b></td><td>${r.onAcc?(r.type==="recv"?"On account (to receive)":"Advance / on account"):(r.type==="recv"?"To receive":"To pay")}</td><td class="r num">${r.amount===""?"":fmt(r.amount)}</td><td class="r num ${r.type==="recv"?"amt-due":"amt-pay"}">${fmt(r.pending)}</td><td class="r num">${ageDays(r.date)}</td></tr>`).join("")
+      + (osBw.length?`<tr class="sub"><td></td><td></td><td></td><td>Total to receive</td><td></td><td></td><td class="r num amt-due">${fmt(r2(osBw.filter(r=>r.type==="recv").reduce((t,r)=>t+r.pending,0)))}</td><td></td></tr><tr class="sub"><td></td><td></td><td></td><td>Total to pay</td><td></td><td></td><td class="r num amt-pay">${fmt(r2(osBw.filter(r=>r.type==="pay").reduce((t,r)=>t+r.pending,0)))}</td><td></td></tr>`:"");
+    $("#os-wrap").hidden=true; $("#os-bw-wrap").hidden=!osBw.length; $("#os-empty").hidden=!!osBw.length; $("#os-empty").textContent = osData ? "No pending bills." : "Loading…";
+    return;
+  }
+  $("#os-bw-wrap").hidden=true;
+  const list=osRows.filter(o=>(all || o.bal!==0) && (!q || o.name.toLowerCase().includes(q)));
   $("#os-body").innerHTML=list.map((o,n)=>`<tr class="click" data-os="${esc(o.name)}"><td class="r num">${n+1}</td><td><b>${esc(o.name)}</b>${o.party&&o.party.gstin?`<div class="muted" style="font-size:12px">${esc(o.party.gstin)}</div>`:""}</td><td>${esc((o.party&&o.party.phone)||"")}</td><td class="r num ${o.bal>0?"amt-due":""}">${o.bal>0?fmt(o.bal):""}</td><td class="r num ${o.bal<0?"amt-pay":""}">${o.bal<0?fmt(-o.bal):""}</td><td class="r"><button class="btn sm" type="button">Account</button></td></tr>`).join("")
     + (list.length ? `<tr class="sub"><td></td><td>Total</td><td></td><td class="r num">${fmt(list.filter(o=>o.bal>0).reduce((t,o)=>t+o.bal,0))}</td><td class="r num">${fmt(list.filter(o=>o.bal<0).reduce((t,o)=>t-o.bal,0))}</td><td></td></tr>` : "");
   $("#os-wrap").hidden=!list.length; $("#os-empty").hidden=!!list.length; $("#os-empty").textContent = osRows.length ? "Everything is settled. Tick “Show settled parties” to see all." : "No parties yet.";
 }
+$("#os-pw").addEventListener("click", () => { osView="pw"; renderOutstanding(); });
+$("#os-bw").addEventListener("click", () => { osView="bw"; renderOutstanding(); });
 $("#os-q").addEventListener("input", renderOutstanding);
 $("#os-all").addEventListener("change", renderOutstanding);
 $("#os-refresh").addEventListener("click", loadOutstanding);
-$("#os-body").addEventListener("click", e => { const tr=e.target.closest("[data-os]"); if(!tr) return; const o=osRows.find(x=>x.name===tr.dataset.os); if(!o) return;
-  const p=o.party || {id:"", name:o.name, address:"", gstin:"", stateCode:"", phone:"", opening:0}; showTab("parties"); openAccount(p); });
+const osOpenParty = name => { const o=osRows.find(x=>x.name===name); const p=(o&&o.party) || {id:"", name, address:"", gstin:"", stateCode:"", phone:"", opening:0}; showTab("parties"); openAccount(p); };
+$("#os-body").addEventListener("click", e => { const tr=e.target.closest("[data-os]"); if(tr) osOpenParty(tr.dataset.os); });
+$("#os-bw-body").addEventListener("click", e => { const tr=e.target.closest("[data-osb]"); if(!tr) return; const r=osBw[+tr.dataset.osb]; if(!r) return; if(r.inv) openInvoice(r.inv, true); else osOpenParty(r.party); });
 $("#os-xlsx").addEventListener("click", () => {
   if(!window.XLSX) return toast("Excel tool did not load. Please reload the page.", true);
+  if(osView==="bw"){
+    if(!osBw.length) return toast("No pending bills", true);
+    const rows=osBw.map((r,n)=>({"Sr. No.":n+1,"Date":fmtDate(r.date),"Ref. No.":r.no,"Party":r.party,"Type":r.type==="recv"?"To receive":"To pay","Bill Amount":r.amount,"Pending":r.pending,"Age (days)":ageDays(r.date)}));
+    const ws=XLSX.utils.json_to_sheet(rows); ws["!cols"]=[7,11,18,30,12,13,13,10].map(w=>({wch:w})); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Bill-wise Outstanding");
+    XLSX.writeFile(wb, `BillwiseOutstanding_${todayISO()}.xlsx`); return toast("Excel file downloaded");
+  }
   const list=osRows.filter(o=>o.bal!==0); if(!list.length) return toast("Nothing outstanding", true);
   const rows=list.map((o,n)=>({"Sr. No.":n+1,"Party":o.name,"GSTIN":(o.party&&o.party.gstin)||"","Phone":(o.party&&o.party.phone)||"","To receive":o.bal>0?o.bal:"","To pay":o.bal<0?-o.bal:""}));
   rows.push({"Party":"TOTAL","To receive":r2(list.filter(o=>o.bal>0).reduce((t,o)=>t+o.bal,0)),"To pay":r2(list.filter(o=>o.bal<0).reduce((t,o)=>t-o.bal,0))});
@@ -1943,7 +2072,7 @@ async function loadDaybook(){
       ...pur.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:"purchase", label:"Purchase", no:x.no, dr:0, cr:+x.total||0})),
       ...pay.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:x.type==="payment"?"payment":"receipt", label:x.type==="payment"?"Payment":"Receipt", no:x.no, dr:x.type==="payment"?+x.amount||0:0, cr:x.type==="payment"?0:+x.amount||0})),
       ...ret.map(x=>({date:x.date, at:x.createdAt||0, party:(x.party||{}).name, type:x.type==="debit"?"debit":"credit", label:x.type==="debit"?"Debit Note":"Credit Note", no:x.no, dr:x.type==="debit"?+x.total||0:0, cr:x.type==="debit"?0:+x.total||0})),
-      ...vch.map(v=>({date:v.date, at:v.createdAt||0, party:`${v.dr} / ${v.cr}`, type:v.kind, label:{expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"}[v.kind]||v.kind, no:v.no, dr:+v.amount||0, cr:+v.amount||0}))]
+      ...vch.map(v=>({date:v.date, at:v.createdAt||0, party:vTitle(v), type:v.kind, label:{expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"}[v.kind]||v.kind, no:v.no, dr:+v.amount||0, cr:+v.amount||0}))]
       .sort((a,b)=>(a.date||"").localeCompare(b.date||"") || a.at-b.at);
     renderDaybook();
   }catch(err){ $("#db-empty").textContent="Could not load: "+((err&&err.message)||err); }
@@ -2202,21 +2331,28 @@ $("#sk-xlsx").addEventListener("click", () => {
 // ================= CASH / BANK BOOK =================
 let cbBook="cash", cbFrom=todayISO().slice(0,7)+"-01", cbTo=todayISO(), cbSeq=0, cbRows=[], cbOpen=0;
 const isCash = p => String(p.mode||"Cash").toLowerCase()==="cash";
+let cbBankName="";
 async function loadCash(){
   if(!db || !dbReady) return; const my=++cbSeq; if(cbTo<cbFrom) cbTo=cbFrom; $("#cb-from").value=cbFrom; $("#cb-to").value=cbTo;
-  const cash=cbBook==="cash"; $("#cb-cash").setAttribute("aria-pressed", cash?"true":"false"); $("#cb-bank").setAttribute("aria-pressed", cash?"false":"true"); $("#cb-title").textContent = cash ? "Cash Book" : "Bank Book (UPI, bank transfer, cheque)";
+  const cash=cbBook==="cash", bn=cash?"":(bankCanon(cbBankName)||bankNames()[0]); if(!cash) cbBankName=bn;
+  $("#cb-cash").setAttribute("aria-pressed", cash?"true":"false"); $("#cb-bank").setAttribute("aria-pressed", cash?"false":"true");
+  $("#cb-bankname").hidden = cash || bankNames().length<2; if(!cash) $("#cb-bankname").value=bn;
+  $("#cb-title").textContent = cash ? "Cash Book" : bankNames().length>1 ? "Bank Book · "+bn : "Bank Book (UPI, bank transfer, cheque)";
   try{
     const q=await C("payments").where("date","<=",cbTo).get(); if(my!==cbSeq) return;
     const vq=await C("vouchers").where("date","<=",cbTo).get(); if(my!==cbSeq) return;
-    const me=cash?"cash":"bank", lbl={expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"};
-    const fromV=vq.docs.map(d=>d.data()).filter(v=>ledgerKind(v.dr)===me||ledgerKind(v.cr)===me).map(v=>{ const inn=ledgerKind(v.dr)===me; return {date:v.date, createdAt:v.createdAt, type:inn?"receipt":"payment", amount:v.amount, no:v.no, mode:lbl[v.kind]||v.kind, ref:v.note||"", party:{name:inn?v.cr:v.dr}}; });
-    const all=[...q.docs.map(d=>d.data()).filter(p=>isCash(p)===cash), ...fromV].sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.createdAt||0)-(b.createdAt||0));
+    const me=cash?"Cash":bn, lbl={expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"}, fromV=[];
+    vq.docs.map(d=>d.data()).forEach(v=>vEntries(v).forEach(e=>{ if(!lgEq(e.ledger, me)) return; const inn=e.dr>0;
+      fromV.push({date:v.date, createdAt:v.createdAt, type:inn?"receipt":"payment", amount:inn?e.dr:e.cr, no:v.no, mode:lbl[v.kind]||v.kind, ref:v.note||"", party:{name:vOther(v, e.ledger)}}); }));
+    const all=[...q.docs.map(d=>d.data()).filter(p=>cash ? isCash(p) : bankOf(p)===bn), ...fromV].sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.createdAt||0)-(b.createdAt||0));
     const sign=p=>p.type==="payment" ? -(+p.amount||0) : (+p.amount||0);
-    cbOpen=r2((+(cash?S.firm.cashOpen:S.firm.bankOpen)||0) + all.filter(p=>(p.date||"")<cbFrom).reduce((t,p)=>t+sign(p),0));
+    const open0 = cash ? (+S.firm.cashOpen||0) : (+(bankList().find(b=>b.name===bn)||{}).open||0);
+    cbOpen=r2(open0 + all.filter(p=>(p.date||"")<cbFrom).reduce((t,p)=>t+sign(p),0));
     let bal=cbOpen; cbRows=all.filter(p=>(p.date||"")>=cbFrom).map(p=>{ bal=r2(bal+sign(p)); return {date:p.date, party:(p.party||{}).name, type:p.type==="payment"?"Payment":"Receipt", no:p.no||"", mode:[p.mode, p.ref].filter(Boolean).join(" · "), inn:p.type==="payment"?0:+p.amount||0, out:p.type==="payment"?+p.amount||0:0, bal}; });
     renderCash();
   }catch(err){ toast("Could not load: "+((err&&err.message)||err), true); }
 }
+$("#cb-bankname").addEventListener("change", e => { cbBankName=e.target.value; loadCash(); });
 function renderCash(){
   const tin=r2(cbRows.reduce((t,r)=>t+r.inn,0)), tout=r2(cbRows.reduce((t,r)=>t+r.out,0)), close=r2(cbOpen+tin-tout);
   const m=v=>(v<0?"−₹":"₹")+fmt(Math.abs(v));
@@ -2275,12 +2411,18 @@ const VK={expense:{t:"Expense voucher", p:"EXP/", key:"nextEXP", hint:"Money spe
   income:{t:"Income voucher", p:"INC/", key:"nextINC", hint:"Money received that is not a sale: discount, commission, interest."},
   contra:{t:"Contra voucher", p:"CON/", key:"nextCON", hint:"Money moved between cash and bank. It does not change profit."},
   journal:{t:"Journal voucher", p:"JV/", key:"nextJV", hint:"Adjustment entry: owner's money in (Cr Capital) or out (Dr Drawings), discount or bad debt written off, opening balances."}};
-let vk="expense";
-const cashOrBank = mode => String(mode||"Cash").toLowerCase()==="cash" ? "Cash" : "Bank";
+// ---- bank accounts
+function bankList(){
+  const b=Array.isArray(S.firm.banks) ? S.firm.banks.filter(x=>x && String(x.name||"").trim()) : [];
+  return b.length ? b.map(x=>({name:String(x.name).trim(), open:+x.open||0})) : [{name:"Bank", open:+S.firm.bankOpen||0}];
+}
+const bankNames = () => bankList().map(b=>b.name);
+function bankCanon(n){ const l=String(n||"").trim().toLowerCase(), b=bankNames(); return b.find(x=>x.toLowerCase()===l) || (l==="bank" ? b[0] : null); }
+function bankOf(p){ return isCash(p) ? null : (bankCanon(p.bank) || bankNames()[0]); }
 function ledgerKind(name){
   const n=String(name||"").trim(), l=n.toLowerCase();
   if(!n) return "";
-  if(l==="cash") return "cash"; if(l==="bank") return "bank";
+  if(l==="cash") return "cash"; if(l==="bank" || bankNames().some(b=>b.toLowerCase()===l)) return "bank";
   if(l==="capital") return "capital"; if(l==="drawings") return "drawings";
   if(l===GST_HEAD.toLowerCase()) return "gst";
   if(DIRECT_HEADS.some(h=>h.toLowerCase()===l)) return "direct";
@@ -2289,36 +2431,121 @@ function ledgerKind(name){
   if(S.parties.some(p=>String(p.name).toLowerCase()===l)) return "party";
   return "other";
 }
+// canonical ledger name (Cash, the bank account's name, Capital, party name as saved)
+function lgName(n){ n=String(n||"").trim(); const k=ledgerKind(n); if(k==="cash") return "Cash"; if(k==="bank") return bankCanon(n)||n; if(k==="capital") return "Capital"; if(k==="drawings") return "Drawings";
+  const p=S.parties.find(x=>String(x.name).trim().toLowerCase()===n.toLowerCase()); return p ? p.name : n; }
+const lgEq = (a,b) => lgName(a).toLowerCase()===lgName(b).toLowerCase();
+// every voucher as Dr/Cr entries (simple vouchers have one Dr and one Cr; a journal can have many lines)
+function vEntries(v){
+  if(Array.isArray(v.lines) && v.lines.length) return v.lines.map(l=>({ledger:String(l.ledger||"").trim(), dr:r2(+l.dr||0), cr:r2(+l.cr||0)})).filter(e=>e.ledger && (e.dr||e.cr));
+  const a=r2(+v.amount||0); return [{ledger:String(v.dr||"").trim(), dr:a, cr:0}, {ledger:String(v.cr||"").trim(), dr:0, cr:a}];
+}
+function vOther(v, ledger){ const es=vEntries(v), mine=es.find(e=>lgEq(e.ledger, ledger)), side=(mine && mine.dr) ? "cr" : "dr";
+  const o=[...new Set(es.filter(e=>e[side]>0 && !lgEq(e.ledger, ledger)).map(e=>lgName(e.ledger)))]; return o.join(", ") || [...new Set(es.filter(e=>!lgEq(e.ledger, ledger)).map(e=>lgName(e.ledger)))].join(", "); }
+function vSides(v){ const es=vEntries(v); return {dr:[...new Set(es.filter(e=>e.dr).map(e=>lgName(e.ledger)))], cr:[...new Set(es.filter(e=>e.cr).map(e=>lgName(e.ledger)))]}; }
+function vTitle(v){ const s=vSides(v); return `${s.dr.join(", ")} / ${s.cr.join(", ")}`; }
+function fillBankSelects(){
+  const names=bankNames(), opts=names.map(n=>`<option>${esc(n)}</option>`).join("");
+  ["#ac-bank","#v-bank","#v-bank2","#cb-bankname","#br-bank"].forEach(sel=>{ const el=$(sel); if(!el) return; const v=el.value; el.innerHTML=opts; el.value = names.includes(v) ? v : names[0]; });
+  $("#cb-bankname").hidden = names.length<2 || cbBook==="cash"; $("#br-bank-wrap").hidden = names.length<2;
+  acBankUI(); vBankUI(); const t=$("#v-contra option[value=transfer]"); if(t) t.hidden = names.length<2;
+}
+// settings: bank account rows
+const bankRowHTML = b => `<div class="bankrow"><input class="bk-name" value="${esc(b.name)}" placeholder="Bank account name (e.g. SBI Current A/c)" aria-label="Bank account name"><input class="bk-open" type="number" step="any" value="${b.open?esc(b.open):""}" placeholder="Opening ₹" aria-label="Opening balance"><button class="x" type="button" data-bkdel aria-label="Remove bank account">×</button></div>`;
+function renderBankRows(list){ $("#st-banks").innerHTML=list.map(bankRowHTML).join(""); }
+function readBankRows(){ return [...$$("#st-banks .bankrow")].map(r=>({name:r.querySelector(".bk-name").value.trim(), open:r2(+r.querySelector(".bk-open").value||0)})).filter(b=>b.name); }
+$("#st-addbank").addEventListener("click", () => { $("#st-banks").insertAdjacentHTML("beforeend", bankRowHTML({name:"", open:0})); settingsDirty=true; $("#st-state-msg").textContent="Unsaved changes"; const r=$$("#st-banks .bk-name"); r[r.length-1].focus(); });
+$("#st-banks").addEventListener("click", e => { const b=e.target.closest("[data-bkdel]"); if(!b) return; b.parentElement.remove(); settingsDirty=true; $("#st-state-msg").textContent="Unsaved changes"; });
+
+// ---- voucher entry
+let vk="expense", vEdit=null;
+const newJl = () => [{side:"dr", ledger:"", amt:""}, {side:"cr", ledger:"", amt:""}];
+let jl=newJl();
+function vBankUI(){
+  if(!$("#v-bank-wrap")) return; const ei=vk==="expense"||vk==="income", many=bankNames().length>1, tr=vk==="contra" && $("#v-contra").value==="transfer";
+  $("#v-bank-wrap").hidden = !many || !((ei && $("#v-mode").value!=="Cash") || vk==="contra");
+  $("#v-bank2-wrap").hidden = !tr; $("#v-bank-lbl").textContent = tr ? "From bank" : "Bank account";
+}
 function setVk(k){
   vk=k; $$("[data-vk]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.vk===k?"true":"false"));
-  $("#v-title").textContent=VK[k].t; $("#v-hint").textContent=VK[k].hint;
+  $("#v-title").textContent=(vEdit?"Alter ":"")+VK[k].t; $("#v-hint").textContent=VK[k].hint;
   const ei=k==="expense"||k==="income";
-  $("#v-head-wrap").hidden=!ei; $("#v-mode-wrap").hidden=!ei; $("#v-direct-wrap").hidden=k!=="expense"; $("#v-contra-wrap").hidden=k!=="contra"; $("#v-dr-wrap").hidden=k!=="journal"; $("#v-cr-wrap").hidden=k!=="journal";
+  $("#v-head-wrap").hidden=!ei; $("#v-mode-wrap").hidden=!ei; $("#v-direct-wrap").hidden=k!=="expense"; $("#v-contra-wrap").hidden=k!=="contra"; $("#v-jl-wrap").hidden=k!=="journal"; $("#v-amt-wrap").hidden=k==="journal"; $("#v-amt").required=k!=="journal";
   $("#v-head-lbl").textContent = k==="income" ? "Income head" : "Expense head"; $("#v-mode-lbl").textContent = k==="income" ? "Received in" : "Paid by";
   $("#v-heads").innerHTML=(k==="income"?INCOME_HEADS:[...INDIRECT_HEADS, ...DIRECT_HEADS, GST_HEAD]).map(h=>`<option value="${esc(h)}">`).join("");
-  $("#v-ledgers").innerHTML=["Cash","Bank","Capital","Drawings", ...S.parties.map(p=>p.name), ...INDIRECT_HEADS, ...DIRECT_HEADS, ...INCOME_HEADS, GST_HEAD].map(h=>`<option value="${esc(h)}">`).join("");
-  $("#v-no").textContent = "Next number: "+VK[k].p+String(Math.max(1, Math.floor(+S.firm[VK[k].key]||1))).padStart(4,"0");
+  $("#v-ledgers").innerHTML=[...new Set(["Cash", ...bankNames(), "Capital","Drawings", ...S.parties.map(p=>p.name), ...INDIRECT_HEADS, ...DIRECT_HEADS, ...INCOME_HEADS, GST_HEAD])].map(h=>`<option value="${esc(h)}">`).join("");
+  $("#v-no").textContent = vEdit ? "Altering "+vEdit.no : "Next number: "+VK[k].p+String(Math.max(1, Math.floor(+S.firm[VK[k].key]||1))).padStart(4,"0");
+  $("#v-save").textContent = vEdit ? "Save alteration" : "Save voucher"; $("#v-cancel").hidden=!vEdit;
+  vBankUI(); renderJl();
 }
-$$("[data-vk]").forEach(b=>b.addEventListener("click", ()=>setVk(b.dataset.vk)));
+$$("[data-vk]").forEach(b=>b.addEventListener("click", () => { if(vEdit && b.dataset.vk!==vk) return toast("Save or cancel the alteration first", true); setVk(b.dataset.vk); }));
+$("#v-mode").addEventListener("change", vBankUI); $("#v-contra").addEventListener("change", vBankUI);
 $("#v-head").addEventListener("change", () => { const l=$("#v-head").value.trim().toLowerCase(); if(DIRECT_HEADS.some(h=>h.toLowerCase()===l)) $("#v-direct").checked=true; else if(INDIRECT_HEADS.some(h=>h.toLowerCase()===l)) $("#v-direct").checked=false; });
+// journal lines
+function renderJl(){
+  $("#v-jl").innerHTML=jl.map((l,i)=>`<div class="jl-row"><select data-ji="${i}" data-jk="side" aria-label="Dr or Cr"><option value="dr" ${l.side==="dr"?"selected":""}>Dr</option><option value="cr" ${l.side==="cr"?"selected":""}>Cr</option></select><input data-ji="${i}" data-jk="ledger" list="v-ledgers" autocomplete="off" value="${esc(l.ledger)}" placeholder="Ledger" aria-label="Ledger"><input data-ji="${i}" data-jk="amt" type="number" step="any" min="0" value="${esc(l.amt)}" style="text-align:right" aria-label="Amount"><span>${jl.length>2?`<button class="x" type="button" data-jdel="${i}" aria-label="Remove line">×</button>`:""}</span></div>`).join("");
+  jlTotals();
+}
+function jlTotals(){ const d=r2(jl.filter(l=>l.side==="dr").reduce((t,l)=>t+(+l.amt||0),0)), c=r2(jl.filter(l=>l.side==="cr").reduce((t,l)=>t+(+l.amt||0),0)), df=r2(d-c);
+  $("#v-jl-dr").textContent=fmt(d); $("#v-jl-cr").textContent=fmt(c); const m=$("#v-jl-msg"); m.textContent = df ? `· Difference ₹${fmt(Math.abs(df))}` : (d ? "· Dr = Cr ✓" : ""); m.style.color = df ? "var(--bad)" : ""; return {d, c, df}; }
+$("#v-jl").addEventListener("input", e => { const el=e.target; if(!el.dataset.jk) return; jl[+el.dataset.ji][el.dataset.jk]=el.value; jlTotals(); });
+$("#v-jl").addEventListener("change", e => { const el=e.target; if(el.dataset.jk==="side"){ jl[+el.dataset.ji].side=el.value; jlTotals(); } });
+$("#v-jl").addEventListener("click", e => { const b=e.target.closest("[data-jdel]"); if(!b) return; jl.splice(+b.dataset.jdel,1); renderJl(); });
+$("#v-jl-add").addEventListener("click", () => { const {df}=jlTotals(); jl.push({side: df>0 ? "cr" : "dr", ledger:"", amt: df ? Math.abs(df) : ""}); renderJl(); const r=$$("#v-jl input[data-jk=ledger]"); r[r.length-1].focus(); });
 $("#v-form").addEventListener("submit", async e => {
   e.preventDefault(); if(!db) return toast("Not connected to the database", true);
-  const amount=r2(+$("#v-amt").value||0); if(amount<=0){ $("#v-amt").focus(); return toast("Enter the amount", true); }
-  let dr="", cr="", head="", mode="", direct=false;
-  if(vk==="expense"||vk==="income"){ head=$("#v-head").value.trim(); if(!head){ $("#v-head").focus(); return toast(vk==="income"?"Pick an income head":"Pick an expense head", true); } mode=$("#v-mode").value;
-    if(vk==="expense"){ dr=head; cr=cashOrBank(mode); direct=$("#v-direct").checked || DIRECT_HEADS.some(h=>h.toLowerCase()===head.toLowerCase()); } else { dr=cashOrBank(mode); cr=head; } }
-  else if(vk==="contra"){ if($("#v-contra").value==="deposit"){ dr="Bank"; cr="Cash"; } else { dr="Cash"; cr="Bank"; } mode="Contra"; }
-  else { dr=$("#v-dr").value.trim(); cr=$("#v-cr").value.trim(); if(!dr){ $("#v-dr").focus(); return toast("Enter the debit ledger", true); } if(!cr){ $("#v-cr").focus(); return toast("Enter the credit ledger", true); } if(dr.toLowerCase()===cr.toLowerCase()) return toast("Debit and credit ledgers must be different", true); }
+  let dr="", cr="", head="", mode="", direct=false, bank="", lines=null, amount=0;
+  if(vk==="journal"){
+    const L=jl.map(l=>({side:l.side, ledger:String(l.ledger||"").trim(), amt:r2(+l.amt||0)})).filter(l=>l.ledger || l.amt);
+    if(L.some(l=>!l.ledger)) return toast("Enter the ledger name on every line", true);
+    if(L.some(l=>l.amt<=0)) return toast("Enter the amount on every line", true);
+    const Dl=L.filter(l=>l.side==="dr"), Cl=L.filter(l=>l.side==="cr");
+    if(!Dl.length || !Cl.length) return toast("A journal needs at least one Dr line and one Cr line", true);
+    const td=r2(Dl.reduce((t,l)=>t+l.amt,0)), tc=r2(Cl.reduce((t,l)=>t+l.amt,0));
+    if(td!==tc) return toast(`Dr total ₹${fmt(td)} and Cr total ₹${fmt(tc)} must be equal`, true);
+    amount=td; dr=lgName(Dl[0].ledger); cr=lgName(Cl[0].ledger);
+    if(L.length===2){ if(lgEq(dr,cr)) return toast("Debit and credit ledgers must be different", true); }
+    else lines=L.map(l=>({ledger:lgName(l.ledger), dr:l.side==="dr"?l.amt:0, cr:l.side==="cr"?l.amt:0}));
+  } else {
+    amount=r2(+$("#v-amt").value||0); if(amount<=0){ $("#v-amt").focus(); return toast("Enter the amount", true); }
+    if(vk==="expense"||vk==="income"){ head=$("#v-head").value.trim(); if(!head){ $("#v-head").focus(); return toast(vk==="income"?"Pick an income head":"Pick an expense head", true); }
+      mode=$("#v-mode").value; bank = mode==="Cash" ? "" : (bankCanon($("#v-bank").value)||bankNames()[0]); const cb = mode==="Cash" ? "Cash" : bank;
+      if(vk==="expense"){ dr=head; cr=cb; direct=$("#v-direct").checked || DIRECT_HEADS.some(h=>h.toLowerCase()===head.toLowerCase()); } else { dr=cb; cr=head; } }
+    else { const c=$("#v-contra").value, b1=bankCanon($("#v-bank").value)||bankNames()[0]; bank=b1; mode="Contra";
+      if(c==="deposit"){ dr=b1; cr="Cash"; } else if(c==="withdraw"){ dr="Cash"; cr=b1; }
+      else { const b2=bankCanon($("#v-bank2").value)||bankNames()[0]; if(b2===b1) return toast("Pick two different bank accounts", true); dr=b2; cr=b1; } }
+  }
+  const kind=vk, me=(auth.currentUser&&auth.currentUser.email)||"";
+  const doc={kind, date:$("#v-date").value||todayISO(), amount, dr, cr, names:[...new Set(lines ? lines.map(l=>l.ledger) : [dr,cr])], head, mode, bank, direct, note:$("#v-note").value.trim(), createdAt:Date.now(), createdBy:me};
+  if(lines) doc.lines=lines;
   await withBtn($("#v-save"), "Saving…", async () => {
     try{
-      const kind=vk, id=kind+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6), ref=C("vouchers").doc(id), firmRef=FIRM();
-      const doc={kind, date:$("#v-date").value||todayISO(), amount, dr, cr, names:[dr,cr], head, mode, direct, note:$("#v-note").value.trim(), createdAt:Date.now(), createdBy:(auth.currentUser&&auth.currentUser.email)||""};
-      await db.runTransaction(async t => { const fs=await t.get(firmRef); const f=fs.exists?fs.data():{}; const n=Math.max(1, Math.floor(+f[VK[kind].key]||1)); doc.no=VK[kind].p+String(n).padStart(4,"0"); t.set(ref, doc); t.set(firmRef, {[VK[kind].key]:n+1}, {merge:true}); });
-      $("#v-amt").value=""; $("#v-note").value=""; if(kind==="journal"){ $("#v-dr").value=""; $("#v-cr").value=""; }
-      toast(`${VK[kind].t.replace(" voucher","")} saved: ${doc.no} · ₹${fmt(amount)}`); setVk(kind);
+      if(vEdit){
+        Object.assign(doc, {no:vEdit.no, createdAt:vEdit.createdAt, createdBy:vEdit.createdBy, alteredAt:Date.now(), alteredBy:me}); if(vEdit.bankDate) doc.bankDate=vEdit.bankDate;
+        await D("vouchers", vEdit.id).set(doc); vEdit=null; toast(`Voucher altered: ${doc.no} · ₹${fmt(amount)}`);
+      } else {
+        const id=kind+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6), ref=C("vouchers").doc(id), firmRef=FIRM();
+        await db.runTransaction(async t => { const fs=await t.get(firmRef); const f=fs.exists?fs.data():{}; const n=Math.max(1, Math.floor(+f[VK[kind].key]||1)); doc.no=VK[kind].p+String(n).padStart(4,"0"); t.set(ref, doc); t.set(firmRef, {[VK[kind].key]:n+1}, {merge:true}); });
+        toast(`${VK[kind].t.replace(" voucher","")} saved: ${doc.no} · ₹${fmt(amount)}`);
+      }
+      $("#v-amt").value=""; $("#v-note").value=""; jl=newJl();
     }catch(err){ toast(errMsg(err), true); }
   });
+  setVk(vk);
 });
+function startVAlter(v){
+  vEdit={id:v.id, no:v.no||"", createdAt:v.createdAt||Date.now(), createdBy:v.createdBy||"", bankDate:v.bankDate||""};
+  $("#v-date").value=v.date||todayISO(); $("#v-note").value=v.note||"";
+  if(v.kind==="journal"){ jl=vEntries(v).map(e=>({side:e.dr?"dr":"cr", ledger:lgName(e.ledger), amt:e.dr||e.cr})); while(jl.length<2) jl.push({side:"cr", ledger:"", amt:""}); }
+  else $("#v-amt").value=v.amount;
+  if(v.kind==="expense"||v.kind==="income"){ $("#v-head").value=v.head || (v.kind==="expense"?v.dr:v.cr); $("#v-mode").value=v.mode||"Cash"; $("#v-direct").checked=!!v.direct; const b=v.kind==="expense"?v.cr:v.dr; if(ledgerKind(b)==="bank") $("#v-bank").value=lgName(b); }
+  if(v.kind==="contra"){ const d=ledgerKind(v.dr), c=ledgerKind(v.cr);
+    if(d==="bank" && c==="cash"){ $("#v-contra").value="deposit"; $("#v-bank").value=lgName(v.dr); }
+    else if(d==="cash"){ $("#v-contra").value="withdraw"; $("#v-bank").value=lgName(v.cr); }
+    else { $("#v-contra").value="transfer"; $("#v-bank").value=lgName(v.cr); $("#v-bank2").value=lgName(v.dr); } }
+  setVk(v.kind); window.scrollTo({top:0, behavior:"smooth"}); toast("Altering "+v.no);
+}
+$("#v-cancel").addEventListener("click", () => { vEdit=null; $("#v-amt").value=""; $("#v-note").value=""; jl=newJl(); setVk(vk); toast("Alteration cancelled"); });
 let vMonth=todayISO().slice(0,7), vList=[], unsubV=null;
 function watchVouchers(){
   if(unsubV){ unsubV(); unsubV=null; } if(!db || !dbReady) return; $("#v-month").value=vMonth;
@@ -2328,15 +2555,17 @@ function renderVouchers(fromSnap){
   if(!fromSnap && !unsubV){ $("#v-date").value=$("#v-date").value||todayISO(); setVk(vk); return watchVouchers(); }
   if(!fromSnap) setVk(vk);
   const lbl={expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"};
-  $("#v-body").innerHTML=vList.map((v,n)=>`<tr><td class="r num">${n+1}</td><td>${fmtDate(v.date)}</td><td><span class="vt ${v.kind}">${lbl[v.kind]||v.kind}</span></td><td class="num">${esc(v.no)}</td><td>${esc(v.dr)}${v.note?`<div class="muted" style="font-size:12px">${esc(v.note)}</div>`:""}</td><td>${esc(v.cr)}</td><td class="r num">${fmt(v.amount)}</td><td class="r"><button class="btn sm danger" type="button" data-vdel="${esc(v.id)}">Delete</button></td></tr>`).join("")
+  $("#v-body").innerHTML=vList.map((v,n)=>{ const sd=vSides(v); return `<tr><td class="r num">${n+1}</td><td>${fmtDate(v.date)}</td><td><span class="vt ${v.kind}">${lbl[v.kind]||v.kind}</span></td><td class="num">${esc(v.no)}</td><td>${esc(sd.dr.join(", "))}${v.note?`<div class="muted" style="font-size:12px">${esc(v.note)}</div>`:""}</td><td>${esc(sd.cr.join(", "))}</td><td class="r num">${fmt(v.amount)}</td><td class="r" style="white-space:nowrap"><button class="btn sm" type="button" data-valt="${esc(v.id)}">Alter</button> <button class="btn sm danger" type="button" data-vdel="${esc(v.id)}">Delete</button></td></tr>`; }).join("")
     + (vList.length?`<tr class="sub"><td></td><td></td><td></td><td></td><td>Total expenses this month</td><td></td><td class="r num">${fmt(vList.filter(v=>v.kind==="expense").reduce((t,v)=>t+(+v.amount||0),0))}</td><td></td></tr>`:"");
   $("#v-wrap").hidden=!vList.length; $("#v-empty").hidden=!!vList.length;
 }
 $("#v-month").addEventListener("change", e => { vMonth=e.target.value||todayISO().slice(0,7); watchVouchers(); });
-$("#v-body").addEventListener("click", e => { const d=e.target.closest("[data-vdel]"); if(!d) return; armDelete(d, async () => { try{ await D("vouchers", d.dataset.vdel).delete(); toast("Voucher deleted"); }catch(err){ toast(errMsg(err), true); } }); });
+$("#v-body").addEventListener("click", e => {
+  const a=e.target.closest("[data-valt]"); if(a){ const v=vList.find(x=>x.id===a.dataset.valt); if(v) startVAlter(v); return; }
+  const d=e.target.closest("[data-vdel]"); if(!d) return; armDelete(d, async () => { try{ await D("vouchers", d.dataset.vdel).delete(); if(vEdit && vEdit.id===d.dataset.vdel){ vEdit=null; jl=newJl(); setVk(vk); } toast("Voucher deleted"); }catch(err){ toast(errMsg(err), true); } }); });
 $("#v-xlsx").addEventListener("click", () => {
   if(!window.XLSX) return toast("Excel tool did not load. Please reload the page.", true); if(!vList.length) return toast("No vouchers for this month", true);
-  const rows=[...vList].reverse().map((v,n)=>({"Sr. No.":n+1,"Date":fmtDate(v.date),"Type":v.kind,"Vch No.":v.no,"Debit (Dr)":v.dr,"Credit (Cr)":v.cr,"Amount":v.amount,"Mode":v.mode||"","Narration":v.note||""}));
+  const rows=[...vList].reverse().map((v,n)=>{ const sd=vSides(v); return {"Sr. No.":n+1,"Date":fmtDate(v.date),"Type":v.kind,"Vch No.":v.no,"Debit (Dr)":sd.dr.join(", "),"Credit (Cr)":sd.cr.join(", "),"Amount":v.amount,"Mode":v.mode||"","Narration":v.note||""}; });
   const ws=XLSX.utils.json_to_sheet(rows); ws["!cols"]=[7,11,9,12,28,28,13,14,30].map(w=>({wch:w})); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Vouchers");
   XLSX.writeFile(wb, `Vouchers_${vMonth}.xlsx`); toast("Excel file downloaded");
 });
@@ -2359,7 +2588,7 @@ function plCalc(all, from, to){
   const purch=r2(all.pur.filter(inR).reduce((t,x)=>t+(+x.taxable||0),0)), purRet=r2(all.ret.filter(r=>r.type==="debit"&&inR(r)).reduce((t,x)=>t+(+x.taxable||0),0));
   const round=r2(all.inv.filter(inR).reduce((t,x)=>t+(+x.roundOff||0),0) - all.pur.filter(inR).reduce((t,x)=>t+(+x.roundOff||0),0) - all.ret.filter(inR).reduce((t,x)=>t+(x.type==="debit"?-1:1)*(+x.roundOff||0),0));
   const direct={}, indirect={}, income={};
-  all.vch.filter(inR).forEach(v=>{ [[v.dr,1],[v.cr,-1]].forEach(([nm,sg])=>{ const k=ledgerKind(nm), a=sg*(+v.amount||0);
+  all.vch.filter(inR).forEach(v=>{ vEntries(v).map(e=>[e.ledger, r2(e.dr-e.cr)]).filter(x=>x[1]).forEach(([nm,a])=>{ const sg=a>0?1:-1, k=ledgerKind(nm);
     if(["party","cash","bank","capital","drawings","gst",""].includes(k)) return;
     if(k==="direct" || (v.kind==="expense" && v.direct && sg>0)) direct[nm]=r2((direct[nm]||0)+a);
     else if(k==="indirect" || (k==="other" && sg>0)) indirect[nm]=r2((indirect[nm]||0)+a);
@@ -2382,18 +2611,17 @@ function bsCalc(all, to){
   all.pur.filter(upd).forEach(x=>{ const o=get((x.party||{}).name); if(o) o.bal-=+x.total||0; });
   all.ret.filter(upd).forEach(x=>{ const o=get((x.party||{}).name); if(o) o.bal+= x.type==="debit" ? (+x.total||0) : -(+x.total||0); });
   all.pay.filter(upd).forEach(x=>{ const o=get((x.party||{}).name); if(o) o.bal+= x.type==="payment" ? (+x.amount||0) : -(+x.amount||0); });
-  all.vch.filter(upd).forEach(v=>{ if(ledgerKind(v.dr)==="party"){ const o=get(v.dr); if(o) o.bal+=+v.amount||0; } if(ledgerKind(v.cr)==="party"){ const o=get(v.cr); if(o) o.bal-=+v.amount||0; } });
+  all.vch.filter(upd).forEach(v=>vEntries(v).forEach(e=>{ if(ledgerKind(e.ledger)==="party"){ const o=get(e.ledger); if(o) o.bal+=e.dr-e.cr; } }));
   const parties=[...bal.values()].map(o=>({...o, bal:r2(o.bal)}));
   const debtors=r2(parties.filter(p=>p.bal>0).reduce((t,p)=>t+p.bal,0)), creditors=r2(parties.filter(p=>p.bal<0).reduce((t,p)=>t-p.bal,0));
   // cash & bank
-  let cash=+S.firm.cashOpen||0, bank=+S.firm.bankOpen||0;
-  all.pay.filter(upd).forEach(p=>{ const a=(p.type==="payment"?-1:1)*(+p.amount||0); if(isCash(p)) cash+=a; else bank+=a; });
+  let cash=+S.firm.cashOpen||0; const bk={}; bankList().forEach(b=>bk[b.name]=+b.open||0);
+  all.pay.filter(upd).forEach(p=>{ const a=(p.type==="payment"?-1:1)*(+p.amount||0); if(isCash(p)) cash+=a; else { const n=bankOf(p); bk[n]=(bk[n]||0)+a; } });
   let capIn=0, drawings=0, gstPaid=0;
-  all.vch.filter(upd).forEach(v=>{ const a=+v.amount||0;
-    if(ledgerKind(v.dr)==="cash") cash+=a; if(ledgerKind(v.cr)==="cash") cash-=a; if(ledgerKind(v.dr)==="bank") bank+=a; if(ledgerKind(v.cr)==="bank") bank-=a;
-    if(ledgerKind(v.cr)==="capital") capIn+=a; if(ledgerKind(v.dr)==="capital") capIn-=a; if(ledgerKind(v.dr)==="drawings") drawings+=a; if(ledgerKind(v.cr)==="drawings") drawings-=a;
-    if(ledgerKind(v.dr)==="gst") gstPaid+=a; if(ledgerKind(v.cr)==="gst") gstPaid-=a; });
-  cash=r2(cash); bank=r2(bank);
+  all.vch.filter(upd).forEach(v=>vEntries(v).forEach(e=>{ const k=ledgerKind(e.ledger), a=e.dr-e.cr;
+    if(k==="cash") cash+=a; else if(k==="bank"){ const n=bankCanon(e.ledger)||bankNames()[0]; bk[n]=(bk[n]||0)+a; }
+    else if(k==="capital") capIn-=a; else if(k==="drawings") drawings+=a; else if(k==="gst") gstPaid+=a; }));
+  cash=r2(cash); const bankRows=Object.entries(bk).map(([n,v])=>[n,r2(v)]), bank=r2(bankRows.reduce((t,x)=>t+x[1],0));
   // GST
   const tx=x=>(+x.cgst||0)+(+x.sgst||0)+(+x.igst||0);
   const outT=all.inv.filter(upd).reduce((t,x)=>t+tx(x),0)-all.ret.filter(r=>r.type!=="debit"&&upd(r)).reduce((t,x)=>t+tx(x),0);
@@ -2408,7 +2636,7 @@ function bsCalc(all, to){
   A.push({grp:"Closing Stock", amt:stock, rows:[]});
   if(debtors) A.push({grp:"Sundry Debtors (to receive)", amt:debtors, rows:parties.filter(p=>p.bal>0).map(p=>[p.name,p.bal])});
   A.push({grp:"Cash-in-Hand", amt:cash, rows:[]});
-  A.push({grp:"Bank Accounts", amt:bank, rows:[]});
+  A.push({grp:"Bank Accounts", amt:bank, rows:bankRows.length>1?bankRows:[]});
   if(gstNet<0) A.push({grp:"GST input credit", amt:-gstNet, rows:[]});
   const lt=r2(L.reduce((t,g)=>t+g.amt,0)), at=r2(A.reduce((t,g)=>t+g.amt,0)), diff=r2(at-lt);
   if(diff>0) L.push({grp:"Difference in opening balances", amt:diff, rows:[], diff:true}); else if(diff<0) A.push({grp:"Difference in opening balances", amt:-diff, rows:[], diff:true});
@@ -2492,12 +2720,12 @@ let lrView="tb", lrName="", lrFrom=fyStart(), lrTo=todayISO(), lrSeq=0, lrData=n
 function showLedger(v, name){ lrView=v; if(name!==undefined) lrName=name; showTab("ledger"); }
 function lgBuild(all, to){
   const L=new Map(), parties=new Set(), key=n=>String(n||"").trim().toLowerCase();
-  const canon=n=>{ n=String(n||"").trim(); const k=ledgerKind(n); return k==="cash"?"Cash":k==="bank"?"Bank":k==="capital"?"Capital":k==="drawings"?"Drawings":((S.parties.find(p=>key(p.name)===key(n))||{}).name||n); };
+  const canon=n=>lgName(n);
   const get=n=>{ const c=canon(n), k=key(c); if(!k) return null; if(!L.has(k)) L.set(k,{name:c, open:0, rows:[]}); return L.get(k); };
   const post=(n,dr,cr,r)=>{ dr=r2(+dr||0); cr=r2(+cr||0); if(!dr && !cr) return; const o=get(n); if(o) o.rows.push({...r, dr, cr}); };
   const party=n=>{ const o=get(n); if(o) parties.add(key(o.name)); };
   const op=(n,v)=>{ v=r2(+v||0); if(!v) return; const o=get(n); if(o) o.open=r2(o.open+v); };
-  op("Cash", S.firm.cashOpen); op("Bank", S.firm.bankOpen); op("Capital", -(+S.firm.capOpen||0));
+  op("Cash", S.firm.cashOpen); bankList().forEach(b=>op(b.name, b.open)); op("Capital", -(+S.firm.capOpen||0));
   S.parties.forEach(p=>{ party(p.name); op(p.name, p.opening); });
   op(LG.opst, stockAt(all, ""));
   const inR=d=>(d.date||"")<=to;
@@ -2511,12 +2739,12 @@ function lgBuild(all, to){
     party(pn);
     if(dn){ post(pn, x.total, 0, {...b, other:LG.pur}); post(LG.pur, 0, x.taxable, r); tax(x,-1,r); ro(x,-1,r); }
     else { post(pn, 0, x.total, {...b, other:LG.sales}); post(LG.sales, x.taxable, 0, r); tax(x,1,r); ro(x,1,r); } });
-  all.pay.filter(inR).forEach(x=>{ const pn=(x.party||{}).name||"Party", cb=isCash(x)?"Cash":"Bank", rc=x.type!=="payment", b={date:x.date, at:x.createdAt||0, type:rc?"Receipt":"Payment", no:x.no, note:[x.mode,x.ref].filter(Boolean).join(" · ")};
+  all.pay.filter(inR).forEach(x=>{ const pn=(x.party||{}).name||"Party", cb=isCash(x)?"Cash":bankOf(x), rc=x.type!=="payment", b={date:x.date, at:x.createdAt||0, type:rc?"Receipt":"Payment", no:x.no, note:[x.mode,x.ref].filter(Boolean).join(" · ")};
     party(pn);
     if(rc){ post(cb, x.amount, 0, {...b, other:pn}); post(pn, 0, x.amount, {...b, other:cb}); }
     else { post(pn, x.amount, 0, {...b, other:cb}); post(cb, 0, x.amount, {...b, other:pn}); } });
   const VL={expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"};
-  all.vch.filter(inR).forEach(v=>{ const b={date:v.date, at:v.createdAt||0, type:VL[v.kind]||v.kind, no:v.no, note:v.note||""}; post(v.dr, v.amount, 0, {...b, other:v.cr}); post(v.cr, 0, v.amount, {...b, other:v.dr}); });
+  all.vch.filter(inR).forEach(v=>{ const b={date:v.date, at:v.createdAt||0, type:VL[v.kind]||v.kind, no:v.no, note:v.note||""}; vEntries(v).forEach(e=>post(e.ledger, e.dr, e.cr, {...b, other:vOther(v, e.ledger)})); });
   const list=[...L.values()].map(o=>{ o.rows.sort((a,b)=>(a.date||"").localeCompare(b.date||"")||a.at-b.at); o.dr=r2(o.rows.reduce((t,r)=>t+r.dr,0)); o.cr=r2(o.rows.reduce((t,r)=>t+r.cr,0)); o.bal=r2(o.open+o.dr-o.cr); o.isParty=parties.has(key(o.name)); return o; });
   const diff=r2(list.reduce((t,o)=>t+o.bal,0));
   if(diff) list.push({name:LG.diff, open:-diff, rows:[], dr:0, cr:0, bal:-diff, isParty:false});
@@ -2545,7 +2773,7 @@ async function loadLedger(){
     const [inv,pur,ret,pay,vch]=await Promise.all([upTo("invoices",end), upTo("purchases",end), upTo("returns",end), upTo("payments",end), upTo("vouchers",end)]);
     if(my!==lrSeq) return;
     lrData=lgBuild({inv,pur,ret,pay,vch}, lrTo);
-    $("#lr-list").innerHTML=[...new Set([...lrData.list.map(o=>o.name), "Cash","Bank","Capital","Drawings",LG.sales,LG.pur,"CGST","SGST","IGST"])].sort((a,b)=>a.localeCompare(b)).map(n=>`<option value="${esc(n)}">`).join("");
+    $("#lr-list").innerHTML=[...new Set([...lrData.list.map(o=>o.name), "Cash",...bankNames(),"Capital","Drawings",LG.sales,LG.pur,"CGST","SGST","IGST"])].sort((a,b)=>a.localeCompare(b)).map(n=>`<option value="${esc(n)}">`).join("");
     renderLedger();
   }catch(err){ $("#lr-empty").textContent="Could not load: "+((err&&err.message)||err); }
 }
@@ -2821,16 +3049,17 @@ $("#o-xlsx").addEventListener("click", () => {
 let brTo=todayISO(), brRows=[], brSeq=0, brBooks=0;
 async function loadBrs(){
   $("#br-to").value=brTo; if(!db || !dbReady) return; const my=++brSeq;
+  const bn=bankCanon($("#br-bank").value)||bankNames()[0]; $("#br-bank-wrap").hidden=bankNames().length<2; $("#br-bank").value=bn;
   $("#br-empty").hidden=false; $("#br-empty").textContent="Loading…";
   try{
     const [pq,vq]=await Promise.all([C("payments").where("date","<=",brTo).get(), C("vouchers").where("date","<=",brTo).get()]); if(my!==brSeq) return;
     const rows=[], VL={expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"};
-    pq.docs.forEach(d=>{ const p=d.data(); if(isCash(p)) return; const inn=p.type!=="payment";
+    pq.docs.forEach(d=>{ const p=d.data(); if(isCash(p) || bankOf(p)!==bn) return; const inn=p.type!=="payment";
       rows.push({col:"payments", id:d.id, date:p.date||"", at:p.createdAt||0, party:(p.party||{}).name||"", type:inn?"Receipt":"Payment", no:p.no||"", mode:[p.mode,p.ref].filter(Boolean).join(" · "), dep:inn?+p.amount||0:0, wd:inn?0:+p.amount||0, bankDate:p.bankDate||""}); });
-    vq.docs.forEach(d=>{ const v=d.data(), dr=ledgerKind(v.dr)==="bank", cr=ledgerKind(v.cr)==="bank"; if(dr===cr) return;
-      rows.push({col:"vouchers", id:d.id, date:v.date||"", at:v.createdAt||0, party:dr?v.cr:v.dr, type:VL[v.kind]||v.kind, no:v.no||"", mode:[v.mode,v.note].filter(Boolean).join(" · "), dep:dr?+v.amount||0:0, wd:cr?+v.amount||0:0, bankDate:v.bankDate||""}); });
+    vq.docs.forEach(d=>{ const v=d.data(); let dep=0, wd=0; vEntries(v).forEach(e=>{ if(lgEq(e.ledger, bn)){ dep+=e.dr; wd+=e.cr; } }); const net=r2(dep-wd); if(!net) return;
+      rows.push({col:"vouchers", id:d.id, date:v.date||"", at:v.createdAt||0, party:vOther(v, bn), type:VL[v.kind]||v.kind, no:v.no||"", mode:[v.mode,v.note].filter(Boolean).join(" · "), dep:net>0?net:0, wd:net<0?-net:0, bankDate:v.bankDate||""}); });
     rows.sort((a,b)=>a.date.localeCompare(b.date)||a.at-b.at);
-    brBooks=r2((+S.firm.bankOpen||0)+rows.reduce((t,r)=>t+r.dep-r.wd,0)); brRows=rows; renderBrs();
+    brBooks=r2((+(bankList().find(b=>b.name===bn)||{}).open||0)+rows.reduce((t,r)=>t+r.dep-r.wd,0)); brRows=rows; renderBrs();
   }catch(err){ $("#br-empty").textContent="Could not load: "+((err&&err.message)||err); }
 }
 const brCleared = r => !!r.bankDate && r.bankDate<=brTo;
@@ -2847,21 +3076,23 @@ $("#br-body").addEventListener("change", async e => { const el=e.target.closest(
   if(v && v<r.date){ el.value=r.bankDate; return toast("Bank date cannot be before the entry date", true); }
   try{ await D(r.col, r.id).set({bankDate:v}, {merge:true}); r.bankDate=v; renderBrs(); toast(v?`Matched with bank on ${fmtDate(v)}`:"Bank date removed"); }catch(err){ el.value=r.bankDate; toast(errMsg(err), true); } });
 $("#br-to").addEventListener("change", e => { brTo=e.target.value||todayISO(); loadBrs(); });
+$("#br-bank").addEventListener("change", loadBrs);
 $("#br-all").addEventListener("change", renderBrs);
 $("#br-xlsx").addEventListener("click", () => {
   if(!brRows.length) return toast("No bank entries", true); const s=brSum();
   const un=brRows.filter(r=>!brCleared(r));
   const rows=[{"Particulars":"Balance as per books","Amount":brBooks}, {"Particulars":"Less: deposits not yet credited by bank","Amount":-s.dep}, {"Particulars":"Add: payments / cheques not yet debited by bank","Amount":s.wd}, {"Particulars":"Balance as per bank","Amount":s.bank}, {},
     ...un.map(r=>({"Particulars":`${fmtDate(r.date)} · ${r.type} ${r.no} · ${r.party}${r.mode?" · "+r.mode:""}`,"Amount":r.dep?r.dep:-r.wd}))];
-  xlsxOut({file:`BankReconciliation_${brTo}`, sheet:"Bank Reconciliation", w:[70,16], rows});
+  xlsxOut({file:`BankReconciliation_${String($("#br-bank").value||"Bank").replace(/[^\w]+/g,"_")}_${brTo}`, sheet:"Bank Reconciliation", w:[70,16], rows});
 });
 
 // ================= SETTINGS =================
-const ST = {name:"st-name",address:"st-addr",phone:"st-phone",email:"st-email",gstin:"st-gstin",stateCode:"st-state",pan:"st-pan",bank:"st-bank",acno:"st-acno",ifsc:"st-ifsc",prefix:"st-prefix",fy:"st-fy",nextNo:"st-next",decl:"st-decl",cashOpen:"st-cashopen",bankOpen:"st-bankopen",capOpen:"st-capopen"};
+const ST = {name:"st-name",address:"st-addr",phone:"st-phone",email:"st-email",gstin:"st-gstin",stateCode:"st-state",pan:"st-pan",bank:"st-bank",acno:"st-acno",ifsc:"st-ifsc",prefix:"st-prefix",fy:"st-fy",nextNo:"st-next",decl:"st-decl",cashOpen:"st-cashopen",capOpen:"st-capopen"};
 let settingsDirty=false;
 function fillSettings(){
   if(settingsDirty) return; const f=S.firm;
   for(const [k,id] of Object.entries(ST)) $("#"+id).value = f[k] ?? (k==="prefix"?"INV/":k==="nextNo"?1:k==="decl"?DEFAULT_DECL:"");
+  renderBankRows(bankList());
   sampleNo();
 }
 function sampleNo(){ const fy=$("#st-fy").value.trim()||autoFY(); $("#st-sample").textContent=`${$("#st-prefix").value}${String(Math.max(1,+$("#st-next").value||1)).padStart(5,"0")}/${fy}`; }
@@ -2869,6 +3100,10 @@ $("#settings-form").addEventListener("input", e => { settingsDirty=true; $("#st-
 $("#settings-form").addEventListener("submit", async e => {
   e.preventDefault(); if(!db) return toast("Not connected to the database", true);
   const data={}; for(const [k,id] of Object.entries(ST)) data[k] = k==="nextNo" ? Math.max(1,Math.floor(+$("#"+id).value||1)) : $("#"+id).value.trim();
+  const banks=readBankRows(); if(!banks.length) banks.push({name:"Bank", open:0});
+  if(banks.some(b=>b.name.toLowerCase()==="cash")) return toast("A bank account cannot be named Cash", true);
+  if(new Set(banks.map(b=>b.name.toLowerCase())).size!==banks.length) return toast("Two bank accounts have the same name", true);
+  data.banks=banks; data.bankOpen=banks[0].open;
   if(S.firm && S.firm.name){
     const ok=await dialog({title:"Change business details?", msg:"ARE YOU SURE YOU WANT TO CHANGE THE DETAILS? New invoices will print the new details. Invoices already saved keep the old details.", yes:"Yes, change", no:"Cancel"});
     if(!ok){ toast("No changes saved"); return; }
@@ -2880,7 +3115,7 @@ function onFirm(){
   const f=S.firm;
   $("#firm-sub").textContent = f.name ? `${f.name}${f.gstin?" · "+f.gstin:""}` : "Add your business details in Settings";
   $("#firm-notice").hidden = !!f.name || !dbReady;
-  fillSettings(); updateSummary(); updatePur(); updateNote(); updateOrd(); if(!$("#tab-home").hidden) renderGateway(); setTopHeight();
+  fillSettings(); fillBankSelects(); updateSummary(); updatePur(); updateNote(); updateOrd(); if(!$("#tab-home").hidden) renderGateway(); setTopHeight();
 }
 
 // ================= BOOT =================
