@@ -288,6 +288,9 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
 .tform tr.tot td{border-top:2px solid var(--accent);font-weight:700;background:var(--surface-2)}
 .tform tr.hl td{background:var(--hl-2);font-weight:700}
 .tform .num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.vt.order{color:#0f6b6b} .vt.billed{color:var(--good)} .vt.open{color:#9a3412}
+input.brd{width:auto;min-width:140px;padding:4px 6px}
+td.ind2{padding-left:26px !important}
 /* Gateway */
 .gw{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:28px;align-items:start;max-width:1000px;margin:0 auto}
 @media (max-width:900px){.gw{grid-template-columns:minmax(0,1fr);gap:16px} .gw-box{order:-1}}
@@ -358,6 +361,9 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
     <button role="tab" data-tab="cash" aria-selected="false">Cash/Bank</button>
     <button role="tab" data-tab="vouchers" aria-selected="false">Expenses &amp; Journal</button>
     <button role="tab" data-tab="final" aria-selected="false">P&amp;L / Balance Sheet</button>
+    <button role="tab" data-tab="ledger" aria-selected="false">Trial Balance / Ledger</button>
+    <button role="tab" data-tab="orders" aria-selected="false">Challan &amp; Orders</button>
+    <button role="tab" data-tab="brs" aria-selected="false">Bank Reconciliation</button>
     <button role="tab" data-tab="settings" aria-selected="false">Settings</button>
   </nav>
 </header>
@@ -378,6 +384,9 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
   <button type="button" data-go="cash"><u>Alt+C</u>: Cash/Bank</button>
   <button type="button" data-go="vouchers"><u>Alt+E</u>: Expense/Journal</button>
   <button type="button" data-go="final"><u>Alt+F</u>: P&amp;L / B/S</button>
+  <button type="button" data-act="tb"><u>Alt+T</u>: Trial Balance</button>
+  <button type="button" data-act="ledger"><u>Alt+L</u>: Ledger</button>
+  <button type="button" data-go="orders"><u>Alt+O</u>: Challan/Orders</button>
   <div class="sep"></div>
   <button type="button" data-go="settings"><u>Alt+S</u>: Settings</button>
   <button type="button" data-act="company"><u>Alt+K</u>: Company</button>
@@ -409,6 +418,7 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
           <button class="gw-item" role="menuitem" data-key="p" data-go="purchase"><u>P</u>urchase</button>
           <button class="gw-item" role="menuitem" data-key="n" data-go="notes">Credit / Debit <u>N</u>ote</button>
           <button class="gw-item" role="menuitem" data-key="e" data-go="vouchers"><u>E</u>xpenses, Contra &amp; Journal</button>
+          <button class="gw-item" role="menuitem" data-key="v" data-go="orders">Deli<u>v</u>ery Challan &amp; Orders</button>
         </div>
         <div class="gw-sec"><h4>REPORTS</h4>
           <button class="gw-item" role="menuitem" data-key="b" data-go="bills"><u>B</u>ills Register</button>
@@ -419,6 +429,9 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
           <button class="gw-item" role="menuitem" data-key="c" data-go="cash"><u>C</u>ash / Bank Book</button>
           <button class="gw-item" role="menuitem" data-key="f" data-act="pl">Pro<u>f</u>it &amp; Loss A/c</button>
           <button class="gw-item" role="menuitem" data-key="h" data-act="bs">Balance S<u>h</u>eet</button>
+          <button class="gw-item" role="menuitem" data-key="a" data-act="tb">Tri<u>a</u>l Balance</button>
+          <button class="gw-item" role="menuitem" data-key="r" data-act="ledger">Ledge<u>r</u> (Account Books)</button>
+          <button class="gw-item" role="menuitem" data-key="x" data-go="brs">Bank Reconciliation (<u>X</u>)</button>
         </div>
         <div class="gw-sec"><h4>UTILITIES</h4>
           <button class="gw-item" role="menuitem" data-key="t" data-go="settings">Se<u>t</u>tings</button>
@@ -696,7 +709,7 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
     <div class="stack">
       <div class="panel">
         <div class="listhead"><h2>GST Reports</h2>
-          <div class="rep-bar"><label class="f">Return period<input type="month" id="gst-month"></label><button class="btn" type="button" id="gst-xlsx">Excel export (GSTR-1 / 3B)</button></div>
+          <div class="rep-bar"><label class="f">Return period<input type="month" id="gst-month"></label><button class="btn primary" type="button" id="gst-json">GSTR-1 JSON (GST portal)</button><button class="btn" type="button" id="gst-xlsx">Excel export (GSTR-1 / 3B)</button></div>
         </div>
         <div class="gst-grid">
           <div class="tile"><span>Output tax (sales)</span><b id="g-out">₹0</b></div>
@@ -806,7 +819,18 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
       </div>
       <div class="tablewrap" id="sk-wrap"><table class="grid"><thead><tr><th class="r">Sr. No.</th><th>Item</th><th class="r">Opening</th><th class="r">Inward</th><th class="r">Outward</th><th class="r">Closing</th><th class="r">Cost rate</th><th class="r">Closing value</th><th class="r">Net sales</th><th class="r">Cost of sales</th><th class="r">Gross profit</th><th class="r">Margin</th></tr></thead><tbody id="sk-body"></tbody></table></div>
       <p class="empty" id="sk-empty">Loading…</p>
-      <p class="hint">Inward = purchases + sales returns. Outward = sales + purchase returns. Cost rate is the latest purchase rate of the item (or its selling rate if it was never purchased). Stock changed by hand through Items &amp; Stock is counted in the opening figure.</p>
+      <p class="hint">Inward = purchases + sales returns. Outward = sales + purchase returns. Cost rate is the latest purchase rate of the item (or its selling rate if it was never purchased). Stock changed by hand through Items &amp; Stock is counted in the opening figure. Click an item to see its stock register.</p>
+    </div>
+    <div class="panel" id="sr-panel" hidden style="margin-top:16px">
+      <div class="listhead"><h2 id="sr-title">Stock register</h2><div class="row"><button class="btn" type="button" id="sr-print">Print</button><button class="btn" type="button" id="sr-xlsx">Excel export</button><button class="btn sm" type="button" id="sr-close">Close</button></div></div>
+      <div class="tiles">
+        <div class="tile"><span>Opening</span><b id="sr-t-open">0</b></div>
+        <div class="tile"><span>Inward</span><b id="sr-t-in">0</b></div>
+        <div class="tile"><span>Outward</span><b id="sr-t-out">0</b></div>
+        <div class="tile"><span>Closing</span><b id="sr-t-close">0</b></div>
+      </div>
+      <div class="tablewrap"><table class="grid"><thead><tr><th>Date</th><th>Particulars</th><th>Vch Type</th><th>Vch No.</th><th class="r">Inward</th><th class="r">Outward</th><th class="r">Balance</th><th class="r">Rate</th></tr></thead><tbody id="sr-body"></tbody></table></div>
+      <p class="hint">Same period as the stock summary above. Delivery challans and orders do not move stock; the bill made from them does.</p>
     </div>
   </section>
 
@@ -819,6 +843,7 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
           <label class="f">To<input type="date" id="cb-to"></label>
           <button class="btn sm" type="button" id="cb-month">This month</button>
           <button class="btn" type="button" id="cb-xlsx">Excel export</button>
+          <button class="btn sm" type="button" data-go="brs">Bank reconciliation</button>
         </div>
       </div>
       <div class="tiles">
@@ -876,6 +901,107 @@ table.grid tr.sub td{background:var(--surface-2);font-weight:700}
       <div class="tiles" id="fa-tiles"></div>
       <div id="fa-body"><p class="empty">Loading…</p></div>
       <p class="hint" id="fa-note"></p>
+    </div>
+  </section>
+
+  <section id="tab-ledger" hidden>
+    <div class="panel">
+      <div class="listhead"><h2 id="lr-title">Trial Balance</h2>
+        <div class="rep-bar">
+          <div class="seg" role="group" aria-label="Report"><button type="button" id="lr-tb" aria-pressed="true">Trial Balance</button><button type="button" id="lr-led" aria-pressed="false">Ledger</button></div>
+          <label class="f" id="lr-name-wrap" hidden>Ledger<input id="lr-name" list="lr-list" autocomplete="off" placeholder="Pick a ledger" style="min-width:220px"></label>
+          <label class="f" id="lr-from-wrap" hidden>From<input type="date" id="lr-from"></label>
+          <label class="f"><span id="lr-to-lbl">As on</span><input type="date" id="lr-to"></label>
+          <button class="btn sm" type="button" id="lr-fy">This year (FY)</button>
+          <button class="btn" type="button" id="lr-print">Print</button>
+          <button class="btn" type="button" id="lr-xlsx">Excel export</button>
+        </div>
+      </div>
+      <div class="tiles" id="lr-tiles"></div>
+      <div class="tablewrap" id="lr-wrap" hidden><table class="grid"><thead id="lr-head"></thead><tbody id="lr-body"></tbody></table></div>
+      <p class="empty" id="lr-empty">Loading…</p>
+      <p class="hint" id="lr-note"></p>
+    </div>
+    <datalist id="lr-list"></datalist>
+  </section>
+
+  <section id="tab-orders" hidden>
+    <div class="bill-grid">
+      <div class="stack">
+        <div class="panel">
+          <h2 id="o-title">Delivery Challan</h2>
+          <div class="row"><div class="seg" role="group" aria-label="Document type" style="flex-wrap:wrap"><button type="button" data-ok="challan" aria-pressed="true">Delivery Challan</button><button type="button" data-ok="so" aria-pressed="false">Sales Order</button><button type="button" data-ok="po" aria-pressed="false">Purchase Order</button></div></div>
+          <p class="hint" id="o-hint"></p>
+          <div class="fields">
+            <label class="f wide"><span id="o-party-lbl">Buyer name</span><input id="o-name" list="partyList" autocomplete="off" placeholder="Type a name or pick from the list"></label>
+            <label class="f wide">Address<input id="o-addr" autocomplete="off"></label>
+            <label class="f">GSTIN/UIN<input id="o-gstin" autocomplete="off" maxlength="15"></label>
+            <label class="f">State<select id="o-state" class="state-sel"></select></label>
+            <label class="f">Date<input type="date" id="o-date"></label>
+            <label class="f"><span id="o-ref-lbl">Vehicle / dispatch</span><input id="o-ref" autocomplete="off"></label>
+            <label class="f wide">Narration<input id="o-note" autocomplete="off" placeholder="Short note"></label>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Items</h2>
+          <div class="adder">
+            <input id="o-add-item" list="itemList" autocomplete="off" placeholder="Type an item name or pick from the list" aria-label="Item">
+            <input id="o-add-qty" type="number" min="0" step="any" value="1" aria-label="Quantity">
+            <button class="btn primary" id="o-add-btn" type="button">Add</button>
+          </div>
+          <div class="tablewrap" id="o-lines-wrap" hidden>
+            <table class="grid lines">
+              <thead><tr><th>Item</th><th>HSN/SAC</th><th class="r">Qty</th><th>Unit</th><th class="r">Rate</th><th>GST %</th><th class="r">Amount</th><th></th></tr></thead>
+              <tbody id="o-lines-body"></tbody>
+            </table>
+          </div>
+          <p class="empty" id="o-lines-empty">No items yet. Pick an item above and click <b>Add</b>.</p>
+        </div>
+      </div>
+      <aside class="panel summary">
+        <div class="inv-no"><span id="o-no-lbl">Challan no.</span><strong id="o-no">—</strong></div>
+        <div class="supply" id="o-supply">Intra-state: CGST + SGST</div>
+        <div class="sum-row"><span>Taxable value</span><span class="num" id="o-taxable">0.00</span></div>
+        <div class="sum-row"><span>GST</span><span class="num" id="o-tax">0.00</span></div>
+        <div class="sum-row"><span>Round off</span><span class="num" id="o-round">0.00</span></div>
+        <div class="sum-total"><b>Total</b><span class="num" id="o-total">₹0</span></div>
+        <button class="btn primary" id="o-save" type="button">Save</button>
+        <button class="btn" id="o-clear" type="button">Clear</button>
+      </aside>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="listhead"><h2>Challans &amp; orders</h2>
+        <div class="row">
+          <label class="f" style="flex-direction:row;align-items:center;gap:6px">Show<select id="o-f-kind" style="width:auto"><option value="">All types</option><option value="challan">Delivery challans</option><option value="so">Sales orders</option><option value="po">Purchase orders</option></select></label>
+          <label class="f" style="flex-direction:row;align-items:center;gap:6px">Status<select id="o-f-status" style="width:auto"><option value="open">Pending</option><option value="">All</option><option value="billed">Billed</option></select></label>
+          <label class="f" style="flex-direction:row;align-items:center;gap:6px">Month<input id="o-month" type="month" style="width:auto"></label>
+          <button class="btn" type="button" id="o-xlsx">Excel export</button>
+        </div>
+      </div>
+      <p class="hint" id="o-sum"></p>
+      <div class="tablewrap" id="o-wrap"><table class="grid"><thead><tr><th class="r">Sr. No.</th><th>Date</th><th>Type</th><th>No.</th><th>Party</th><th class="r">Amount</th><th>Status</th><th></th></tr></thead><tbody id="o-body"></tbody></table></div>
+      <p class="empty" id="o-empty">Nothing here for this month.</p>
+    </div>
+  </section>
+
+  <section id="tab-brs" hidden>
+    <div class="panel">
+      <div class="listhead"><h2>Bank Reconciliation</h2>
+        <div class="rep-bar">
+          <label class="f">As on<input type="date" id="br-to"></label>
+          <label class="chk"><input type="checkbox" id="br-all"> Show matched entries too</label>
+          <button class="btn" type="button" id="br-xlsx">Excel export</button>
+        </div>
+      </div>
+      <div class="tiles">
+        <div class="tile"><span>Balance as per books</span><b id="br-t-books">₹0</b></div>
+        <div class="tile"><span>Deposits not yet in bank</span><b id="br-t-dep">₹0</b></div>
+        <div class="tile"><span>Payments not yet cleared</span><b id="br-t-wd">₹0</b></div>
+        <div class="tile"><span>Balance as per bank</span><b id="br-t-bank">₹0</b></div>
+      </div>
+      <div class="tablewrap" id="br-wrap" hidden><table class="grid"><thead><tr><th>Date</th><th>Particulars</th><th>Vch Type</th><th>Vch No.</th><th>Mode / Ref</th><th class="r">Deposit</th><th class="r">Withdrawal</th><th>Bank date</th></tr></thead><tbody id="br-body"></tbody></table></div>
+      <p class="empty" id="br-empty">Loading…</p>
+      <p class="hint">Enter the date on which each entry appears in your bank statement or passbook. Entries without a bank date are not yet cleared. The opening bank balance from Settings is treated as already matched. "Balance as per bank" should equal the balance in your bank statement on the same date; if it does not, an entry is missing in BillBook (bank charges, interest, a cheque) or a bank date is wrong.</p>
     </div>
   </section>
 
@@ -1037,7 +1163,7 @@ function dialog({title, msg="", yes="Yes", no="Cancel", input=null}){
 }
 
 // ---- Tally-style navigation
-const SCREEN={home:"Gateway of BillBook", bill:"Sales Invoice Creation", bills:"Bills Register", purchase:"Purchase Voucher", items:"Stock Items", parties:"Party Ledgers", outstanding:"Outstanding Summary", settings:"Company Settings", daybook:"Day Book", gst:"GST Reports", notes:"Credit / Debit Note", stock:"Stock Summary", cash:"Cash / Bank Book", vouchers:"Expenses, Contra & Journal", final:"Profit & Loss A/c"};
+const SCREEN={home:"Gateway of BillBook", bill:"Sales Invoice Creation", bills:"Bills Register", purchase:"Purchase Voucher", items:"Stock Items", parties:"Party Ledgers", outstanding:"Outstanding Summary", settings:"Company Settings", daybook:"Day Book", gst:"GST Reports", notes:"Credit / Debit Note", stock:"Stock Summary", cash:"Cash / Bank Book", vouchers:"Expenses, Contra & Journal", final:"Profit & Loss A/c", ledger:"Trial Balance", orders:"Delivery Challan & Orders", brs:"Bank Reconciliation"};
 let gwSel=0;
 const gwItems = () => $$("#gw-menu .gw-item");
 function gwFocus(i){ const it=gwItems(); if(!it.length) return; gwSel=(i+it.length)%it.length; it.forEach((b,k)=>b.classList.toggle("sel", k===gwSel)); if(!$("#tab-home").hidden) it[gwSel].focus({preventScroll:true}); }
@@ -1052,8 +1178,10 @@ function doAct(a){
   else if(a==="logout") $("#logout").click();
   else if(a==="pl") showFinal("pl");
   else if(a==="bs") showFinal("bs");
+  else if(a==="tb") showLedger("tb");
+  else if(a==="ledger") showLedger("led");
   else if(a==="backup"){ showTab("settings"); setTimeout(()=>{ const el=$("#backup-panel"); el.scrollIntoView({behavior:"smooth", block:"start"}); $("#bk-download").focus(); }, 50); }
-  else if(a==="help") dialog({title:"Keyboard shortcuts", msg:"Esc: Gateway · F8: Sales · F9: Purchase · F2: Bills · F4: Items & Stock · F7: Parties · F10: Outstanding · Alt+D: Day Book · Alt+R: GST Reports · Alt+N: Credit/Debit Note · Alt+I: Stock Summary · Alt+C: Cash/Bank · Alt+E: Expenses & Journal · Alt+F: P&L / Balance Sheet · Alt+S: Settings · Alt+K: Company · On the Gateway use ↑ ↓ Enter or the underlined letter.", yes:"OK", no:""});
+  else if(a==="help") dialog({title:"Keyboard shortcuts", msg:"Esc: Gateway · F8: Sales · F9: Purchase · F2: Bills · F4: Items & Stock · F7: Parties · F10: Outstanding · Alt+D: Day Book · Alt+R: GST Reports · Alt+N: Credit/Debit Note · Alt+I: Stock Summary · Alt+C: Cash/Bank · Alt+E: Expenses & Journal · Alt+F: P&L / Balance Sheet · Alt+T: Trial Balance · Alt+L: Ledger · Alt+O: Challan & Orders · Alt+S: Settings · Alt+K: Company · On the Gateway use ↑ ↓ Enter or the underlined letter.", yes:"OK", no:""});
 }
 document.addEventListener("click", e => { const a=e.target.closest("[data-act]"); if(a){ e.preventDefault(); doAct(a.dataset.act); } });
 $("#gw-menu").addEventListener("mousemove", e => { const b=e.target.closest(".gw-item"); if(b){ const i=gwItems().indexOf(b); if(i!==gwSel){ gwSel=i; gwItems().forEach((x,k)=>x.classList.toggle("sel",k===gwSel)); } } });
@@ -1065,7 +1193,7 @@ document.addEventListener("keydown", e => {
   if(!$("#modal").hidden) return;
   if(FKEYS[e.key]){ e.preventDefault(); showTab(FKEYS[e.key]); return; }
   if(e.key==="F1"){ e.preventDefault(); doAct("help"); return; }
-  if(e.altKey && !e.ctrlKey && !e.metaKey){ const k=(e.code||"").replace("Key","").toLowerCase(); if(k==="k"){ e.preventDefault(); doAct("company"); return; } if(k==="g"){ e.preventDefault(); showTab("home"); return; } if(k==="s"){ e.preventDefault(); showTab("settings"); return; } if(k==="b"){ e.preventDefault(); showTab("bills"); return; } if(k==="d"){ e.preventDefault(); showTab("daybook"); return; } if(k==="r"){ e.preventDefault(); showTab("gst"); return; } if(k==="n"){ e.preventDefault(); showTab("notes"); return; } if(k==="i"){ e.preventDefault(); showTab("stock"); return; } if(k==="c"){ e.preventDefault(); showTab("cash"); return; } if(k==="e"){ e.preventDefault(); showTab("vouchers"); return; } if(k==="f"){ e.preventDefault(); showFinal("pl"); return; } }
+  if(e.altKey && !e.ctrlKey && !e.metaKey){ const k=(e.code||"").replace("Key","").toLowerCase(); if(k==="k"){ e.preventDefault(); doAct("company"); return; } if(k==="g"){ e.preventDefault(); showTab("home"); return; } if(k==="s"){ e.preventDefault(); showTab("settings"); return; } if(k==="b"){ e.preventDefault(); showTab("bills"); return; } if(k==="d"){ e.preventDefault(); showTab("daybook"); return; } if(k==="r"){ e.preventDefault(); showTab("gst"); return; } if(k==="n"){ e.preventDefault(); showTab("notes"); return; } if(k==="i"){ e.preventDefault(); showTab("stock"); return; } if(k==="c"){ e.preventDefault(); showTab("cash"); return; } if(k==="e"){ e.preventDefault(); showTab("vouchers"); return; } if(k==="f"){ e.preventDefault(); showFinal("pl"); return; } if(k==="t"){ e.preventDefault(); showLedger("tb"); return; } if(k==="l"){ e.preventDefault(); showLedger("led"); return; } if(k==="o"){ e.preventDefault(); showTab("orders"); return; } }
   if($("#tab-home").hidden || e.ctrlKey || e.metaKey || e.altKey) return;
   const tag=(document.activeElement&&document.activeElement.tagName)||""; if(/INPUT|SELECT|TEXTAREA/.test(tag)) return;
   if(e.key==="ArrowDown"){ e.preventDefault(); gwFocus(gwSel+1); }
@@ -1079,8 +1207,9 @@ window.addEventListener("resize", setTopHeight);
 // ---- Tabs
 function showTab(name){
   $$("nav button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab===name ? "true":"false"));
-  ["home","bill","bills","purchase","items","parties","outstanding","daybook","gst","notes","stock","cash","vouchers","final","settings"].forEach(t => $("#tab-"+t).hidden = t!==name);
+  ["home","bill","bills","purchase","items","parties","outstanding","daybook","gst","notes","stock","cash","vouchers","final","ledger","orders","brs","settings"].forEach(t => $("#tab-"+t).hidden = t!==name);
   if(name==="vouchers") renderVouchers(); if(name==="final") loadFinal();
+  if(name==="ledger") loadLedger(); if(name==="orders") renderOrders(); if(name==="brs") loadBrs();
   if(name==="notes") renderNotesList(); if(name==="stock") loadStock(); if(name==="cash") loadCash();
   if(name==="daybook") loadDaybook(); if(name==="gst") loadGst();
   $("#screen-title").textContent = SCREEN[name] || "BillBook";
@@ -1259,6 +1388,7 @@ $("#save-bill").addEventListener("click", async e => {
     const batch = db.batch();
     for(const [iid,q] of Object.entries(used)){ if(S.items.some(x=>x.id===iid)) batch.update(D("items",iid), {stock: INC(-q)}); }
     await batch.commit();
+    if(draft.fromOrder){ try{ await D("orders", draft.fromOrder).set({status:"billed", billNo:inv.no, billedAt:Date.now()}, {merge:true}); }catch(e){} }
     // auto-save new party
     if(!S.parties.some(p => p.name.toLowerCase()===inv.party.name.toLowerCase())) await C("parties").add({...inv.party, phone:""});
     draft=newDraft(); saveDraft(); fillBillForm();
@@ -1324,11 +1454,11 @@ function invoiceHTML(inv){
         <div class="iv-cell iv-firm"><div class="iv-b">${esc(f.name||"Your Firm Name")}</div>${f.address?`<div>${nl(f.address)}</div>`:""}
           ${f.phone?`<div>Contact : ${esc(f.phone)}</div>`:""}${f.gstin?`<div>GSTIN/UIN: ${esc(f.gstin)}</div>`:""}
           ${f.stateCode?`<div>State Name : ${esc(stateName(f.stateCode))}, Code : ${esc(f.stateCode)}</div>`:""}${f.email?`<div>E-Mail : ${esc(f.email)}</div>`:""}</div>
-        ${partyBlock("Consignee (Ship to)", inv.ship||inv.party)}
-        ${partyBlock("Buyer (Bill to)", inv.party).replace(/<\/div>$/, (()=>{ const pc = inv.pos ?? (inv.ship||inv.party||{}).stateCode; return pc ? `<div class="iv-kv"><span>Place of Supply</span><span>: ${esc(stateName(pc))}</span></div></div>` : "</div>"; })())}
+        ${inv.__noShip ? "" : partyBlock("Consignee (Ship to)", inv.ship||inv.party)}
+        ${partyBlock(inv.__billLbl||"Buyer (Bill to)", inv.party).replace(/<\/div>$/, (()=>{ const pc = inv.pos ?? (inv.ship||inv.party||{}).stateCode; return pc ? `<div class="iv-kv"><span>Place of Supply</span><span>: ${esc(stateName(pc))}</span></div></div>` : "</div>"; })())}
       </div>
       <div class="iv-meta">
-        ${meta("Invoice No.",inv.no,"Dated",fmtDate(inv.date))}
+        ${meta(inv.__noLbl||"Invoice No.",inv.no,"Dated",fmtDate(inv.date))}
         ${meta("Delivery Note","","Mode/Terms of Payment",inv.pay)}
         ${meta("Reference No. &amp; Date.",inv.ref,"Other References","")}
         ${meta("Buyer's Order No.",inv.order,"Dated","")}
@@ -1361,7 +1491,7 @@ function invoiceHTML(inv){
       </div>
     </div>
   </div>
-  <div class="iv-cg">This is a Computer Generated Invoice</div>
+  <div class="iv-cg">This is a Computer Generated ${esc(inv.__cgLbl||"Invoice")}</div>
 </div>`;
 }
 
@@ -1717,6 +1847,7 @@ $("#p-save").addEventListener("click", e => {
       b.set(C("purchases").doc(id), {no, date:pur.date||todayISO(), party, intra, pos:party.stateCode||"", lines, taxable:c.taxable, cgst:c.cgst, sgst:c.sgst, igst:c.igst, roundOff:c.roundOff, total:c.total, createdAt:editing?(pur.editCreatedAt||Date.now()):Date.now(), createdBy:editing?(pur.editBy||""):me, ...(editing?{alteredAt:Date.now(), alteredBy:me}:{})});
       if(!S.parties.some(p=>p.name.toLowerCase()===party.name.toLowerCase())) b.set(C("parties").doc(), {...party, phone:"", type:"supplier", opening:0});
       await b.commit();
+      if(pur.fromOrder && !editing){ try{ await D("orders", pur.fromOrder).set({status:"billed", billNo:no, billedAt:Date.now()}, {merge:true}); }catch(e){} }
       pur=newPur(); savePur(); fillPur(); toast(`${editing?"Purchase altered":"Purchase saved"}: ${no} · ₹${fmt(c.total)} · stock updated`);
     }catch(err){ toast(errMsg(err), true); }
   });
@@ -2031,7 +2162,7 @@ async function loadStock(){
   try{
     const end=todayISO()>skTo?todayISO():skTo;
     const [inv,pur,ret]=await Promise.all([rangeDocs("invoices",skFrom,end), rangeDocs("purchases",skFrom,end), rangeDocs("returns",skFrom,end)]);
-    if(my!==skSeq) return;
+    if(my!==skSeq) return; skDocs={inv,pur,ret};
     const byName={}; S.items.forEach(i=>byName[String(i.name).toLowerCase()]=i.id);
     const st={}; S.items.forEach(i=>st[i.id]={item:i, after:0, inw:0, out:0, sales:0, soldQty:0});
     const idOf=l=>l.itemId && st[l.itemId] ? l.itemId : byName[String(l.name||"").toLowerCase()];
@@ -2041,9 +2172,9 @@ async function loadStock(){
     move(inv,-1,"sale"); move(pur,1,"pur"); move(ret.filter(r=>r.type!=="debit"),1,"cn"); move(ret.filter(r=>r.type==="debit"),-1,"dn");
     skRows=Object.values(st).map(o=>{ const cur=+o.item.stock||0, closing=r2(cur-o.after), opening=r2(closing-o.inw+o.out), cost=+(o.item.prate ?? o.item.rate ?? 0)||0;
       const cos=r2(o.soldQty*cost), sales=r2(o.sales), gp=r2(sales-cos);
-      return {name:o.item.name, unit:o.item.unit||"", opening, inw:r2(o.inw), out:r2(o.out), closing, cost, value:r2(closing*cost), sales, cos, gp, margin: sales ? Math.round(gp/sales*1000)/10 : null}; })
+      return {id:o.item.id, name:o.item.name, unit:o.item.unit||"", opening, inw:r2(o.inw), out:r2(o.out), closing, cost, value:r2(closing*cost), sales, cos, gp, margin: sales ? Math.round(gp/sales*1000)/10 : null}; })
       .sort((a,b)=>String(a.name).localeCompare(String(b.name)));
-    renderStock();
+    renderStock(); if(srId) showRegister(srId);
   }catch(err){ $("#sk-empty").textContent="Could not load: "+((err&&err.message)||err); }
 }
 function renderStock(){
@@ -2051,7 +2182,7 @@ function renderStock(){
   const sum=k=>r2(list.reduce((t,r)=>t+(+r[k]||0),0)), sales=sum("sales"), gp=sum("gp");
   $("#sk-t-value").textContent="₹"+fmt(sum("value")); $("#sk-t-sales").textContent="₹"+fmt(sales); $("#sk-t-profit").textContent=(gp<0?"−₹":"₹")+fmt(Math.abs(gp)); $("#sk-t-margin").textContent= sales ? (Math.round(gp/sales*1000)/10)+"%" : "—";
   const q2=(v,u)=>`${fmtQ(v)} <span class="muted">${esc(u)}</span>`;
-  $("#sk-body").innerHTML=list.map((r,n)=>`<tr><td class="r num">${n+1}</td><td><b>${esc(r.name)}</b></td><td class="r num">${q2(r.opening,r.unit)}</td><td class="r num">${r.inw?fmtQ(r.inw):""}</td><td class="r num">${r.out?fmtQ(r.out):""}</td><td class="r num"><b>${q2(r.closing,r.unit)}</b></td><td class="r num">${fmt(r.cost)}</td><td class="r num">${fmt(r.value)}</td><td class="r num">${r.sales?fmt(r.sales):""}</td><td class="r num">${r.cos?fmt(r.cos):""}</td><td class="r num ${r.gp<0?"amt-due":""}">${r.sales||r.cos?fmt(r.gp):""}</td><td class="r num">${r.margin===null?"":r.margin+"%"}</td></tr>`).join("")
+  $("#sk-body").innerHTML=list.map((r,n)=>`<tr class="click" data-skid="${esc(r.id)}"><td class="r num">${n+1}</td><td><b>${esc(r.name)}</b></td><td class="r num">${q2(r.opening,r.unit)}</td><td class="r num">${r.inw?fmtQ(r.inw):""}</td><td class="r num">${r.out?fmtQ(r.out):""}</td><td class="r num"><b>${q2(r.closing,r.unit)}</b></td><td class="r num">${fmt(r.cost)}</td><td class="r num">${fmt(r.value)}</td><td class="r num">${r.sales?fmt(r.sales):""}</td><td class="r num">${r.cos?fmt(r.cos):""}</td><td class="r num ${r.gp<0?"amt-due":""}">${r.sales||r.cos?fmt(r.gp):""}</td><td class="r num">${r.margin===null?"":r.margin+"%"}</td></tr>`).join("")
     + (list.length?`<tr class="sub"><td></td><td>Total</td><td></td><td></td><td></td><td></td><td></td><td class="r num">${fmt(sum("value"))}</td><td class="r num">${fmt(sales)}</td><td class="r num">${fmt(sum("cos"))}</td><td class="r num">${fmt(gp)}</td><td class="r num">${sales?(Math.round(gp/sales*1000)/10)+"%":""}</td></tr>`:"");
   $("#sk-wrap").hidden=!list.length; $("#sk-empty").hidden=!!list.length; $("#sk-empty").textContent = skRows.length ? "No items match your search." : "No items yet.";
 }
@@ -2108,7 +2239,7 @@ $("#cb-xlsx").addEventListener("click", () => {
 });
 
 // ================= BACKUP / RESTORE =================
-const BK_COLS=["items","parties","invoices","purchases","payments","returns","vouchers"];
+const BK_COLS=["items","parties","invoices","purchases","payments","returns","vouchers","orders"];
 $("#bk-download").addEventListener("click", e => { if(!db) return toast("Not connected to the database", true);
   withBtn(e.currentTarget, "Preparing…", async () => {
     try{
@@ -2354,6 +2485,377 @@ $("#fa-xlsx").addEventListener("click", () => {
   XLSX.writeFile(wb, faView==="pl" ? `ProfitLoss_${faFrom}_to_${faTo}.xlsx` : `BalanceSheet_${faTo}.xlsx`); toast("Excel file downloaded");
 });
 
+// ================= LEDGERS & TRIAL BALANCE =================
+const LG={sales:"Sales", pur:"Purchase", round:"Round off", opst:"Opening Stock", diff:"Difference in opening balances"};
+const TB_ORDER=["Capital Account","Sundry Creditors","Duties & Taxes","Stock-in-Hand","Sundry Debtors","Cash-in-Hand","Bank Accounts","Sales Accounts","Purchase Accounts","Direct Expenses","Indirect Expenses","Indirect Incomes",LG.diff];
+let lrView="tb", lrName="", lrFrom=fyStart(), lrTo=todayISO(), lrSeq=0, lrData=null, lrLedRows=[], lrLedOpen=0;
+function showLedger(v, name){ lrView=v; if(name!==undefined) lrName=name; showTab("ledger"); }
+function lgBuild(all, to){
+  const L=new Map(), parties=new Set(), key=n=>String(n||"").trim().toLowerCase();
+  const canon=n=>{ n=String(n||"").trim(); const k=ledgerKind(n); return k==="cash"?"Cash":k==="bank"?"Bank":k==="capital"?"Capital":k==="drawings"?"Drawings":((S.parties.find(p=>key(p.name)===key(n))||{}).name||n); };
+  const get=n=>{ const c=canon(n), k=key(c); if(!k) return null; if(!L.has(k)) L.set(k,{name:c, open:0, rows:[]}); return L.get(k); };
+  const post=(n,dr,cr,r)=>{ dr=r2(+dr||0); cr=r2(+cr||0); if(!dr && !cr) return; const o=get(n); if(o) o.rows.push({...r, dr, cr}); };
+  const party=n=>{ const o=get(n); if(o) parties.add(key(o.name)); };
+  const op=(n,v)=>{ v=r2(+v||0); if(!v) return; const o=get(n); if(o) o.open=r2(o.open+v); };
+  op("Cash", S.firm.cashOpen); op("Bank", S.firm.bankOpen); op("Capital", -(+S.firm.capOpen||0));
+  S.parties.forEach(p=>{ party(p.name); op(p.name, p.opening); });
+  op(LG.opst, stockAt(all, ""));
+  const inR=d=>(d.date||"")<=to;
+  const tax=(x,sgn,r)=>[["CGST",x.cgst],["SGST",x.sgst],["IGST",x.igst]].forEach(([n,a])=>{ a=+a||0; if(a) post(n, sgn>0?a:0, sgn>0?0:a, r); });
+  const ro=(x,sgn,r)=>{ const a=r2(sgn*(+x.roundOff||0)); if(a) post(LG.round, a>0?a:0, a<0?-a:0, r); };
+  all.inv.filter(inR).forEach(x=>{ const pn=(x.party||{}).name||"Cash sale", b={date:x.date, at:x.createdAt||0, type:"Sales", no:x.no, doc:x};
+    party(pn); post(pn, x.total, 0, {...b, other:LG.sales}); const r={...b, other:pn}; post(LG.sales, 0, x.taxable, r); tax(x,-1,r); ro(x,-1,r); });
+  all.pur.filter(inR).forEach(x=>{ const pn=(x.party||{}).name||"Supplier", b={date:x.date, at:x.createdAt||0, type:"Purchase", no:x.no};
+    party(pn); post(pn, 0, x.total, {...b, other:LG.pur}); const r={...b, other:pn}; post(LG.pur, x.taxable, 0, r); tax(x,1,r); ro(x,1,r); });
+  all.ret.filter(inR).forEach(x=>{ const pn=(x.party||{}).name||"Party", dn=x.type==="debit", b={date:x.date, at:x.createdAt||0, type:dn?"Debit Note":"Credit Note", no:x.no}, r={...b, other:pn};
+    party(pn);
+    if(dn){ post(pn, x.total, 0, {...b, other:LG.pur}); post(LG.pur, 0, x.taxable, r); tax(x,-1,r); ro(x,-1,r); }
+    else { post(pn, 0, x.total, {...b, other:LG.sales}); post(LG.sales, x.taxable, 0, r); tax(x,1,r); ro(x,1,r); } });
+  all.pay.filter(inR).forEach(x=>{ const pn=(x.party||{}).name||"Party", cb=isCash(x)?"Cash":"Bank", rc=x.type!=="payment", b={date:x.date, at:x.createdAt||0, type:rc?"Receipt":"Payment", no:x.no, note:[x.mode,x.ref].filter(Boolean).join(" · ")};
+    party(pn);
+    if(rc){ post(cb, x.amount, 0, {...b, other:pn}); post(pn, 0, x.amount, {...b, other:cb}); }
+    else { post(pn, x.amount, 0, {...b, other:cb}); post(cb, 0, x.amount, {...b, other:pn}); } });
+  const VL={expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"};
+  all.vch.filter(inR).forEach(v=>{ const b={date:v.date, at:v.createdAt||0, type:VL[v.kind]||v.kind, no:v.no, note:v.note||""}; post(v.dr, v.amount, 0, {...b, other:v.cr}); post(v.cr, 0, v.amount, {...b, other:v.dr}); });
+  const list=[...L.values()].map(o=>{ o.rows.sort((a,b)=>(a.date||"").localeCompare(b.date||"")||a.at-b.at); o.dr=r2(o.rows.reduce((t,r)=>t+r.dr,0)); o.cr=r2(o.rows.reduce((t,r)=>t+r.cr,0)); o.bal=r2(o.open+o.dr-o.cr); o.isParty=parties.has(key(o.name)); return o; });
+  const diff=r2(list.reduce((t,o)=>t+o.bal,0));
+  if(diff) list.push({name:LG.diff, open:-diff, rows:[], dr:0, cr:0, bal:-diff, isParty:false});
+  return {list, diff, closeStock:stockAt(all, to)};
+}
+function lgGroup(o){
+  const n=o.name, k=ledgerKind(n);
+  if(n===LG.diff) return LG.diff; if(n===LG.sales) return "Sales Accounts"; if(n===LG.pur) return "Purchase Accounts"; if(n===LG.opst) return "Stock-in-Hand";
+  if(["CGST","SGST","IGST"].includes(n) || k==="gst") return "Duties & Taxes";
+  if(n===LG.round) return o.bal>0 ? "Indirect Expenses" : "Indirect Incomes";
+  if(o.isParty) return o.bal>=0 ? "Sundry Debtors" : "Sundry Creditors";
+  return {cash:"Cash-in-Hand", bank:"Bank Accounts", capital:"Capital Account", drawings:"Capital Account", direct:"Direct Expenses", indirect:"Indirect Expenses", income:"Indirect Incomes"}[k] || (o.bal>=0 ? "Indirect Expenses" : "Indirect Incomes");
+}
+function lrUI(){
+  const tb=lrView==="tb";
+  $("#lr-tb").setAttribute("aria-pressed", tb?"true":"false"); $("#lr-led").setAttribute("aria-pressed", tb?"false":"true");
+  $("#lr-title").textContent = tb ? "Trial Balance" : "Ledger"+(lrName?" · "+lrName:""); $("#screen-title").textContent = tb ? "Trial Balance" : "Ledger Vouchers";
+  $("#lr-name-wrap").hidden=tb; $("#lr-from-wrap").hidden=tb; $("#lr-to-lbl").textContent = tb ? "As on" : "To";
+  if(document.activeElement!==$("#lr-name")) $("#lr-name").value=lrName; $("#lr-from").value=lrFrom; $("#lr-to").value=lrTo;
+}
+async function loadLedger(){
+  lrUI(); if(!db || !dbReady) return; const my=++lrSeq;
+  $("#lr-empty").hidden=false; $("#lr-empty").textContent="Loading…"; $("#lr-wrap").hidden=true;
+  try{
+    const end=todayISO()>lrTo?todayISO():lrTo;
+    const [inv,pur,ret,pay,vch]=await Promise.all([upTo("invoices",end), upTo("purchases",end), upTo("returns",end), upTo("payments",end), upTo("vouchers",end)]);
+    if(my!==lrSeq) return;
+    lrData=lgBuild({inv,pur,ret,pay,vch}, lrTo);
+    $("#lr-list").innerHTML=[...new Set([...lrData.list.map(o=>o.name), "Cash","Bank","Capital","Drawings",LG.sales,LG.pur,"CGST","SGST","IGST"])].sort((a,b)=>a.localeCompare(b)).map(n=>`<option value="${esc(n)}">`).join("");
+    renderLedger();
+  }catch(err){ $("#lr-empty").textContent="Could not load: "+((err&&err.message)||err); }
+}
+function lrFind(name){ const k=String(name||"").trim().toLowerCase(); return lrData && lrData.list.find(o=>o.name.toLowerCase()===k); }
+function tbGroups(){
+  const groups={}; lrData.list.filter(o=>o.bal).forEach(o=>{ const g=lgGroup(o); (groups[g] ||= []).push(o); });
+  return TB_ORDER.filter(g=>groups[g]).map(g=>{ const ls=groups[g].sort((a,b)=>a.name.localeCompare(b.name)); return {grp:g, ls, bal:r2(ls.reduce((t,o)=>t+o.bal,0))}; });
+}
+function renderLedger(){
+  lrUI(); const d=lrData; if(!d) return;
+  const tile=(l,v,cls)=>`<div class="tile"><span>${l}</span><b class="${cls||""}">${v}</b></div>`;
+  if(lrView==="tb"){
+    const G=tbGroups(); let tdr=0, tcr=0, rows="";
+    G.forEach(g=>{ rows+=`<tr class="sub"><td>${esc(g.grp)}</td><td class="r num">${g.bal>0?fmt(g.bal):""}</td><td class="r num">${g.bal<0?fmt(-g.bal):""}</td></tr>`;
+      g.ls.forEach(o=>{ if(o.bal>0) tdr+=o.bal; else tcr-=o.bal; rows+=`<tr class="click" data-lr="${esc(o.name)}"><td class="ind2">${esc(o.name)}</td><td class="r num">${o.bal>0?fmt(o.bal):""}</td><td class="r num">${o.bal<0?fmt(-o.bal):""}</td></tr>`; }); });
+    tdr=r2(tdr); tcr=r2(tcr);
+    $("#lr-head").innerHTML=`<tr><th>Particulars</th><th class="r">Debit (₹)</th><th class="r">Credit (₹)</th></tr>`;
+    $("#lr-body").innerHTML=rows+`<tr class="sub"><td>Grand Total</td><td class="r num">${fmt(tdr)}</td><td class="r num">${fmt(tcr)}</td></tr>`;
+    $("#lr-tiles").innerHTML=tile("Total debit","₹"+fmt(tdr))+tile("Total credit","₹"+fmt(tcr))+tile("Ledgers",String(G.reduce((t,g)=>t+g.ls.length,0)))+tile("Closing stock","₹"+fmt(d.closeStock));
+    $("#lr-note").textContent=`Closing balances as on ${fmtDate(lrTo)}. Click a ledger to see its entries. Closing stock is not part of the trial balance; it is shown in the Profit & Loss A/c and Balance Sheet.`+(d.diff?` "Difference in opening balances" (₹${fmt(Math.abs(d.diff))}) means some opening figures (capital, cash, bank, stock or party balances) are not entered in Settings / Parties.`:"");
+    $("#lr-wrap").hidden=!G.length; $("#lr-empty").hidden=!!G.length; $("#lr-empty").textContent="No entries yet.";
+    return;
+  }
+  $("#lr-head").innerHTML=`<tr><th>Date</th><th>Particulars</th><th>Vch Type</th><th>Vch No.</th><th class="r">Debit (₹)</th><th class="r">Credit (₹)</th><th class="r">Balance</th></tr>`;
+  if(!lrName.trim()){ $("#lr-tiles").innerHTML=""; $("#lr-wrap").hidden=true; $("#lr-empty").hidden=false; $("#lr-empty").textContent="Pick a ledger above (party, Cash, Bank, Sales, Purchase, an expense head…), or click one in the Trial Balance."; $("#lr-note").textContent=""; lrLedRows=[]; return; }
+  const o=lrFind(lrName), all=o?o.rows:[];
+  let bal=r2((o?o.open:0)+all.filter(r=>(r.date||"")<lrFrom).reduce((t,r)=>t+r.dr-r.cr,0)); const open=bal;
+  lrLedOpen=open; lrLedRows=all.filter(r=>(r.date||"")>=lrFrom).map(r=>{ bal=r2(bal+r.dr-r.cr); return {...r, bal}; });
+  const tdr=r2(lrLedRows.reduce((t,r)=>t+r.dr,0)), tcr=r2(lrLedRows.reduce((t,r)=>t+r.cr,0));
+  $("#lr-body").innerHTML=`<tr class="sub"><td>${fmtDate(lrFrom)}</td><td>Opening balance</td><td></td><td></td><td class="r num">${open>0?fmt(open):""}</td><td class="r num">${open<0?fmt(-open):""}</td><td class="r num">${balTxt(open)}</td></tr>`
+    + lrLedRows.map((r,i)=>`<tr${r.doc?` class="click" data-lri="${i}"`:""}><td>${fmtDate(r.date)}</td><td><b>${esc(r.other)}</b>${r.note?`<div class="muted" style="font-size:12px">${esc(r.note)}</div>`:""}</td><td>${esc(r.type)}</td><td class="num">${esc(r.no)}</td><td class="r num">${r.dr?fmt(r.dr):""}</td><td class="r num">${r.cr?fmt(r.cr):""}</td><td class="r num">${balTxt(r.bal)}</td></tr>`).join("")
+    + `<tr class="sub"><td>${fmtDate(lrTo)}</td><td>Closing balance</td><td></td><td></td><td class="r num">${fmt(tdr)}</td><td class="r num">${fmt(tcr)}</td><td class="r num">${balTxt(bal)}</td></tr>`;
+  $("#lr-tiles").innerHTML=tile("Opening",balTxt(open))+tile("Debit total","₹"+fmt(tdr))+tile("Credit total","₹"+fmt(tcr))+tile("Closing",balTxt(bal));
+  $("#lr-note").textContent = o ? `Group: ${lgGroup(o)}. Dr balance = the ledger owes you / is an asset or expense; Cr balance = you owe / income or capital.` : `No entries found for "${lrName}". Check the spelling or pick from the list.`;
+  $("#lr-wrap").hidden=false; $("#lr-empty").hidden=true;
+}
+$("#lr-tb").addEventListener("click", () => { lrView="tb"; lrData ? renderLedger() : loadLedger(); });
+$("#lr-led").addEventListener("click", () => { lrView="led"; lrData ? renderLedger() : loadLedger(); });
+$("#lr-name").addEventListener("change", e => { lrName=e.target.value.trim(); const o=lrFind(lrName); if(o) lrName=o.name; renderLedger(); });
+$("#lr-from").addEventListener("change", e => { lrFrom=e.target.value||fyStart(); renderLedger(); });
+$("#lr-to").addEventListener("change", e => { lrTo=e.target.value||todayISO(); loadLedger(); });
+$("#lr-fy").addEventListener("click", () => { lrFrom=fyStart(); lrTo=todayISO(); loadLedger(); });
+$("#lr-body").addEventListener("click", e => {
+  const t=e.target.closest("[data-lr]"); if(t){ lrView="led"; lrName=t.dataset.lr; renderLedger(); window.scrollTo(0,0); return; }
+  const r=e.target.closest("[data-lri]"); if(r){ const x=lrLedRows[+r.dataset.lri]; if(x && x.doc) openInvoice(x.doc, true); }
+});
+function lrExport(){
+  if(!lrData) return null;
+  if(lrView==="tb"){ const rows=[]; let tdr=0, tcr=0; tbGroups().forEach(g=>{ rows.push({"Particulars":g.grp,"Debit":g.bal>0?g.bal:"","Credit":g.bal<0?-g.bal:"",__b:1}); g.ls.forEach(o=>{ if(o.bal>0) tdr+=o.bal; else tcr-=o.bal; rows.push({"Particulars":"    "+o.name,"Debit":o.bal>0?o.bal:"","Credit":o.bal<0?-o.bal:""}); }); });
+    rows.push({"Particulars":"Grand Total","Debit":r2(tdr),"Credit":r2(tcr),__b:1}); return {title:`Trial Balance as on ${fmtDate(lrTo)}`, file:`TrialBalance_${lrTo}`, sheet:"Trial Balance", rows, w:[40,16,16]}; }
+  if(!lrName.trim()) return null;
+  const tdr=r2(lrLedRows.reduce((t,r)=>t+r.dr,0)), tcr=r2(lrLedRows.reduce((t,r)=>t+r.cr,0)), close=lrLedRows.length?lrLedRows[lrLedRows.length-1].bal:lrLedOpen;
+  const rows=[{"Date":fmtDate(lrFrom),"Particulars":"Opening balance","Vch Type":"","Vch No.":"","Debit":lrLedOpen>0?lrLedOpen:"","Credit":lrLedOpen<0?-lrLedOpen:"","Balance":balTxt(lrLedOpen),__b:1},
+    ...lrLedRows.map(r=>({"Date":fmtDate(r.date),"Particulars":r.other+(r.note?" · "+r.note:""),"Vch Type":r.type,"Vch No.":r.no||"","Debit":r.dr||"","Credit":r.cr||"","Balance":balTxt(r.bal)})),
+    {"Date":fmtDate(lrTo),"Particulars":"Closing balance","Vch Type":"","Vch No.":"","Debit":tdr,"Credit":tcr,"Balance":balTxt(close),__b:1}];
+  return {title:`Ledger: ${lrName} · ${fmtDate(lrFrom)} to ${fmtDate(lrTo)}`, file:`Ledger_${lrName.replace(/[^\w]+/g,"_")}_${lrFrom}_to_${lrTo}`, sheet:"Ledger", rows, w:[11,40,12,16,14,14,16]};
+}
+function reportHTML(title, rows){
+  const f=S.firm||{}, cols=Object.keys(rows[0]||{}).filter(k=>k!=="__b");
+  const td='style="border:1px solid #000;padding:4px 6px"', tr='style="border:1px solid #000;padding:4px 6px;text-align:right"';
+  const cell=(k,v)=>typeof v==="number" ? `<td ${tr}>${fmt(v)}</td>` : `<td ${/Debit|Credit|Inward|Outward|Balance|Rate|Amount|Deposit|Withdrawal/.test(k)?tr:td}>${esc(v).replace(/^ {4}/,"&nbsp;&nbsp;&nbsp;&nbsp;")}</td>`;
+  return `<div class="iv" style="padding:28px 34px;font-size:12px">
+    <div style="text-align:center"><div style="font-size:16px;font-weight:700">${esc(f.name||"")}</div><div>${nl(f.address||"")}</div>${f.gstin?`<div>GSTIN: ${esc(f.gstin)}</div>`:""}</div>
+    <div style="text-align:center;font-weight:700;font-size:14px;margin:12px 0 8px">${esc(title)}</div>
+    <table style="width:100%;border-collapse:collapse"><thead><tr>${cols.map(k=>`<th ${td}>${esc(k)}</th>`).join("")}</tr></thead>
+    <tbody>${rows.map(r=>`<tr${r.__b?' style="font-weight:700"':""}>${cols.map(k=>cell(k, r[k]??"")).join("")}</tr>`).join("")}</tbody></table>
+    <div class="iv-cg" style="margin-top:18px">This is a Computer Generated Report</div></div>`;
+}
+function xlsxOut(x){ if(!window.XLSX) return toast("Excel tool did not load. Please reload the page.", true); const rows=x.rows.map(r=>{ const o={...r}; delete o.__b; return o; });
+  const ws=XLSX.utils.json_to_sheet(rows); ws["!cols"]=x.w.map(w=>({wch:w})); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, x.sheet); XLSX.writeFile(wb, x.file+".xlsx"); toast("Excel file downloaded"); }
+$("#lr-print").addEventListener("click", () => { const x=lrExport(); if(!x) return toast("Nothing to print", true); printHTML(reportHTML(x.title, x.rows), x.title); });
+$("#lr-xlsx").addEventListener("click", () => { const x=lrExport(); if(!x) return toast("Nothing to export", true); xlsxOut(x); });
+
+// ================= STOCK REGISTER (item movement) =================
+let skDocs=null, srId="", srRows=[], srOpen=0;
+function showRegister(id){
+  const row=skRows.find(r=>r.id===id); if(!row || !skDocs){ $("#sr-panel").hidden=true; srId=""; return; }
+  srId=id; const byName={}; S.items.forEach(i=>byName[String(i.name).toLowerCase()]=i.id);
+  const idOf=l=>l.itemId && S.items.some(x=>x.id===l.itemId) ? l.itemId : byName[String(l.name||"").toLowerCase()];
+  const mv=[]; const scan=(docs,sign,type)=>docs.forEach(d=>{ if((d.date||"")<skFrom || (d.date||"")>skTo) return; (d.lines||[]).forEach(l=>{ if(idOf(l)!==id) return; const q=+l.qty||0;
+    mv.push({date:d.date, at:d.createdAt||0, party:(d.party||{}).name||"", type, no:d.no||"", inw:sign>0?q:0, out:sign<0?q:0, rate:+l.rate||0, doc:type==="Sales"?d:null}); }); });
+  scan(skDocs.inv,-1,"Sales"); scan(skDocs.pur,1,"Purchase"); scan(skDocs.ret.filter(r=>r.type!=="debit"),1,"Credit Note"); scan(skDocs.ret.filter(r=>r.type==="debit"),-1,"Debit Note");
+  mv.sort((a,b)=>(a.date||"").localeCompare(b.date||"")||a.at-b.at);
+  let bal=srOpen=row.opening; srRows=mv.map(m=>{ bal=r2(bal+m.inw-m.out); return {...m, bal}; });
+  const u=esc(row.unit), q=v=>`${fmtQ(v)} <span class="muted">${u}</span>`;
+  $("#sr-title").textContent=`Stock register · ${row.name}`;
+  $("#sr-t-open").innerHTML=q(row.opening); $("#sr-t-in").innerHTML=q(row.inw); $("#sr-t-out").innerHTML=q(row.out); $("#sr-t-close").innerHTML=q(row.closing);
+  $("#sr-body").innerHTML=`<tr class="sub"><td>${fmtDate(skFrom)}</td><td>Opening balance</td><td></td><td></td><td></td><td></td><td class="r num">${q(row.opening)}</td><td></td></tr>`
+    + srRows.map((r,i)=>`<tr${r.doc?` class="click" data-sri="${i}"`:""}><td>${fmtDate(r.date)}</td><td><b>${esc(r.party)}</b></td><td><span class="vt ${{Sales:"sales",Purchase:"purchase","Credit Note":"credit","Debit Note":"debit"}[r.type]}">${r.type}</span></td><td class="num">${esc(r.no)}</td><td class="r num">${r.inw?fmtQ(r.inw):""}</td><td class="r num">${r.out?fmtQ(r.out):""}</td><td class="r num">${fmtQ(r.bal)}</td><td class="r num">${fmt(r.rate)}</td></tr>`).join("")
+    + `<tr class="sub"><td>${fmtDate(skTo)}</td><td>Closing balance</td><td></td><td></td><td class="r num">${fmtQ(row.inw)}</td><td class="r num">${fmtQ(row.out)}</td><td class="r num">${q(row.closing)}</td><td></td></tr>`;
+  $("#sr-panel").hidden=false;
+}
+function srExport(){ const row=skRows.find(r=>r.id===srId); if(!row) return null;
+  const rows=[{"Date":fmtDate(skFrom),"Particulars":"Opening balance","Vch Type":"","Vch No.":"","Inward":"","Outward":"","Balance":fmtQ(srOpen)+" "+row.unit,"Rate":"",__b:1},
+    ...srRows.map(r=>({"Date":fmtDate(r.date),"Particulars":r.party,"Vch Type":r.type,"Vch No.":r.no,"Inward":r.inw||"","Outward":r.out||"","Balance":fmtQ(r.bal)+" "+row.unit,"Rate":r.rate})),
+    {"Date":fmtDate(skTo),"Particulars":"Closing balance","Vch Type":"","Vch No.":"","Inward":row.inw,"Outward":row.out,"Balance":fmtQ(row.closing)+" "+row.unit,"Rate":"",__b:1}];
+  return {title:`Stock register: ${row.name} · ${fmtDate(skFrom)} to ${fmtDate(skTo)}`, file:`StockRegister_${row.name.replace(/[^\w]+/g,"_")}_${skFrom}_to_${skTo}`, sheet:"Stock Register", rows, w:[11,30,12,16,10,10,14,10]}; }
+$("#sk-body").addEventListener("click", e => { const tr=e.target.closest("[data-skid]"); if(!tr) return; showRegister(tr.dataset.skid); setTimeout(()=>$("#sr-panel").scrollIntoView({behavior:"smooth", block:"start"}), 30); });
+$("#sr-body").addEventListener("click", e => { const tr=e.target.closest("[data-sri]"); if(tr){ const r=srRows[+tr.dataset.sri]; if(r && r.doc) openInvoice(r.doc, true); } });
+$("#sr-close").addEventListener("click", () => { srId=""; $("#sr-panel").hidden=true; });
+$("#sr-print").addEventListener("click", () => { const x=srExport(); if(x) printHTML(reportHTML(x.title, x.rows), x.title); });
+$("#sr-xlsx").addEventListener("click", () => { const x=srExport(); if(x) xlsxOut(x); });
+
+// ================= GSTR-1 JSON (GST portal / offline tool) =================
+const UQC={PCS:"PCS",PC:"PCS",PIECE:"PCS",PIECES:"PCS",NOS:"NOS",NO:"NOS",NUMBER:"NOS",KG:"KGS",KGS:"KGS",GM:"GMS",GMS:"GMS",GRAM:"GMS",MTR:"MTR",M:"MTR",METER:"MTR",METRE:"MTR",MTRS:"MTR",ROLL:"ROL",ROL:"ROL",ROLLS:"ROL",COIL:"ROL",BOX:"BOX",BOXES:"BOX",SET:"SET",SETS:"SET",LTR:"LTR",L:"LTR",LITRE:"LTR",PAIR:"PRS",PRS:"PRS",BAG:"BAG",BAGS:"BAG",BUNDLE:"BDL",BDL:"BDL",DOZEN:"DOZ",DOZ:"DOZ",PKT:"PAC",PACK:"PAC",PAC:"PAC",PACKET:"PAC",CTN:"CTN",CARTON:"CTN",SQM:"SQM",SQFT:"SQF",SQF:"SQF",UNIT:"UNT",UNT:"UNT",UNITS:"UNT",TON:"TON",TONNE:"TON",QTL:"QTL",DRUM:"DRM",DRM:"DRM",BTL:"BTL",BOTTLE:"BTL",CAN:"CAN",TUBE:"TUB",TBS:"TBS",TABLET:"TBS",KM:"KME",KME:"KME",CM:"CMS",CMS:"CMS",FT:"OTH"};
+const uqc = u => UQC[String(u||"").trim().toUpperCase().replace(/\.$/,"")] || "OTH";
+const jdate = iso => { const [y,m,d]=String(iso||"").split("-"); return `${d}-${m}-${y}`; };
+function gItems(lines, intra){
+  const c=calc(lines||[], intra), by={};
+  c.groups.forEach(g=>{ const o=(by[g.rate] ||= {txval:0, iamt:0, camt:0, samt:0}); o.txval+=g.taxable; o.iamt+=g.igst; o.camt+=g.cgst; o.samt+=g.sgst; });
+  return Object.entries(by).sort((a,b)=>+a[0]-+b[0]).map(([rt,o],i)=>({num:i+1, itm_det: intra ? {txval:r2(o.txval), rt:+rt, camt:r2(o.camt), samt:r2(o.samt), csamt:0} : {txval:r2(o.txval), rt:+rt, iamt:r2(o.iamt), csamt:0}}));
+}
+function gstr1Json(){
+  const d=gstData, f=S.firm, fs=String(f.stateCode||"").padStart(2,"0");
+  const posOf=x=>String((x.pos ?? (x.ship||x.party||{}).stateCode) || fs || "").padStart(2,"0");
+  const warn=[], b2b={}, b2cl={}, b2cs={}, cdnr={}, hsnB={b2b:{}, b2c:{}};
+  const hsnAdd=(type, lines, intra, sign)=>calc(lines||[], intra).lines.forEach(l=>{ const k=(l.hsn||"")+"|"+(+l.gst||0)+"|"+uqc(l.unit); const o=(hsnB[type][k] ||= {hsn_sc:String(l.hsn||"").trim(), desc:"", uqc:uqc(l.unit), qty:0, rt:+l.gst||0, txval:0, iamt:0, camt:0, samt:0, csamt:0});
+    if(!o.desc) o.desc=String(l.name||"").slice(0,30); const t=l.amount*(+l.gst||0)/100; o.qty+=sign*(+l.qty||0); o.txval+=sign*l.amount; if(intra){ o.camt+=sign*t/2; o.samt+=sign*t/2; } else o.iamt+=sign*t; });
+  d.inv.forEach(i=>{ const g=String((i.party||{}).gstin||"").trim().toUpperCase(), pos=posOf(i), val=r2(+i.total||0), itms=gItems(i.lines, i.intra);
+    if(g){ if(!gstinValid(g)) warn.push(`${i.no}: GSTIN ${g} looks wrong`); (b2b[g] ||= {ctin:g, inv:[]}).inv.push({inum:String(i.no), idt:jdate(i.date), val, pos, rchrg:"N", inv_typ:"R", itms}); hsnAdd("b2b", i.lines, i.intra, 1); return; }
+    hsnAdd("b2c", i.lines, i.intra, 1);
+    if(!i.intra && pos!==fs && val>100000){ (b2cl[pos] ||= {pos, inv:[]}).inv.push({inum:String(i.no), idt:jdate(i.date), val, itms}); return; }
+    calc(i.lines||[], i.intra).groups.forEach(gr=>{ const k=pos+"|"+gr.rate+"|"+(i.intra?"A":"E"); const o=(b2cs[k] ||= {sply_ty:i.intra?"INTRA":"INTER", pos, typ:"OE", rt:gr.rate, txval:0, iamt:0, camt:0, samt:0, csamt:0}); o.txval+=gr.taxable; o.iamt+=gr.igst; o.camt+=gr.cgst; o.samt+=gr.sgst; }); });
+  d.ret.filter(r=>r.type!=="debit").forEach(r=>{ const g=String((r.party||{}).gstin||"").trim().toUpperCase(), pos=posOf(r);
+    if(g){ (cdnr[g] ||= {ctin:g, nt:[]}).nt.push({ntty:"C", nt_num:String(r.no), nt_dt:jdate(r.date), val:r2(+r.total||0), pos, rchrg:"N", inv_typ:"R", itms:gItems(r.lines, r.intra)}); hsnAdd("b2b", r.lines, r.intra, -1); return; }
+    hsnAdd("b2c", r.lines, r.intra, -1);
+    calc(r.lines||[], r.intra).groups.forEach(gr=>{ const k=pos+"|"+gr.rate+"|"+(r.intra?"A":"E"); const o=(b2cs[k] ||= {sply_ty:r.intra?"INTRA":"INTER", pos, typ:"OE", rt:gr.rate, txval:0, iamt:0, camt:0, samt:0, csamt:0}); o.txval-=gr.taxable; o.iamt-=gr.igst; o.camt-=gr.cgst; o.samt-=gr.sgst; }); });
+  const rd=o=>{ ["txval","iamt","camt","samt","csamt","qty"].forEach(k=>{ if(k in o) o[k]= k==="qty" ? Math.round(o[k]*1000)/1000 : r2(o[k]); }); return o; };
+  const cs=Object.values(b2cs).map(rd).filter(o=>o.txval).map(o=>{ const x={sply_ty:o.sply_ty, pos:o.pos, typ:"OE", rt:o.rt, txval:o.txval}; if(o.sply_ty==="INTRA"){ x.camt=o.camt; x.samt=o.samt; } else x.iamt=o.iamt; x.csamt=0; return x; });
+  const hsnList=t=>Object.values(hsnB[t]).map(rd).filter(o=>o.txval||o.qty).map((o,i)=>({num:i+1, ...o}));
+  d.inv.forEach(i=>i.lines && i.lines.forEach(l=>{ if(!String(l.hsn||"").trim()) warn.push(`${i.no}: item "${l.name}" has no HSN`); }));
+  const series=(docs,n,label)=>{ if(!docs.length) return null; const s=[...docs].sort((a,b)=>(a.seq||0)-(b.seq||0)||String(a.no).localeCompare(String(b.no))); return {doc_num:n, doc_typ:label, docs:[{num:1, from:String(s[0].no), to:String(s[s.length-1].no), totnum:s.length, cancel:0, net_issue:s.length}]}; };
+  const docDet=[series(d.inv,1,"Invoices for outward supply"), series(d.ret.filter(r=>r.type!=="debit"),5,"Credit Note")].filter(Boolean);
+  const [y,m]=gstMonth.split("-"); const out={gstin:String(f.gstin||"").toUpperCase(), fp:m+y, version:"GST3.2.1", hash:"hash"};
+  if(Object.keys(b2b).length) out.b2b=Object.values(b2b);
+  if(Object.keys(b2cl).length) out.b2cl=Object.values(b2cl);
+  if(cs.length) out.b2cs=cs;
+  if(Object.keys(cdnr).length) out.cdnr=Object.values(cdnr);
+  const hb=hsnList("b2b"), hc=hsnList("b2c"); if(hb.length||hc.length) out.hsn={...(hb.length?{hsn_b2b:hb}:{}), ...(hc.length?{hsn_b2c:hc}:{})};
+  if(docDet.length) out.doc_issue={doc_det:docDet};
+  return {out, warn:[...new Set(warn)]};
+}
+$("#gst-json").addEventListener("click", async () => {
+  if(!gstData) return toast("Load a period first", true);
+  if(!gstinValid(S.firm.gstin)) return toast("Enter your firm's correct GSTIN in Settings first", true);
+  if(!gstData.inv.length && !gstData.ret.length) return toast("No sales in this period", true);
+  const {out, warn}=gstr1Json();
+  if(warn.length){ const ok=await dialog({title:"Check before upload", msg:warn.slice(0,8).join(" · ")+(warn.length>8?` · and ${warn.length-8} more`:"")+". Download anyway?", yes:"Download", no:"Cancel"}); if(!ok) return; }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(out)], {type:"application/json"})); a.download=`GSTR1_${out.gstin}_${out.fp}.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  toast("GSTR-1 JSON downloaded. Upload it on the GST portal: Returns → GSTR-1 → Prepare offline → Upload.");
+});
+
+// ================= DELIVERY CHALLAN & ORDERS =================
+const OK={challan:{t:"Delivery Challan", doc:"DELIVERY CHALLAN", p:"DC/", key:"nextDC", party:"Buyer name", ref:"Vehicle / dispatch", hint:"Goods sent to a buyer before the bill. Make the bill from it later with “Make bill”; stock goes down when the bill is saved."},
+  so:{t:"Sales Order", doc:"SALES ORDER", p:"SO/", key:"nextSO", party:"Buyer name", ref:"Buyer's order no.", hint:"An order taken from a buyer. When the goods go out, press “Make bill” on it."},
+  po:{t:"Purchase Order", doc:"PURCHASE ORDER", p:"PO/", key:"nextPO", party:"Supplier name", ref:"Delivery by", hint:"An order you place with a supplier. When the goods and bill arrive, press “Make purchase” on it."}};
+const OKEY = () => "billbook-order-v1" + (CID==="main" ? "" : "-"+CID);
+const newOrd = (kind) => ({kind:kind||"challan", name:"", address:"", gstin:"", stateCode:"", date:todayISO(), ref:"", note:"", lines:[]});
+const loadOrd = () => { try{ const d=JSON.parse(localStorage.getItem(OKEY())); if(d && Array.isArray(d.lines) && OK[d.kind]) return Object.assign(newOrd(), d); }catch(e){} return newOrd(); };
+let od = loadOrd();
+const saveOrd = () => { try{ localStorage.setItem(OKEY(), JSON.stringify(od)); }catch(e){} };
+const OMAP = {"o-name":"name","o-addr":"address","o-gstin":"gstin","o-state":"stateCode","o-date":"date","o-ref":"ref","o-note":"note"};
+const odIntra = () => isIntra(S.firm.stateCode, od.stateCode);
+const ordNo = (kind,n) => OK[kind].p+String(n).padStart(4,"0");
+function fillOrd(){
+  for(const [id,k] of Object.entries(OMAP)) $("#"+id).value = od[k]||"";
+  const k=OK[od.kind]; $$("[data-ok]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.ok===od.kind?"true":"false"));
+  $("#o-title").textContent=k.t; $("#o-hint").textContent=k.hint; $("#o-party-lbl").textContent=k.party; $("#o-ref-lbl").textContent=k.ref; $("#o-no-lbl").textContent=k.t+" no."; $("#o-save").textContent="Save "+k.t.toLowerCase();
+  renderOrdLines(); updateOrd();
+}
+$$("[data-ok]").forEach(b=>b.addEventListener("click", () => { od.kind=b.dataset.ok; saveOrd(); fillOrd(); }));
+for(const [id,k] of Object.entries(OMAP)){
+  $("#"+id).addEventListener("input", e => { let v=e.target.value;
+    if(id==="o-gstin"){ v=v.toUpperCase(); e.target.value=v; const sc=gstinState(v); if(sc){ $("#o-state").value=sc; od.stateCode=sc; }
+      const p=v.length===15 && S.parties.find(x=>String(x.gstin||"").toUpperCase()===v); if(p){ Object.assign(od,{name:p.name,address:p.address||"",stateCode:p.stateCode||v.slice(0,2),gstin:v}); saveOrd(); fillOrd(); toast("Saved party found: "+p.name); return; } }
+    od[k]=v; saveOrd(); if(id==="o-gstin"||id==="o-state") renderOrdLines(); updateOrd(); });
+}
+$("#o-name").addEventListener("change", () => { const p=S.parties.find(x=>x.name.toLowerCase()===$("#o-name").value.trim().toLowerCase()); if(!p) return; Object.assign(od,{name:p.name,address:p.address||"",gstin:p.gstin||"",stateCode:p.stateCode||""}); saveOrd(); fillOrd(); });
+function ordAddLine(){
+  const name=$("#o-add-item").value.trim(), qty=+$("#o-add-qty").value||1; if(!name){ $("#o-add-item").focus(); return; }
+  const it=S.items.find(i=>i.name.toLowerCase()===name.toLowerCase());
+  if(it) od.lines.push({itemId:it.id, name:it.name, hsn:it.hsn||"", unit:it.unit||"PCS", qty, rate:od.kind==="po" ? +(it.prate ?? it.rate ?? 0)||0 : +it.rate||0, disc:0, gst:+(it.gst ?? 18)});
+  else od.lines.push({itemId:"", name, hsn:"", unit:"PCS", qty, rate:0, disc:0, gst:18});
+  $("#o-add-item").value=""; $("#o-add-qty").value="1"; saveOrd(); renderOrdLines(); updateOrd(); $("#o-add-item").focus();
+}
+$("#o-add-btn").addEventListener("click", ordAddLine);
+$("#o-add-item").addEventListener("keydown", e => { if(e.key==="Enter"){ e.preventDefault(); $("#o-add-qty").focus(); $("#o-add-qty").select(); } });
+$("#o-add-qty").addEventListener("keydown", e => { if(e.key==="Enter"){ e.preventDefault(); ordAddLine(); } });
+function renderOrdLines(){
+  $("#o-lines-wrap").hidden=!od.lines.length; $("#o-lines-empty").hidden=!!od.lines.length;
+  const c=calc(od.lines, odIntra());
+  $("#o-lines-body").innerHTML = od.lines.map((l,i)=>`<tr>
+    <td><input class="w-name" data-i="${i}" data-k="name" value="${esc(l.name)}" aria-label="Item name"></td>
+    <td><input class="w-s" data-i="${i}" data-k="hsn" value="${esc(l.hsn)}" aria-label="HSN"></td>
+    <td><input class="w-xs num" data-i="${i}" data-k="qty" type="number" step="any" min="0" value="${esc(l.qty)}" aria-label="Qty" style="text-align:right"></td>
+    <td><input class="w-xs" data-i="${i}" data-k="unit" value="${esc(l.unit)}" aria-label="Unit"></td>
+    <td><input class="w-s num" data-i="${i}" data-k="rate" type="number" step="any" min="0" value="${esc(l.rate)}" aria-label="Rate" style="text-align:right"></td>
+    <td><select data-i="${i}" data-k="gst" aria-label="GST %">${[0,5,12,18,28].map(g=>`<option ${+l.gst===g?"selected":""}>${g}</option>`).join("")}</select></td>
+    <td class="r num" id="ol-${i}-amt">${fmt(c.lines[i].amount)}</td>
+    <td><button class="x" type="button" data-odel="${i}" aria-label="Remove ${esc(l.name)}">×</button></td></tr>`).join("");
+}
+$("#o-lines-body").addEventListener("input", e => { const el=e.target; if(!el.dataset.k) return; const i=+el.dataset.i, k=el.dataset.k;
+  od.lines[i][k] = ["qty","rate","gst"].includes(k) ? (el.value===""?"":+el.value) : el.value; saveOrd();
+  const c=calc(od.lines, odIntra()); $("#ol-"+i+"-amt").textContent=fmt(c.lines[i].amount); updateOrd(); });
+$("#o-lines-body").addEventListener("change", e => { if(e.target.dataset.k==="gst"){ od.lines[+e.target.dataset.i].gst=+e.target.value; saveOrd(); updateOrd(); } });
+$("#o-lines-body").addEventListener("click", e => { const b=e.target.closest("[data-odel]"); if(!b) return; od.lines.splice(+b.dataset.odel,1); saveOrd(); renderOrdLines(); updateOrd(); });
+function updateOrd(){
+  const intra=odIntra(), c=calc(od.lines, intra), k=OK[od.kind];
+  $("#o-no").textContent = ordNo(od.kind, Math.max(1, Math.floor(+S.firm[k.key]||1)));
+  $("#o-supply").textContent = !S.firm.stateCode ? "Business state not set in Settings" : !od.stateCode ? "Party state not selected; treating as intra-state (CGST + SGST)" : intra ? `${stateName(od.stateCode)}: intra-state, CGST + SGST` : `${stateName(od.stateCode)}: inter-state, IGST`;
+  $("#o-taxable").textContent=fmt(c.taxable); $("#o-tax").textContent=fmt(c.tax); $("#o-round").textContent=(c.roundOff>0?"+":"")+fmt(c.roundOff); $("#o-total").textContent="₹"+c.total.toLocaleString("en-IN")+".00";
+}
+function ordDoc(o){ const k=OK[o.kind]||OK.challan; return {...o, __docTitle:k.doc, __noLbl:k.t+" No.", __billLbl:o.kind==="po"?"Supplier (Order to)":"Buyer (Bill to)", __noShip:o.kind==="po", __cgLbl:k.t, firm:firmSnapshot(), ship:o.party,
+  ref:o.kind==="po"?(o.ref?"Delivery by "+o.ref:""):"", pay:o.note||"", order:o.kind==="so"?o.ref||"":"", dispatch:o.kind==="challan"?o.ref||"":"", dest:""}; }
+$("#o-clear").addEventListener("click", e => armDelete(e.currentTarget, () => { od=newOrd(od.kind); saveOrd(); fillOrd(); toast("Form cleared"); }));
+$("#o-save").addEventListener("click", e => {
+  if(!db) return toast("Not connected to the database", true);
+  const party=cleanParty(od), kind=OK[od.kind]?od.kind:"challan", K=OK[kind];
+  const lines=od.lines.filter(l=>String(l.name).trim() && +l.qty>0).map(l=>({itemId:l.itemId||"", name:String(l.name).trim(), hsn:String(l.hsn||"").trim(), unit:String(l.unit||"").trim(), qty:+l.qty||0, rate:r2(+l.rate||0), disc:0, gst:+l.gst||0}));
+  if(!party.name){ $("#o-name").focus(); return toast(kind==="po"?"Enter the supplier name":"Enter the buyer name", true); }
+  if(!lines.length){ $("#o-add-item").focus(); return toast("Add at least one item with a quantity", true); }
+  withBtn(e.currentTarget, "Saving…", async () => {
+    try{
+      const intra=odIntra(), c=calc(lines,intra), id=kind+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6), ref=C("orders").doc(id), firmRef=FIRM();
+      const doc={kind, date:od.date||todayISO(), party, ref:String(od.ref||"").trim(), note:String(od.note||"").trim(), intra, pos:party.stateCode||"", lines, taxable:c.taxable, cgst:c.cgst, sgst:c.sgst, igst:c.igst, roundOff:c.roundOff, total:c.total, status:"open", createdAt:Date.now(), createdBy:(auth.currentUser&&auth.currentUser.email)||""};
+      await db.runTransaction(async t => { const fs=await t.get(firmRef); const f=fs.exists?fs.data():{}; const n=Math.max(1, Math.floor(+f[K.key]||1)); doc.no=ordNo(kind,n); t.set(ref, doc); t.set(firmRef, {[K.key]:n+1}, {merge:true}); });
+      if(!S.parties.some(p=>p.name.toLowerCase()===party.name.toLowerCase())) await C("parties").add({...party, phone:"", type:kind==="po"?"supplier":"customer", opening:0});
+      od=newOrd(kind); saveOrd(); fillOrd(); toast(`${K.t} ${doc.no} saved · ₹${fmt(c.total)}`);
+      openInvoice(ordDoc({...doc, id}), true);
+    }catch(err){ toast(errMsg(err), true); }
+  });
+});
+let oMonth=todayISO().slice(0,7), oList=[], unsubO=null;
+function watchOrders(){
+  if(unsubO){ unsubO(); unsubO=null; } if(!db || !dbReady) return; $("#o-month").value=oMonth;
+  const base=C("orders"); const q = oMonth ? base.where("date",">=",oMonth+"-01").where("date","<",nextMonth(oMonth)+"-01") : base;
+  unsubO = q.onSnapshot(s=>{ oList=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0)); renderOrders(true); }, err=>toast("Could not load orders: "+(err.message||err), true));
+}
+const oFiltered = () => { const k=$("#o-f-kind").value, st=$("#o-f-status").value; return oList.filter(o=>(!k||o.kind===k) && (!st||(o.status||"open")===st)); };
+function renderOrders(fromSnap){
+  if(!fromSnap && !unsubO){ fillOrd(); return watchOrders(); }
+  const list=oFiltered(), open=oList.filter(o=>(o.status||"open")==="open");
+  const lbl={challan:"Challan", so:"Sales Order", po:"Purchase Order"};
+  $("#o-body").innerHTML=list.map((o,n)=>{ const op=(o.status||"open")==="open";
+    return `<tr class="click" data-oopen="${esc(o.id)}"><td class="r num">${n+1}</td><td>${fmtDate(o.date)}</td><td><span class="vt order">${lbl[o.kind]||o.kind}</span></td><td class="num">${esc(o.no)}</td><td>${esc((o.party||{}).name)}</td><td class="r num">${rupee(o.total)}</td><td>${op?'<span class="vt open">Pending</span>':`<span class="vt billed">Billed</span> <span class="muted num">${esc(o.billNo||"")}</span>`}</td>
+      <td class="r" style="white-space:nowrap">${op?`<button class="btn sm primary" type="button" data-omake="${esc(o.id)}">${o.kind==="po"?"Make purchase":"Make bill"}</button> `:""}<button class="btn sm danger" type="button" data-odelo="${esc(o.id)}">Delete</button></td></tr>`; }).join("");
+  $("#o-wrap").hidden=!list.length; $("#o-empty").hidden=!!list.length;
+  $("#o-sum").textContent = open.length ? `Pending this month: ${open.filter(o=>o.kind==="challan").length} challan(s), ${open.filter(o=>o.kind==="so").length} sales order(s), ${open.filter(o=>o.kind==="po").length} purchase order(s) · ₹${fmt(open.reduce((t,o)=>t+(+o.total||0),0))}` : "Nothing pending this month.";
+}
+function billFromOrder(o){
+  if(o.kind==="po"){
+    pur=Object.assign(newPur(), {...cleanParty(o.party||{}), no:"", date:todayISO(), lines:(o.lines||[]).map(l=>({...l})), fromOrder:o.id}); savePur(); fillPur(); showTab("purchase");
+    toast(`Purchase from ${o.no}: enter the supplier's bill number, check the quantities and rates, then save.`); return;
+  }
+  draft=Object.assign(newDraft(), {party:{...cleanParty(o.party||{})}, same:true, ship:{...cleanParty(o.party||{})}, date:todayISO(), order:o.kind==="so"?(o.ref||o.no):"", ref:o.kind==="challan"?("Challan "+o.no+" dt. "+fmtDate(o.date)):"", dispatch:o.kind==="challan"?(o.ref||""):"", lines:(o.lines||[]).map(l=>({...l})), fromOrder:o.id});
+  saveDraft(); fillBillForm(); showTab("bill"); toast(`Bill from ${o.no}: check and press Save invoice.`);
+}
+$("#o-body").addEventListener("click", e => {
+  const m=e.target.closest("[data-omake]"); if(m){ e.stopPropagation(); const o=oList.find(x=>x.id===m.dataset.omake); if(o) billFromOrder(o); return; }
+  const d=e.target.closest("[data-odelo]"); if(d){ e.stopPropagation(); armDelete(d, async () => { try{ await D("orders", d.dataset.odelo).delete(); toast("Deleted"); }catch(err){ toast(errMsg(err), true); } }); return; }
+  const tr=e.target.closest("[data-oopen]"); if(tr){ const o=oList.find(x=>x.id===tr.dataset.oopen); if(o) openInvoice(ordDoc(o), true); }
+});
+$("#o-month").addEventListener("change", e => { oMonth=e.target.value||""; watchOrders(); });
+$("#o-f-kind").addEventListener("change", () => renderOrders(true));
+$("#o-f-status").addEventListener("change", () => renderOrders(true));
+$("#o-xlsx").addEventListener("click", () => {
+  const list=oFiltered(); if(!list.length) return toast("Nothing to export", true);
+  xlsxOut({file:`Orders_${oMonth||"all"}`, sheet:"Challans & Orders", w:[7,11,14,12,28,13,10,16],
+    rows:[...list].reverse().map((o,n)=>({"Sr. No.":n+1,"Date":fmtDate(o.date),"Type":OK[o.kind]?OK[o.kind].t:o.kind,"No.":o.no,"Party":(o.party||{}).name,"Amount":o.total,"Status":(o.status||"open")==="open"?"Pending":"Billed","Bill No.":o.billNo||""}))});
+});
+
+// ================= BANK RECONCILIATION =================
+let brTo=todayISO(), brRows=[], brSeq=0, brBooks=0;
+async function loadBrs(){
+  $("#br-to").value=brTo; if(!db || !dbReady) return; const my=++brSeq;
+  $("#br-empty").hidden=false; $("#br-empty").textContent="Loading…";
+  try{
+    const [pq,vq]=await Promise.all([C("payments").where("date","<=",brTo).get(), C("vouchers").where("date","<=",brTo).get()]); if(my!==brSeq) return;
+    const rows=[], VL={expense:"Expense",income:"Income",contra:"Contra",journal:"Journal"};
+    pq.docs.forEach(d=>{ const p=d.data(); if(isCash(p)) return; const inn=p.type!=="payment";
+      rows.push({col:"payments", id:d.id, date:p.date||"", at:p.createdAt||0, party:(p.party||{}).name||"", type:inn?"Receipt":"Payment", no:p.no||"", mode:[p.mode,p.ref].filter(Boolean).join(" · "), dep:inn?+p.amount||0:0, wd:inn?0:+p.amount||0, bankDate:p.bankDate||""}); });
+    vq.docs.forEach(d=>{ const v=d.data(), dr=ledgerKind(v.dr)==="bank", cr=ledgerKind(v.cr)==="bank"; if(dr===cr) return;
+      rows.push({col:"vouchers", id:d.id, date:v.date||"", at:v.createdAt||0, party:dr?v.cr:v.dr, type:VL[v.kind]||v.kind, no:v.no||"", mode:[v.mode,v.note].filter(Boolean).join(" · "), dep:dr?+v.amount||0:0, wd:cr?+v.amount||0:0, bankDate:v.bankDate||""}); });
+    rows.sort((a,b)=>a.date.localeCompare(b.date)||a.at-b.at);
+    brBooks=r2((+S.firm.bankOpen||0)+rows.reduce((t,r)=>t+r.dep-r.wd,0)); brRows=rows; renderBrs();
+  }catch(err){ $("#br-empty").textContent="Could not load: "+((err&&err.message)||err); }
+}
+const brCleared = r => !!r.bankDate && r.bankDate<=brTo;
+function brSum(){ const un=brRows.filter(r=>!brCleared(r)); const dep=r2(un.reduce((t,r)=>t+r.dep,0)), wd=r2(un.reduce((t,r)=>t+r.wd,0)); return {dep, wd, bank:r2(brBooks-dep+wd)}; }
+function renderBrs(){
+  const all=$("#br-all").checked, s=brSum(), m=v=>(v<0?"−₹":"₹")+fmt(Math.abs(v));
+  $("#br-t-books").textContent=m(brBooks); $("#br-t-dep").textContent="₹"+fmt(s.dep); $("#br-t-wd").textContent="₹"+fmt(s.wd); $("#br-t-bank").textContent=m(s.bank);
+  const idx=brRows.map((r,i)=>i).filter(i=>all || !brCleared(brRows[i]));
+  $("#br-body").innerHTML=idx.map(i=>{ const r=brRows[i]; return `<tr><td>${fmtDate(r.date)}</td><td><b>${esc(r.party)}</b></td><td><span class="vt ${r.dep?"receipt":"payment"}">${esc(r.type)}</span></td><td class="num">${esc(r.no)}</td><td>${esc(r.mode)}</td><td class="r num">${r.dep?fmt(r.dep):""}</td><td class="r num">${r.wd?fmt(r.wd):""}</td><td><input class="brd" type="date" data-brd="${i}" value="${esc(r.bankDate)}" aria-label="Bank date for ${esc(r.no)}"></td></tr>`; }).join("");
+  $("#br-wrap").hidden=!idx.length; $("#br-empty").hidden=!!idx.length;
+  $("#br-empty").textContent = brRows.length ? "All bank entries up to this date are matched with the bank. Tick “Show matched entries too” to see them." : "No bank / UPI / cheque entries yet.";
+}
+$("#br-body").addEventListener("change", async e => { const el=e.target.closest("[data-brd]"); if(!el) return; const r=brRows[+el.dataset.brd]; if(!r) return; const v=el.value||""; if(v===r.bankDate) return;
+  if(v && v<r.date){ el.value=r.bankDate; return toast("Bank date cannot be before the entry date", true); }
+  try{ await D(r.col, r.id).set({bankDate:v}, {merge:true}); r.bankDate=v; renderBrs(); toast(v?`Matched with bank on ${fmtDate(v)}`:"Bank date removed"); }catch(err){ el.value=r.bankDate; toast(errMsg(err), true); } });
+$("#br-to").addEventListener("change", e => { brTo=e.target.value||todayISO(); loadBrs(); });
+$("#br-all").addEventListener("change", renderBrs);
+$("#br-xlsx").addEventListener("click", () => {
+  if(!brRows.length) return toast("No bank entries", true); const s=brSum();
+  const un=brRows.filter(r=>!brCleared(r));
+  const rows=[{"Particulars":"Balance as per books","Amount":brBooks}, {"Particulars":"Less: deposits not yet credited by bank","Amount":-s.dep}, {"Particulars":"Add: payments / cheques not yet debited by bank","Amount":s.wd}, {"Particulars":"Balance as per bank","Amount":s.bank}, {},
+    ...un.map(r=>({"Particulars":`${fmtDate(r.date)} · ${r.type} ${r.no} · ${r.party}${r.mode?" · "+r.mode:""}`,"Amount":r.dep?r.dep:-r.wd}))];
+  xlsxOut({file:`BankReconciliation_${brTo}`, sheet:"Bank Reconciliation", w:[70,16], rows});
+});
+
 // ================= SETTINGS =================
 const ST = {name:"st-name",address:"st-addr",phone:"st-phone",email:"st-email",gstin:"st-gstin",stateCode:"st-state",pan:"st-pan",bank:"st-bank",acno:"st-acno",ifsc:"st-ifsc",prefix:"st-prefix",fy:"st-fy",nextNo:"st-next",decl:"st-decl",cashOpen:"st-cashopen",bankOpen:"st-bankopen",capOpen:"st-capopen"};
 let settingsDirty=false;
@@ -2378,11 +2880,11 @@ function onFirm(){
   const f=S.firm;
   $("#firm-sub").textContent = f.name ? `${f.name}${f.gstin?" · "+f.gstin:""}` : "Add your business details in Settings";
   $("#firm-notice").hidden = !!f.name || !dbReady;
-  fillSettings(); updateSummary(); updatePur(); updateNote(); if(!$("#tab-home").hidden) renderGateway(); setTopHeight();
+  fillSettings(); updateSummary(); updatePur(); updateNote(); updateOrd(); if(!$("#tab-home").hidden) renderGateway(); setTopHeight();
 }
 
 // ================= BOOT =================
-fillBillForm(); fillPur(); fillNote(); renderItems(); renderParties(); renderBills(); fillSettings();
+fillBillForm(); fillPur(); fillNote(); fillOrd(); renderItems(); renderParties(); renderBills(); fillSettings();
 showTab("home"); setTimeout(setTopHeight, 50);
 
 const banner = m => { $("#banner").textContent=m; $("#banner").hidden=!m; };
@@ -2395,7 +2897,7 @@ if(!window.firebase || !CFG || !CFG.apiKey || String(CFG.apiKey).includes("PASTE
   auth = firebase.auth(); db = firebase.firestore(); INC = n => firebase.firestore.FieldValue.increment(n);
   db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
   auth.onAuthStateChanged(user => {
-    unsubs.forEach(u=>u()); unsubs=[]; unsubGlobal.forEach(u=>u()); unsubGlobal=[]; closeAccount(); if(unsubPur){ unsubPur(); unsubPur=null; } if(unsubNt){ unsubNt(); unsubNt=null; } if(unsubV){ unsubV(); unsubV=null; } if(unsubBills){ unsubBills(); unsubBills=null; }
+    unsubs.forEach(u=>u()); unsubs=[]; unsubGlobal.forEach(u=>u()); unsubGlobal=[]; closeAccount(); if(unsubPur){ unsubPur(); unsubPur=null; } if(unsubNt){ unsubNt(); unsubNt=null; } if(unsubV){ unsubV(); unsubV=null; } if(unsubO){ unsubO(); unsubO=null; } if(unsubBills){ unsubBills(); unsubBills=null; }
     if(!user){ dbReady=false; $("#app").hidden=true; $("#login").hidden=false; return; }
     $("#login").hidden=true; $("#app").hidden=false; $("#user-email").textContent=user.email; dbReady=true; banner("");
     $("#lg-email").value=""; $("#lg-pass").value="";
@@ -2411,7 +2913,7 @@ function subscribeAll(){
   unsubs.push(C("items").onSnapshot(q => { S.items=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.name).localeCompare(String(b.name))); renderItems(); renderBills(); }, fail));
   unsubs.push(C("parties").onSnapshot(q => { S.parties=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.name).localeCompare(String(b.name))); renderParties(); }, fail));
   unsubs.push(C("invoices").where("date","==",todayISO()).onSnapshot(q => { S.todayTotal=q.docs.reduce((t,d)=>t+(+d.data().total||0),0); renderBills(); }, ()=>{}));
-  watchBills(); if(!$("#tab-purchase").hidden) watchPurchases(); if(!$("#tab-outstanding").hidden) loadOutstanding(); if(!$("#tab-daybook").hidden) loadDaybook(); if(!$("#tab-gst").hidden) loadGst(); if(!$("#tab-notes").hidden) watchNotes(); if(!$("#tab-stock").hidden) loadStock(); if(!$("#tab-cash").hidden) loadCash(); if(!$("#tab-vouchers").hidden) watchVouchers(); if(!$("#tab-final").hidden) loadFinal();
+  watchBills(); if(!$("#tab-purchase").hidden) watchPurchases(); if(!$("#tab-outstanding").hidden) loadOutstanding(); if(!$("#tab-daybook").hidden) loadDaybook(); if(!$("#tab-gst").hidden) loadGst(); if(!$("#tab-notes").hidden) watchNotes(); if(!$("#tab-stock").hidden) loadStock(); if(!$("#tab-cash").hidden) loadCash(); if(!$("#tab-vouchers").hidden) watchVouchers(); if(!$("#tab-final").hidden) loadFinal(); if(!$("#tab-ledger").hidden) loadLedger(); if(!$("#tab-orders").hidden) watchOrders(); if(!$("#tab-brs").hidden) loadBrs();
 }
 
 // ================= COMPANIES =================
@@ -2432,7 +2934,7 @@ function switchCompany(id){
   CID=id; try{ localStorage.setItem("billbook-company", id); }catch(e){}
   Object.assign(S, {firm:{}, items:[], parties:[], invoices:[], todayTotal:0}); settingsDirty=false;
   draft = (()=>{ try{ const d=JSON.parse(localStorage.getItem(DRAFT_KEY())); if(d && Array.isArray(d.lines)) return Object.assign(newDraft(), d); }catch(e){} return newDraft(); })();
-  closeAccount(); if(unsubPur){ unsubPur(); unsubPur=null; } if(unsubNt){ unsubNt(); unsubNt=null; } if(unsubV){ unsubV(); unsubV=null; } vList=[]; purList=[]; ntList=[]; osRows=[]; pur=loadPur(); fillPur(); nt=loadNote(); fillNote(); resetItemForm(); resetPartyForm();
+  closeAccount(); if(unsubPur){ unsubPur(); unsubPur=null; } if(unsubNt){ unsubNt(); unsubNt=null; } if(unsubV){ unsubV(); unsubV=null; } if(unsubO){ unsubO(); unsubO=null; } vList=[]; purList=[]; ntList=[]; osRows=[]; oList=[]; lrData=null; brRows=[]; srId=""; skDocs=null; $("#sr-panel").hidden=true; pur=loadPur(); fillPur(); nt=loadNote(); fillNote(); od=loadOrd(); fillOrd(); resetItemForm(); resetPartyForm();
   fillBillForm(); renderItems(); renderParties(); renderBills(); onFirm(); renderCoSel();
   subscribeAll();
 }
